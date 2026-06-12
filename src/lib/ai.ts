@@ -8,13 +8,20 @@ export async function draftEmailWithAI(prompt: string, tone: string = "professio
   }
 
   const genAI = new GoogleGenerativeAI(settings.geminiApiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const fullPrompt = `Write an email or message body based on the following instruction.
   Tone: ${tone}
   Instruction: ${prompt}
   Do not include the subject line or placeholders like [Your Name]. Just write the body text. If it looks like an email, format with simple HTML like <p> and <br> tags.`;
 
-  const result = await model.generateContent(fullPrompt);
-  return result.response.text();
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(fullPrompt);
+    return result.response.text();
+  } catch (err: any) {
+    console.warn("Primary model failed, falling back to gemini-pro:", err.message);
+    const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const result = await fallbackModel.generateContent(fullPrompt);
+    return result.response.text();
+  }
 }
