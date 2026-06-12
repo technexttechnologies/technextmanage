@@ -1,54 +1,89 @@
-import { Cloud, ExternalLink, FileText, Lock } from "lucide-react";
-import styles from "./page.module.css";
+export const dynamic = "force-dynamic";
 
-export default function DocumentsPage() {
+import { prisma } from "@/lib/prisma";
+import { FileText, Download, Calendar, HardDrive } from "lucide-react";
+import styles from "./page.module.css";
+import DocumentUploader from "@/components/DocumentUploader";
+import { DeleteButton } from "@/app/settings/DeleteButton";
+import { deleteDocument } from "./actions";
+
+export default async function DocumentsPage() {
+  const documents = await prisma.document.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { uploadedBy: true }
+  });
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>Document Storage</h1>
-          <p className={styles.subtitle}>Manage client assets, agreements, and files.</p>
+          <h1 className={styles.title}>Cloud Documents</h1>
+          <p className={styles.subtitle}>Securely store and manage files via Vercel Blob.</p>
         </div>
       </header>
 
+      <DocumentUploader />
+
       <div className={styles.card}>
-        <div className={styles.iconWrapper}>
-          <Cloud size={48} className={styles.icon} />
-        </div>
-        
-        <h2>Cloud Storage Recommended</h2>
-        <p className={styles.description}>
-          To keep your TechNext CRM fast and lightweight, we recommend utilizing an external cloud storage provider (like Google Drive, OneDrive, or Dropbox) for heavy client assets, signed agreements, and media files.
-        </p>
-
-        <div className={styles.steps}>
-          <div className={styles.step}>
-            <div className={styles.stepNum}>1</div>
-            <div className={styles.stepContent}>
-              <h3>Upload to Cloud</h3>
-              <p>Upload your client's files to a dedicated folder in your preferred cloud storage.</p>
-            </div>
+        {documents.length === 0 ? (
+          <div className={styles.emptyState}>
+            <HardDrive size={48} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
+            <h3>No Documents Uploaded</h3>
+            <p>Your cloud drive is currently empty. Upload files above.</p>
           </div>
-          <div className={styles.step}>
-            <div className={styles.stepNum}>2</div>
-            <div className={styles.stepContent}>
-              <h3>Generate a Link</h3>
-              <p>Create a shareable link to the folder or specific document.</p>
-            </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>File Name</th>
+                  <th>Size</th>
+                  <th>Uploaded By</th>
+                  <th>Date</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {documents.map((doc) => (
+                  <tr key={doc.id}>
+                    <td>
+                      <div className={styles.fileInfo}>
+                        <div className={styles.fileIcon}>
+                          <FileText size={20} />
+                        </div>
+                        <div>
+                          <a href={doc.fileUrl} target="_blank" rel="noreferrer" className={styles.fileName}>
+                            {doc.fileName}
+                          </a>
+                          <div className={styles.fileMeta}>{doc.mimeType}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{(doc.fileSize / 1024 / 1024).toFixed(2)} MB</td>
+                    <td>{doc.uploadedBy.name}</td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                        <Calendar size={14} />
+                        {new Date(doc.createdAt).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                        <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="btn-secondary" style={{ padding: '6px 12px' }}>
+                          <Download size={14} /> View
+                        </a>
+                        <form action={deleteDocument} className={styles.deleteForm}>
+                          <input type="hidden" name="documentId" value={doc.id} />
+                          <DeleteButton />
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div className={styles.step}>
-            <div className={styles.stepNum}>3</div>
-            <div className={styles.stepContent}>
-              <h3>Paste in CRM</h3>
-              <p>Paste the link into the specific Customer's <strong>Notes</strong> section or within a specific <strong>Project's description</strong> for quick access by the entire team.</p>
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.securityNote}>
-          <Lock size={16} />
-          <span>This ensures your CRM database remains blazingly fast and your documents remain securely backed up.</span>
-        </div>
+        )}
       </div>
     </div>
   );
