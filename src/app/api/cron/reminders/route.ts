@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/mailer";
+import { sendEmail, generateTechNextEmailHtml } from "@/lib/mailer";
 
 export async function GET(req: Request) {
   // Verify Vercel Cron Secret for security
@@ -35,29 +35,28 @@ export async function GET(req: Request) {
     for (const fu of dueFollowUps) {
       // Email to employee
       if (fu.assignedTo.email) {
+        const bodyHtml = `
+          <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Upcoming Follow-up</h2>
+          <p>You have a <strong>${fu.type}</strong> scheduled with <strong>${fu.customer.name}</strong> for <strong>tomorrow (${tomorrowStart.toLocaleDateString()})</strong>.</p>
+          ${fu.notes ? `<div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 4px; margin: 20px 0;"><p style="margin: 0; color: #92400e; font-size: 15px;"><strong>Notes:</strong> ${fu.notes}</p></div>` : ''}
+        `;
         await sendEmail(
           fu.assignedTo.email,
           `⏰ Follow-up Reminder: ${fu.customer.name} — ${fu.type}`,
-          `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
-            <h2 style="color:#0A2540;">Follow-up Reminder</h2>
-            <p>You have a <strong>${fu.type}</strong> scheduled with <strong>${fu.customer.name}</strong> for <strong>tomorrow (${tomorrowStart.toLocaleDateString()})</strong>.</p>
-            ${fu.notes ? `<p><em>Notes: ${fu.notes}</em></p>` : ''}
-            <p style="color:#6B7280;font-size:13px;">— TechNext CRM Auto-Reminder</p>
-          </div>`
+          generateTechNextEmailHtml("Employee Reminder", bodyHtml)
         );
       }
       // Email to customer
       if (fu.customer.email) {
+        const bodyHtml = `
+          <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Hello ${fu.customer.name},</h2>
+          <p style="font-size: 16px;">This is a friendly reminder about your scheduled <strong>${fu.type}</strong> with us on <strong>${tomorrowStart.toLocaleDateString()}</strong>.</p>
+          <p style="font-size: 16px;">We look forward to speaking with you!</p>
+        `;
         await sendEmail(
           fu.customer.email,
           `Reminder: Upcoming ${fu.type} with TechNext Technologies`,
-          `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
-            <h2 style="color:#0A2540;">TechNext Technologies</h2>
-            <p>Dear ${fu.customer.name},</p>
-            <p>This is a friendly reminder about your scheduled <strong>${fu.type}</strong> with us on <strong>${tomorrowStart.toLocaleDateString()}</strong>.</p>
-            <p>We look forward to speaking with you!</p>
-            <p style="margin-top:24px;color:#6B7280;font-size:13px;">Best regards,<br>TechNext Technologies Team</p>
-          </div>`
+          generateTechNextEmailHtml("Upcoming Appointment", bodyHtml)
         );
       }
       results.push(`Follow-up reminder: ${fu.customer.name}`);
@@ -80,29 +79,31 @@ export async function GET(req: Request) {
     for (const r of expiringRenewals) {
       if (r.customer.email) {
         const daysLeft = Math.ceil((r.expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        const bodyHtml = `
+          <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Hello ${r.customer.name},</h2>
+          <p style="font-size: 16px;">Your <strong>${r.type}</strong> service is expiring on <strong>${r.expiryDate.toLocaleDateString()}</strong> (${daysLeft} days from now).</p>
+          <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 1px solid #fecaca; border-left: 4px solid #ef4444; border-radius: 8px; padding: 20px; margin: 30px 0;">
+            <p style="margin: 0; color: #991b1b; font-size: 16px; font-weight: 500;">Please contact us to renew your service and avoid any disruption.</p>
+          </div>
+        `;
         await sendEmail(
           r.customer.email,
           `⚠️ Renewal Alert: Your ${r.type} expires in ${daysLeft} days`,
-          `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
-            <h2 style="color:#0A2540;">TechNext Technologies</h2>
-            <p>Dear ${r.customer.name},</p>
-            <p>Your <strong>${r.type}</strong> service is expiring on <strong>${r.expiryDate.toLocaleDateString()}</strong> (${daysLeft} days from now).</p>
-            <p>Please contact us to renew your service and avoid any disruption.</p>
-            <p style="margin-top:24px;color:#6B7280;font-size:13px;">Best regards,<br>TechNext Technologies Team</p>
-          </div>`
+          generateTechNextEmailHtml("Service Expiration Warning", bodyHtml)
         );
         results.push(`Renewal alert: ${r.customer.name} — ${r.type}`);
       }
 
       // Also email admin
       if (settings.smtpEmail) {
+        const bodyHtml = `
+          <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Renewal Expiring Soon</h2>
+          <p style="font-size: 16px;"><strong>${r.customer.name}</strong>'s <strong>${r.type}</strong> service expires on ${r.expiryDate.toLocaleDateString()}.</p>
+        `;
         await sendEmail(
           settings.smtpEmail,
           `🔄 Renewal Expiring: ${r.customer.name} — ${r.type}`,
-          `<div style="font-family:Arial,sans-serif;padding:24px;">
-            <h2>Renewal Expiring Soon</h2>
-            <p><strong>${r.customer.name}</strong>'s <strong>${r.type}</strong> expires on ${r.expiryDate.toLocaleDateString()}.</p>
-          </div>`
+          generateTechNextEmailHtml("Action Required", bodyHtml)
         );
       }
     }
@@ -121,14 +122,17 @@ export async function GET(req: Request) {
 
     for (const q of staleQuotations) {
       if (settings.smtpEmail) {
+        const bodyHtml = `
+          <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Quotation Pending Response</h2>
+          <p style="font-size: 16px;">Quotation <strong>${q.quotationNumber}</strong> for <strong>${q.customer.name}</strong> (₹${q.totalAmount.toFixed(2)}) was sent over 3 days ago and is still pending.</p>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 30px 0;">
+            <p style="margin: 0; color: #1e293b; font-size: 15px; font-weight: 500;">Please consider following up with the customer directly.</p>
+          </div>
+        `;
         await sendEmail(
           settings.smtpEmail,
           `📋 Quotation Follow-up: ${q.quotationNumber} — ${q.customer.name}`,
-          `<div style="font-family:Arial,sans-serif;padding:24px;">
-            <h2>Quotation Pending Response</h2>
-            <p>Quotation <strong>${q.quotationNumber}</strong> for <strong>${q.customer.name}</strong> (₹${q.totalAmount.toFixed(2)}) was sent over 3 days ago and is still pending.</p>
-            <p>Consider following up with the customer.</p>
-          </div>`
+          generateTechNextEmailHtml("Follow-up Reminder", bodyHtml)
         );
         results.push(`Stale quotation: ${q.quotationNumber}`);
       }

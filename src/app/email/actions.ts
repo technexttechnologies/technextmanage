@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import path from "path";
-import { sendEmail } from "@/lib/mailer";
+import { sendEmail, generateTechNextEmailHtml } from "@/lib/mailer";
 import { revalidatePath } from "next/cache";
 
 export async function sendComposedEmail(formData: FormData) {
@@ -28,21 +28,14 @@ export async function sendComposedEmail(formData: FormData) {
     });
   }
 
-  // 2. Add TechNext Logo as inline CID attachment
-  attachments.push({
-    filename: 'technext-logo.jpg',
-    path: path.join(process.cwd(), 'public', 'technext-logo.jpg'),
-    cid: 'technextlogo'
-  });
-
-  // Wrap the DB template (or AI body) in a standard clean wrapper
-  const htmlBody = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
-    ${body.replace(/\n/g, '<br>')}
-    <div style="margin-top:32px;padding-top:16px;border-top:1px solid #E5E7EB;">
-      <img src="cid:technextlogo" alt="TechNext Technologies Logo" style="max-height: 40px; margin-bottom: 8px;" />
-      <p style="color:#6B7280;font-size:13px;margin:0;">— TechNext Technologies</p>
+  // Wrap the DB template (or AI body) in the beautiful global wrapper
+  const bodyContent = `
+    <div style="font-size: 16px; color: #1e293b; line-height: 1.7;">
+      ${body.replace(/\n/g, '<br>')}
     </div>
-  </div>`;
+  `;
+
+  const htmlBody = generateTechNextEmailHtml(subject, bodyContent);
 
   await sendEmail(to, subject, htmlBody, attachments);
   revalidatePath("/email");

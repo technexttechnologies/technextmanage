@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { sendEmail } from "@/lib/mailer";
+import { sendEmail, generateTechNextEmailHtml } from "@/lib/mailer";
 
 function formatStatus(status: string) {
   return status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
@@ -14,20 +14,31 @@ async function notifyCustomer(project: any, eventType: string, customMessage: st
 
   const trackingLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/track/${project.id}`;
   
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #111827;">
-      <h2 style="color: #0A2540;">Project Update: ${project.name}</h2>
-      <p>Dear ${project.customer.name},</p>
-      <p>${customMessage}</p>
-      <div style="background-color: #F7F9FC; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin: 24px 0;">
-        <h3 style="margin-top: 0; color: #0A2540;">Current Status: ${formatStatus(project.status)}</h3>
-        <p style="margin: 0;"><strong>Progress:</strong> ${project.progress}%</p>
+  const bodyContent = `
+    <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Hello ${project.customer.name},</h2>
+    <p style="font-size: 16px;">${customMessage}</p>
+    
+    <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 30px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+      <h3 style="margin-top: 0; color: #1e293b; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px;">Current Status</h3>
+      <p style="margin: 8px 0 0 0; font-size: 20px; font-weight: 700; color: #2563eb;">${formatStatus(project.status)}</p>
+      
+      <div style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; font-weight: 600; color: #475569;">
+          <span>Progress</span>
+          <span>${project.progress}%</span>
+        </div>
+        <div style="background-color: #e2e8f0; border-radius: 4px; height: 8px; width: 100%; overflow: hidden;">
+          <div style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); width: ${project.progress}%; height: 100%; border-radius: 4px;"></div>
+        </div>
       </div>
-      <p>You can track the live progress of your project anytime securely using your unique tracking link:</p>
-      <a href="${trackingLink}" style="display: inline-block; background-color: #635BFF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 16px 0;">Track My Project</a>
-      <p style="margin-top: 32px; font-size: 14px; color: #6B7280;">Best regards,<br>TechNext Technologies</p>
     </div>
   `;
+
+  const html = generateTechNextEmailHtml(
+    `Project Update: ${project.name}`,
+    bodyContent,
+    { text: "Track My Project", url: trackingLink }
+  );
 
   await sendEmail(project.customer.email, `TechNext Update: ${project.name}`, html);
 }
