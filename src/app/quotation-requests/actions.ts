@@ -123,7 +123,13 @@ export async function uploadQuotationPdf(formData: FormData) {
     throw new Error("Missing file or request ID");
   }
 
-  const blob = await put(`quotations/${id}_${file.name}`, file, { access: 'public' });
+  const fileBuffer = await file.arrayBuffer();
+
+  const blob = await put(`quotations/${id}_${file.name}`, fileBuffer, { 
+    access: 'public',
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+    contentType: file.type || 'application/pdf'
+  });
 
   const request = await prisma.quotationRequest.update({
     where: { id },

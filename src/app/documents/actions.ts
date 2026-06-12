@@ -15,8 +15,14 @@ export async function uploadDocument(formData: FormData) {
 
   if (!file || !(file instanceof Blob)) throw new Error("No valid file uploaded");
 
+  const fileBuffer = await file.arrayBuffer();
+
   // Upload to Vercel Blob
-  const blob = await put(file.name, file, { access: 'public' });
+  const blob = await put(file.name, fileBuffer, { 
+    access: 'public',
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+    contentType: file.type || 'application/octet-stream'
+  });
 
   // Save to Database
   await prisma.document.create({

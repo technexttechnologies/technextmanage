@@ -113,7 +113,13 @@ export async function uploadInvoicePdf(formData: FormData) {
 
   if (!id || !file || !(file instanceof Blob)) throw new Error("Missing file");
 
-  const blob = await put(`invoices/${id}_${file.name}`, file, { access: 'public' });
+  const fileBuffer = await file.arrayBuffer();
+
+  const blob = await put(`invoices/${id}_${file.name}`, fileBuffer, { 
+    access: 'public',
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+    contentType: file.type || 'application/pdf'
+  });
 
   const request = await prisma.invoiceRequest.update({
     where: { id },
