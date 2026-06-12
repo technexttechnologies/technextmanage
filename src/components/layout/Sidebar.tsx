@@ -3,11 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink } from "lucide-react";
+import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut } from "lucide-react";
 import styles from "./Sidebar.module.css";
+import { logout } from "@/app/login/actions";
 
-export default function Sidebar() {
+export default function Sidebar({ user }: { user: any }) {
   const pathname = usePathname() || "";
+  const isAdmin = user?.role === "SUPER_ADMIN" || user?.role === "ADMIN";
 
   return (
     <aside className={styles.sidebar}>
@@ -54,36 +56,47 @@ export default function Sidebar() {
           </Link>
         </div>
 
-        <div className={styles.navSection}>
-          <p className={styles.navSectionTitle}>Integrations</p>
-          <Link href="/aronium" className={`${styles.navItem} ${pathname.startsWith('/aronium') ? styles.active : ''}`}>
-            <ShoppingCart size={20} /> Aronium POS
-          </Link>
-          <Link href="/integration" className={`${styles.navItem} ${pathname.startsWith('/integration') ? styles.active : ''}`}>
-            <Database size={20} /> Sync Center
-          </Link>
-          <a href="https://technextcatlog.vercel.app/admin.html" target="_blank" rel="noopener noreferrer" className={styles.navItem}>
-            <ExternalLink size={20} /> Catalog Admin ↗
-          </a>
-        </div>
+        {isAdmin && (
+          <div className={styles.navSection}>
+            <p className={styles.navSectionTitle}>Integrations</p>
+            <Link href="/aronium" className={`${styles.navItem} ${pathname.startsWith('/aronium') ? styles.active : ''}`}>
+              <ShoppingCart size={20} /> Aronium POS
+            </Link>
+            <Link href="/integration" className={`${styles.navItem} ${pathname.startsWith('/integration') ? styles.active : ''}`}>
+              <Database size={20} /> Sync Center
+            </Link>
+            <a href="https://technextcatlog.vercel.app/admin.html" target="_blank" rel="noopener noreferrer" className={styles.navItem}>
+              <ExternalLink size={20} /> Catalog Admin ↗
+            </a>
+          </div>
+        )}
 
         <div className={styles.navSection}>
           <p className={styles.navSectionTitle}>System</p>
           <Link href="/documents" className={`${styles.navItem} ${pathname.startsWith('/documents') ? styles.active : ''}`}>
             <FileText size={20} /> Documents
           </Link>
-          <Link href="/settings" className={`${styles.navItem} ${pathname.startsWith('/settings') ? styles.active : ''}`}>
-            <Settings size={20} /> Settings
-          </Link>
+          {isAdmin && (
+            <Link href="/settings" className={`${styles.navItem} ${pathname.startsWith('/settings') ? styles.active : ''}`}>
+              <Settings size={20} /> Settings
+            </Link>
+          )}
         </div>
       </nav>
       
       <div className={styles.userProfile}>
-        <div className={styles.avatar}>T</div>
-        <div className={styles.userInfo}>
-          <p className={styles.userName}>TechNext Admin</p>
-          <p className={styles.userRole}>Super Admin</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+          <div className={styles.avatar}>{user?.name?.charAt(0) || "U"}</div>
+          <div className={styles.userInfo}>
+            <p className={styles.userName}>{user?.name || "User"}</p>
+            <p className={styles.userRole}>{user?.role || "Staff"}</p>
+          </div>
         </div>
+        <form action={logout}>
+          <button type="submit" style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '8px' }} title="Log out">
+            <LogOut size={20} />
+          </button>
+        </form>
       </div>
     </aside>
   );
