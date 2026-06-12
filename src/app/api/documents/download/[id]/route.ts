@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { getDriveFileStream } from '@/lib/googleDrive';
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
+
   const session = await getSession();
   if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
@@ -16,25 +18,21 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   }
 
   try {
-    const res = await fetch(doc.fileUrl, {
-      headers: {
-        Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`
-      }
-    });
+    // doc.fileUrl contains the Google Drive File ID
+    const { stream, mimeType, fileName } = await getDriveFileStream(doc.fileUrl);
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch blob: ${res.statusText}`);
-    }
+    // Stream the file directly to the client
+    const readableStream = stream as unknown as ReadableStream;
 
-    // Stream the file directly to the client securely
-    return new NextResponse(res.body, {
+    return new NextResponse(readableStream, {
       headers: {
-        'Content-Type': doc.mimeType,
-        'Content-Disposition': `attachment; filename="${doc.fileName}"`,
+        'Content-Type': mimeType,
+        'Content-Disposition': `inline; filename="${encodeURIComponent(fileName)}"`,
+        'Cache-Control': 'private, max-age=3600',
       },
     });
   } catch (e: any) {
     console.error("Secure Download Error:", e);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return new NextResponse(`Failed to retrieve file: ${e.message}`, { status: 500 });
   }
 }

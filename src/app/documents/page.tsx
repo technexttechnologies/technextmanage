@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { FileText, Download, Calendar, HardDrive } from "lucide-react";
+import { FileText, Download, Calendar, HardDrive, ExternalLink } from "lucide-react";
 import styles from "./page.module.css";
 import DocumentUploader from "@/components/DocumentUploader";
 import { DeleteButton } from "@/app/settings/DeleteButton";
@@ -71,6 +71,9 @@ export default async function DocumentsPage() {
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                         <a href={`/api/documents/download/${doc.id}`} target="_blank" rel="noreferrer" className="btn-secondary" style={{ padding: '6px 12px' }}>
                           <Download size={14} /> Download
+                        </a>
+                        <a href={`https://drive.google.com/file/d/${doc.fileUrl}/view`} target="_blank" rel="noreferrer" className="btn-secondary" style={{ padding: '6px 12px' }}>
+                          <ExternalLink size={14} /> Drive
                         </a>
                         <form action={deleteDocument} className={styles.deleteForm}>
                           <input type="hidden" name="documentId" value={doc.id} />

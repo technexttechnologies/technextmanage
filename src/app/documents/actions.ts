@@ -1,9 +1,9 @@
 "use server";
 
-import { put, del } from '@vercel/blob';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
+import { uploadToDrive, deleteFromDrive } from '@/lib/googleDrive';
 
 export async function uploadDocument(formData: FormData) {
   try {
@@ -16,20 +16,20 @@ export async function uploadDocument(formData: FormData) {
 
     if (!file || !(file instanceof Blob)) return { success: false, error: "No valid file uploaded" };
 
-    const fileBuffer = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-    // Upload to Vercel Blob
-    const blob = await put(file.name, fileBuffer, { 
-      access: 'private',
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-      contentType: file.type || 'application/octet-stream'
-    });
+    // Upload to Google Drive
+    const { fileId, webViewLink } = await uploadToDrive(
+      file.name,
+      file.type || 'application/octet-stream',
+      fileBuffer
+    );
 
-    // Save to Database
+    // Save to Database — fileUrl stores the Google Drive File ID
     await prisma.document.create({
       data: {
         fileName: file.name,
-        fileUrl: blob.url,
+        fileUrl: fileId,           // Store Drive File ID as fileUrl
         fileSize: file.size,
         mimeType: file.type || 'application/octet-stream',
         uploadedById: session.userId as string,
@@ -61,12 +61,12 @@ export async function deleteDocument(formData: FormData) {
       return;
     }
 
-    // Delete from Vercel Blob
+    // Delete from Google Drive (fileUrl stores the Drive File ID)
     try {
-      await del(doc.fileUrl);
+      await deleteFromDrive(doc.fileUrl);
     } catch (err) {
-      console.error("Failed to delete blob from Vercel", err);
-      // We continue to delete from DB even if blob delete fails
+      console.error("Failed to delete from Google Drive:", err);
+      // Continue to delete from DB even if Drive delete fails
     }
 
     // Delete from DB
