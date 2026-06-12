@@ -49,16 +49,16 @@ export async function uploadDocument(formData: FormData) {
 export async function deleteDocument(formData: FormData) {
   try {
     const session = await getSession();
-    if (!session) return { success: false, error: "Unauthorized" };
+    if (!session) return;
 
     const documentId = formData.get('documentId') as string;
 
     const doc = await prisma.document.findUnique({ where: { id: documentId } });
-    if (!doc) return { success: false, error: "Document not found" };
+    if (!doc) return;
 
     // Admins can delete anything, users can only delete their own
     if (session.role !== "SUPER_ADMIN" && session.role !== "ADMIN" && doc.uploadedById !== session.userId) {
-      return { success: false, error: "Unauthorized to delete this document" };
+      return;
     }
 
     // Delete from Vercel Blob
@@ -73,9 +73,7 @@ export async function deleteDocument(formData: FormData) {
     await prisma.document.delete({ where: { id: documentId } });
 
     revalidatePath('/documents');
-    return { success: true };
   } catch (err: any) {
     console.error("Delete Error:", err);
-    return { success: false, error: err.message || "Failed to delete document" };
   }
 }
