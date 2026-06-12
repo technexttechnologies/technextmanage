@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--background) 0%, #E0E7FF 100%);
+  background: var(--surface-background);
   padding: 20px;
 }
 
@@ -25,7 +25,7 @@
 .logoIcon {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+  background: transparent;
   color: white;
   border-radius: 16px;
   display: flex;
@@ -109,7 +109,7 @@
 
 .loginBtn {
   margin-top: 8px;
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+  background: var(--brand-primary);
   color: white;
   border: none;
   padding: 14px;

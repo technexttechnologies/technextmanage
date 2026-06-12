@@ -41,6 +41,11 @@ export default async function NewProjectPage() {
           </div>
 
           <div className={styles.inputGroup}>
+            <label htmlFor="type">Project Type</label>
+            <input type="text" id="type" name="type" placeholder="e.g. Website, Mobile App, SEO" autoComplete="off" />
+          </div>
+
+          <div className={styles.inputGroup}>
             <label htmlFor="description">Project Description</label>
             <textarea id="description" name="description" rows={3} placeholder="Briefly describe the project goals..." />
           </div>
@@ -52,10 +57,9 @@ export default async function NewProjectPage() {
             <div className={styles.inputGroup}>
               <label htmlFor="status">Initial Status</label>
               <select id="status" name="status">
+                <option value="PROJECT_RECEIVED">Project Received</option>
+                <option value="REQUIREMENT_ANALYSIS">Requirement Analysis</option>
                 <option value="PLANNING">Planning</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="ON_HOLD">On Hold</option>
-                <option value="COMPLETED">Completed</option>
               </select>
             </div>
             

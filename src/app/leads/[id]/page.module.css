@@ -121,7 +121,7 @@
 }
 
 .convertCard {
-  background: linear-gradient(135deg, #16A34A 0%, #15803D 100%);
+  background: #16A34A;
   color: white;
   text-align: center;
 }

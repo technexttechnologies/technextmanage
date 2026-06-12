@@ -14,7 +14,7 @@ export default function Sidebar({ user }: { user: any }) {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logoContainer}>
-        <Image src="/logo.png" alt="TechNext Logo" width={150} height={40} className={styles.logo} />
+        <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TechNext Logo" style={{ width: '150px', height: 'auto' }} className={styles.logo} />
       </div>
       
       <nav className={styles.nav}>

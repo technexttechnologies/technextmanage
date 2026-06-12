@@ -62,10 +62,11 @@ export async function sendCustomerStatusUpdate(customerEmail: string | null, req
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
         
         <!-- Header -->
-        <div style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); padding: 40px 30px; text-align: center;">
-          <img src="https://ui-avatars.com/api/?name=Tech+Next&background=ffffff&color=4f46e5&rounded=true&size=128&font-size=0.33&bold=true" alt="TechNext Logo" style="width: 72px; height: 72px; border-radius: 50%; margin-bottom: 20px; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
-          <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">TechNext Technologies</h1>
-          <p style="color: #e0e7ff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9; font-weight: 500;">Automated Document Update</p>
+        <div style="background-color: #0A2540; padding: 40px 30px; text-align: center;">
+          <div style="background-color: #ffffff; display: inline-block; padding: 16px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TechNext Logo" style="width: 200px; height: auto; display: block;" />
+          </div>
+          <p style="color: #e0e7ff; margin: 0; font-size: 16px; opacity: 0.9; font-weight: 500;">Automated Document Update</p>
         </div>
         
         <!-- Body -->

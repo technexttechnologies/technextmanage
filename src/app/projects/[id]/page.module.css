@@ -1,0 +1,246 @@
+.container {
+  padding: var(--spacing-6);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.backLink:hover {
+  color: var(--brand-primary);
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.sourceTag {
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--surface-background);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-6);
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--spacing-5);
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-4);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroup label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.formGroup input, .formGroup textarea, .formGroup select {
+  padding: 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-background);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.whatsappCard {
+  background: #16A34A;
+  color: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-6);
+}
+
+.whatsappCard h3 {
+  color: white;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.whatsappCard p {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 20px;
+}
+
+.whatsappActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.whatsappBtn {
+  background: white;
+  color: #16A34A;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.2s;
+}
+
+.whatsappBtn:hover {
+  transform: translateY(-2px);
+}
+
+.secondaryBtn {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,0.3);
+  cursor: pointer;
+  width: 100%;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.secondaryBtn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timelineItem {
+  display: flex;
+  gap: 12px;
+}
+
+.timelineIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-accent);
+  flex-shrink: 0;
+}
+
+.timelineContent {
+  background: var(--surface-background);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  width: 100%;
+  font-size: 14px;
+}
+
+.timelineDate {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.noteItem {
+  background: #FFFBEB;
+  border-left: 4px solid #F59E0B;
+  padding: 12px;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  margin-bottom: 12px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.noteActions {
+  display: flex;
+  gap: 8px;
+}
+
+.milestoneItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+}
+
+.milestoneCompleted {
+  background: #ECFDF5;
+  border-color: #10B981;
+}
+
+.milestoneTitle {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.milestoneDate {
+  font-size: 12px;
+  color: var(--text-muted);
+}
