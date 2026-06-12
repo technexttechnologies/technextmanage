@@ -40,9 +40,9 @@ export default function DocumentUploader() {
       formData.append("file", file);
       await uploadDocument(formData);
       setFile(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Upload failed. Ensure BLOB_READ_WRITE_TOKEN is configured in Vercel.");
+      alert(`Upload failed: ${err.message || "Unknown error"}. Check console for details.`);
     } finally {
       setIsUploading(false);
     }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut } from "lucide-react";
+import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
 
@@ -51,8 +51,23 @@ export default function Sidebar({ user }: { user: any }) {
           <Link href="/tasks" className={`${styles.navItem} ${pathname.startsWith('/tasks') ? styles.active : ''}`}>
             <CheckSquare size={20} /> Tasks
           </Link>
-          <Link href="/email" className={`${styles.navItem} ${pathname.startsWith('/email') ? styles.active : ''}`}>
-            <Mail size={20} /> Email Center
+          {isAdmin && (
+            <Link href="/email" className={`${styles.navItem} ${pathname === "/email" ? styles.active : ""}`}>
+              <Mail size={20} />
+              <span>Email System</span>
+            </Link>
+          )}
+
+          <div className={styles.navSectionTitle}>Workflows</div>
+
+          <Link href="/quotation-requests" className={`${styles.navItem} ${pathname.startsWith("/quotation-requests") ? styles.active : ""}`}>
+            <FileSignature size={20} />
+            <span>Quotation Requests</span>
+          </Link>
+
+          <Link href="/invoice-requests" className={`${styles.navItem} ${pathname.startsWith("/invoice-requests") ? styles.active : ""}`}>
+            <Receipt size={20} />
+            <span>Invoice Requests</span>
           </Link>
         </div>
 

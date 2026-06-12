@@ -14,7 +14,9 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
       followUps: { orderBy: { date: 'asc' } },
       renewals: { orderBy: { expiryDate: 'asc' } },
       quotations: { orderBy: { date: 'desc' } },
-      aroniumRefs: { orderBy: { id: 'desc' } }
+      aroniumRefs: { orderBy: { id: 'desc' } },
+      quotationRequests: { orderBy: { createdAt: 'desc' } },
+      invoiceRequests: { orderBy: { createdAt: 'desc' } }
     }
   });
 
@@ -108,40 +110,40 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
                 </div>
               </div>
 
-              <div className={styles.aroniumLists}>
+              <div className={styles.aroniumLists} style={{ marginTop: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                 <div className={styles.listBlock}>
-                  <h3>Linked Quotations</h3>
-                  {customer.quotations.length === 0 ? (
-                    <p className={styles.textMuted}>No quotations linked.</p>
+                  <h3>Quotation Requests</h3>
+                  {customer.quotationRequests.length === 0 ? (
+                    <p className={styles.textMuted}>No quotation requests linked.</p>
                   ) : (
                     <ul className={styles.simpleList}>
-                      {customer.quotations.map(q => (
+                      {customer.quotationRequests.map(q => (
                         <li key={q.id}>
-                          <span className={styles.qNum}>{q.quotationNumber}</span>
-                          <span className={`${styles.qStatus} ${styles[q.status.toLowerCase()]}`}>{q.status}</span>
-                          <span className={styles.qAmount}>${q.totalAmount.toFixed(2)}</span>
+                          <Link href={`/quotation-requests/${q.id}`} className={styles.qNum}>#{q.id.slice(-6).toUpperCase()}</Link>
+                          <span className={styles.qStatus}>{q.status}</span>
                         </li>
                       ))}
                     </ul>
                   )}
-                  <Link href="/quotations/new" className={styles.linkAction}>+ Add Quotation</Link>
+                  <Link href="/quotation-requests/new" className={styles.linkAction}>+ Request Quotation</Link>
                 </div>
 
                 <div className={styles.listBlock}>
-                  <h3>Linked Invoices & Payments</h3>
-                  {customer.aroniumRefs.length === 0 ? (
-                    <p className={styles.textMuted}>No Aronium references linked.</p>
+                  <h3>Invoice Requests</h3>
+                  {customer.invoiceRequests.length === 0 ? (
+                    <p className={styles.textMuted}>No invoice requests linked.</p>
                   ) : (
                     <ul className={styles.simpleList}>
-                      {customer.aroniumRefs.map(ref => (
+                      {customer.invoiceRequests.map(ref => (
                         <li key={ref.id}>
-                          <span className={styles.rType}>{ref.refType}</span>
-                          <span className={styles.rNum}>#{ref.refNumber}</span>
+                          <Link href={`/invoice-requests/${ref.id}`} className={styles.qNum}>#{ref.id.slice(-6).toUpperCase()}</Link>
+                          <span className={styles.qStatus}>{ref.status}</span>
+                          <span className={styles.qAmount}>${ref.amountRequested.toFixed(2)}</span>
                         </li>
                       ))}
                     </ul>
                   )}
-                  <Link href="/aronium/new" className={styles.linkAction}>+ Link Reference</Link>
+                  <Link href="/invoice-requests/new" className={styles.linkAction}>+ Request Invoice</Link>
                 </div>
               </div>
             </div>

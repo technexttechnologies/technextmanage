@@ -10,20 +10,25 @@ datasource db {
 // Core Entity Models
 
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  passwordHash String
-  name         String
-  role         String      @default("SALES") // SUPER_ADMIN, ADMIN, HEAD, SALES, PROJECT, SUPPORT
-  customers    Customer[]
-  leads        Lead[]
-  tasks        Task[]
-  followUps    FollowUp[]
-  projects     Project[]
-  quotations   Quotation[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  Document     Document[]
+  id                String             @id @default(cuid())
+  email             String             @unique
+  passwordHash      String
+  name              String
+  role              String             @default("SALES") // SUPER_ADMIN, ADMIN, HEAD, SALES, PROJECT, SUPPORT
+  customers         Customer[]
+  leads             Lead[]
+  tasks             Task[]
+  followUps         FollowUp[]
+  projects          Project[]
+  quotations        Quotation[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  Document          Document[]
+  requestedQuotes   QuotationRequest[] @relation("RequestedQuotes")
+  assignedQuotes    QuotationRequest[] @relation("AssignedQuotes")
+  requestedInvoices InvoiceRequest[]   @relation("RequestedInvoices")
+  assignedInvoices  InvoiceRequest[]   @relation("AssignedInvoices")
+  activityLogs      ActivityLog[]
 }
 
 model Customer {
@@ -46,14 +51,16 @@ model Customer {
   billingNotes  String?
   paymentStatus String?
 
-  projects    Project[]
-  followUps   FollowUp[]
-  renewals    Renewal[]
-  aroniumRefs AroniumReference[]
-  quotations  Quotation[]
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  Document    Document[]
+  projects          Project[]
+  followUps         FollowUp[]
+  renewals          Renewal[]
+  aroniumRefs       AroniumReference[]
+  quotations        Quotation[]
+  quotationRequests QuotationRequest[]
+  invoiceRequests   InvoiceRequest[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  Document          Document[]
 }
 
 model Lead {
@@ -72,22 +79,23 @@ model Lead {
 }
 
 model Project {
-  id           String     @id @default(cuid())
-  name         String
-  description  String?
-  customerId   String?
-  customer     Customer?  @relation(fields: [customerId], references: [id])
-  startDate    DateTime
-  endDate      DateTime?
-  progress     Int        @default(0) // 0-100
-  status       String     @default("PLANNING") // PLANNING, IN_PROGRESS, TESTING, COMPLETED, ON_HOLD
-  priority     String     @default("MEDIUM")
-  tasks        Task[]
-  assignedToId String?
-  assignedTo   User?      @relation(fields: [assignedToId], references: [id])
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  Document     Document[]
+  id              String           @id @default(cuid())
+  name            String
+  description     String?
+  customerId      String?
+  customer        Customer?        @relation(fields: [customerId], references: [id])
+  startDate       DateTime
+  endDate         DateTime?
+  progress        Int              @default(0) // 0-100
+  status          String           @default("PLANNING") // PLANNING, IN_PROGRESS, TESTING, COMPLETED, ON_HOLD
+  priority        String           @default("MEDIUM")
+  tasks           Task[]
+  assignedToId    String?
+  assignedTo      User?            @relation(fields: [assignedToId], references: [id])
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  Document        Document[]
+  invoiceRequests InvoiceRequest[]
 }
 
 model Task {
@@ -212,4 +220,55 @@ model Document {
   uploadedById String
   uploadedBy   User      @relation(fields: [uploadedById], references: [id])
   createdAt    DateTime  @default(now())
+}
+
+model QuotationRequest {
+  id                 String   @id @default(cuid())
+  customerId         String
+  customer           Customer @relation(fields: [customerId], references: [id])
+  serviceName        String
+  requirementDetails String   @db.Text
+  budget             String?
+  priority           String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status             String   @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, QUOTATION_GENERATED, PDF_UPLOADED, SENT_TO_CUSTOMER, ACCEPTED, REJECTED
+  pdfUrl             String?
+  adminNotes         String?  @db.Text
+  aroniumQuotationNo String?
+  requestedById      String
+  requestedBy        User     @relation("RequestedQuotes", fields: [requestedById], references: [id])
+  assignedAdminId    String?
+  assignedAdmin      User?    @relation("AssignedQuotes", fields: [assignedAdminId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model InvoiceRequest {
+  id               String   @id @default(cuid())
+  customerId       String
+  customer         Customer @relation(fields: [customerId], references: [id])
+  projectId        String?
+  project          Project? @relation(fields: [projectId], references: [id])
+  amountRequested  Float
+  notes            String?  @db.Text
+  status           String   @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, INVOICE_GENERATED, PDF_UPLOADED, SENT_TO_CUSTOMER, PAID, CANCELLED
+  pdfUrl           String?
+  adminNotes       String?  @db.Text
+  aroniumInvoiceNo String?
+  requestedById    String
+  requestedBy      User     @relation("RequestedInvoices", fields: [requestedById], references: [id])
+  assignedAdminId  String?
+  assignedAdmin    User?    @relation("AssignedInvoices", fields: [assignedAdminId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  action     String
+  entityType String // QUOTATION_REQUEST, INVOICE_REQUEST, CUSTOMER
+  entityId   String
+  details    String?  @db.Text
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
 }
