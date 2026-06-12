@@ -22,10 +22,12 @@ export async function uploadPublicFile(
 ): Promise<{ publicId: string; secureUrl: string }> {
   const cl = getCloudinary();
 
-  // Always use 'raw' for PDFs so the actual file is served, not a thumbnail
+  // Always use 'raw' for non-images so the actual file is served
   const resourceType = mimeType.startsWith('image/') ? 'image' : 'raw';
 
-  const safeFileName = fileName
+  // Preserve extension so Cloudinary serves file with correct Content-Type
+  const ext = fileName.match(/\.[^/.]+$/)?.[0] || '';
+  const baseName = fileName
     .replace(/\.[^/.]+$/, '')
     .replace(/[^a-zA-Z0-9_-]/g, '_');
 
@@ -33,10 +35,11 @@ export async function uploadPublicFile(
     const uploadStream = cl.uploader.upload_stream(
       {
         folder: 'technext-crm-pdfs',
-        public_id: `${Date.now()}-${safeFileName}`,
+        public_id: `${Date.now()}-${baseName}${ext}`, // e.g. 17812...-quotation.pdf
         resource_type: resourceType as any,
         type: 'upload',       // public — accessible without auth
         overwrite: false,
+        use_filename: false,  // we set our own public_id with extension
       },
       (error, result) => {
         if (error) return reject(new Error(`Cloudinary upload failed: ${error.message}`));
