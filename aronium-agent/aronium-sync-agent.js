@@ -5,7 +5,7 @@ const http = require('http');
 // ==========================================
 // CONFIGURATION - CHANGE THESE SETTINGS
 // ==========================================
-const ARONIUM_DB_PATH = 'C:\\Program Files\\Aronium\\Data\\aronium.db'; // Update to exact path
+const ARONIUM_DB_PATH = 'C:\\Users\\LENOVO\\AppData\\Local\\Aronium\\Data\\pos.db'; // Update to exact path
 const VERCEL_APP_URL = 'https://technextmanage.vercel.app'; // Your Vercel URL
 const SYNC_SECRET = 'technext-sync-2026';
 const SYNC_INTERVAL_MINUTES = 30;
