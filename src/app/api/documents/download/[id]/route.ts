@@ -1,12 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await getSession();
   if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
-  const doc = await prisma.document.findUnique({ where: { id: params.id } });
+  const doc = await prisma.document.findUnique({ where: { id } });
   if (!doc) return new NextResponse('Not found', { status: 404 });
 
   // Admins can download anything, users can only download their own
