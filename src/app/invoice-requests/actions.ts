@@ -51,6 +51,9 @@ export async function createInvoiceRequest(formData: FormData) {
   `;
   await sendAdminNotification("New Invoice Request Submitted", adminHtml);
 
+  // Notify Customer with Tracking Link
+  await sendCustomerStatusUpdate(request.customer.email, "Invoice Request", "SUBMITTED", "We are preparing your invoice.", null, request.id);
+
   revalidatePath("/invoice-requests");
   redirect("/invoice-requests");
 }

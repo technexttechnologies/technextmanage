@@ -58,6 +58,10 @@ export async function createQuotationRequest(formData: FormData) {
   `;
   await sendAdminNotification("New Quotation Request Submitted", adminHtml);
 
+  // Notify Customer with Tracking Link
+  await sendCustomerStatusUpdate(request.customer.email, "Quotation Request", "SUBMITTED", "We are reviewing your requirements.", null, request.id);
+
+
   revalidatePath("/quotation-requests");
   redirect("/quotation-requests");
 }
