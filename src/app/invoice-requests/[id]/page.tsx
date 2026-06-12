@@ -9,12 +9,13 @@ import Link from "next/link";
 import { updateInvoiceStatus } from "../actions";
 import InvoicePdfUploader from "@/components/InvoicePdfUploader";
 
-export default async function InvoiceRequestDetails({ params }: { params: { id: string } }) {
+export default async function InvoiceRequestDetails({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await getSession();
   const isAdmin = session?.role === "SUPER_ADMIN" || session?.role === "ADMIN";
 
   const request = await prisma.invoiceRequest.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       customer: true,
       project: true,

@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import styles from "./page.module.css";
 import { Check, Clock, FileText, Download } from "lucide-react";
 
-export default async function PublicTrackingPage({ params }: { params: { id: string } }) {
+export default async function PublicTrackingPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   // Check if it's a quotation
   let request: any = await prisma.quotationRequest.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: { customer: true }
   });
   let type = "Quotation";
@@ -14,7 +15,7 @@ export default async function PublicTrackingPage({ params }: { params: { id: str
   // If not, check if it's an invoice
   if (!request) {
     request = await prisma.invoiceRequest.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: { customer: true }
     });
     type = "Invoice";

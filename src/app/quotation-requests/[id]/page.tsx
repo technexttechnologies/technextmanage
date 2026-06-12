@@ -9,12 +9,13 @@ import Link from "next/link";
 import { updateQuotationStatus } from "../actions";
 import QuotationPdfUploader from "@/components/QuotationPdfUploader";
 
-export default async function QuotationRequestDetails({ params }: { params: { id: string } }) {
+export default async function QuotationRequestDetails({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await getSession();
   const isAdmin = session?.role === "SUPER_ADMIN" || session?.role === "ADMIN";
 
   const request = await prisma.quotationRequest.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       customer: true,
       requestedBy: true,
