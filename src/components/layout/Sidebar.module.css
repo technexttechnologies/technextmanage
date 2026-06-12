@@ -9,11 +9,34 @@
   top: 0;
   left: 0;
   z-index: var(--z-nav);
+  transition: transform 0.3s ease;
 }
 
 @media (max-width: 1023px) {
   .sidebar {
-    display: none;
+    transform: translateX(-100%);
+  }
+}
+
+.mobileOpen {
+  transform: translateX(0) !important;
+}
+
+/* Mobile overlay */
+.overlay {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .overlay.show {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: calc(var(--z-nav) - 1);
   }
 }
 

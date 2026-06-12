@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt } from "lucide-react";
 import styles from "./Sidebar.module.css";
@@ -10,9 +11,26 @@ import { logout } from "@/app/login/actions";
 export default function Sidebar({ user }: { user: any }) {
   const pathname = usePathname() || "";
   const isAdmin = user?.role === "SUPER_ADMIN" || user?.role === "ADMIN";
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setIsMobileOpen(prev => !prev);
+    window.addEventListener('toggleMobileMenu', handler);
+    return () => window.removeEventListener('toggleMobileMenu', handler);
+  }, []);
+
+  // Close sidebar on navigation
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   return (
-    <aside className={styles.sidebar}>
+    <>
+      <div 
+        className={`${styles.overlay} ${isMobileOpen ? styles.show : ''}`} 
+        onClick={() => setIsMobileOpen(false)}
+      />
+      <aside className={`${styles.sidebar} ${isMobileOpen ? styles.mobileOpen : ''}`}>
       <div className={styles.logoContainer}>
         <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TechNext Logo" style={{ width: '150px', height: 'auto' }} className={styles.logo} />
       </div>
@@ -114,5 +132,6 @@ export default function Sidebar({ user }: { user: any }) {
         </form>
       </div>
     </aside>
+    </>
   );
 }

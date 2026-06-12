@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Home, Users, Target, Briefcase, Menu } from "lucide-react";
 import styles from "./BottomNav.module.css";
@@ -21,7 +23,7 @@ export default function BottomNav() {
         <Briefcase size={24} />
         <span>Projects</span>
       </Link>
-      <button className={styles.navItem} aria-label="Menu">
+      <button className={styles.navItem} aria-label="Menu" onClick={() => window.dispatchEvent(new Event('toggleMobileMenu'))}>
         <Menu size={24} />
         <span>Menu</span>
       </button>
