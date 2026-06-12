@@ -11,7 +11,7 @@ export default function MobileHeader({ user }: { user?: any }) {
     <header className={styles.mobileHeader}>
       <div className={styles.logoContainer}>
         <img 
-          src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" 
+          src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" 
           alt="TECHNEXT Logo" 
           className={styles.logo} 
         />

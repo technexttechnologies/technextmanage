@@ -32,7 +32,7 @@ export default function Sidebar({ user }: { user: any }) {
       />
       <aside className={`${styles.sidebar} ${isMobileOpen ? styles.mobileOpen : ''}`}>
       <div className={styles.logoContainer}>
-        <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TECHNEXT Logo" style={{ width: '150px', height: 'auto' }} className={styles.logo} />
+        <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{ width: '150px', height: 'auto' }} className={styles.logo} />
       </div>
       
       <nav className={styles.nav}>

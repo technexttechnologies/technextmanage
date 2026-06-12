@@ -26,7 +26,7 @@ export default async function PublicTrackingPage({ params }: { params: Promise<{
         <div className={styles.card}>
           <div className={styles.header}>
             <div className={styles.logo}>
-              <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TECHNEXT Logo" style={{height: '40px', objectFit: 'contain'}} />
+              <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{height: '40px', objectFit: 'contain'}} />
             </div>
             <div className={styles.title}>Live Project Tracking</div>
           </div>
@@ -115,7 +115,7 @@ export default async function PublicTrackingPage({ params }: { params: Promise<{
       <div className={styles.card}>
         <div className={styles.header}>
           <div className={styles.logo}>
-            <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TECHNEXT Logo" style={{height: '40px', objectFit: 'contain'}} />
+            <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{height: '40px', objectFit: 'contain'}} />
           </div>
           <div className={styles.title}>{type} Request Tracking</div>
         </div>

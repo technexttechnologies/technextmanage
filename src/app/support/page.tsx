@@ -12,7 +12,7 @@ export default function SupportPage() {
     <div className={styles.publicContainer}>
       <header className={styles.publicHeader}>
         <div className={styles.brandName} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TECHNEXT Logo" style={{ height: '32px', width: 'auto' }} />
+          <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{ height: '32px', width: 'auto' }} />
           TECHNEXT Support
         </div>
       </header>
