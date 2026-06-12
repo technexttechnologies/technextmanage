@@ -21,6 +21,9 @@ export default async function TicketsPage() {
           <h1 className={styles.title}>Support Tickets</h1>
           <p className={styles.subtitle}>Manage customer support requests.</p>
         </div>
+        <Link href="/tickets/new" className="btn-primary">
+          + New Ticket
+        </Link>
       </header>
 
       {tickets.length === 0 ? (

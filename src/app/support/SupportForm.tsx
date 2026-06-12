@@ -57,6 +57,18 @@ export default function SupportForm() {
       </div>
 
       <div className={styles.formGroup}>
+        <label htmlFor="phone">Mobile Number</label>
+        <input 
+          type="tel" 
+          id="phone" 
+          name="phone" 
+          required 
+          placeholder="e.g. 9876543210" 
+          disabled={isPending}
+        />
+      </div>
+
+      <div className={styles.formGroup}>
         <label htmlFor="subject">Subject</label>
         <input 
           type="text" 
