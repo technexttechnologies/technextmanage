@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { saveTemplate, deleteTemplate } from "./actions";
 import Link from "next/link";
-import { Save, Info, Trash2 } from "lucide-react";
+import { Save, Info, Trash2, Sparkles } from "lucide-react";
 import styles from "../new/page.module.css";
 
 type Template = {
@@ -17,6 +17,27 @@ type Template = {
 export default function TemplateForm({ template }: { template?: Template }) {
   const [type, setType] = useState(template?.type || "EMAIL");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [body, setBody] = useState(template?.body || "");
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isDrafting, setIsDrafting] = useState(false);
+
+  const draftWithAI = async (tone: string) => {
+    if (!aiPrompt) return alert("Please type an instruction first!");
+    setIsDrafting(true);
+    try {
+      const res = await fetch("/api/ai/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: aiPrompt, tone })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setBody(data.html);
+    } catch (err: any) {
+      alert("AI Error: " + err.message);
+    }
+    setIsDrafting(false);
+  };
 
   const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this template?")) {
@@ -86,13 +107,27 @@ export default function TemplateForm({ template }: { template?: Template }) {
           </div>
         </div>
 
+        <div style={{background: '#F3F4F6', padding: '12px', borderRadius: '8px', border: '1px solid #E5E7EB', marginBottom: '16px'}}>
+          <label style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#4B5563', marginBottom: '8px'}}>
+            <Sparkles size={14} color="#8B5CF6" /> Draft with AI
+          </label>
+          <div style={{display: 'flex', gap: '8px'}}>
+            <input type="text" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder="E.g., Write a polite reminder for pending payment..."
+              style={{flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #D1D5DB', fontSize: '13px'}} />
+            <button type="button" onClick={() => draftWithAI("professional")} disabled={isDrafting} style={{background: '#8B5CF6', color: 'white', border: 'none', padding: '0 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500}}>
+              {isDrafting ? "Drafting..." : "Draft"}
+            </button>
+          </div>
+        </div>
+
         <div className={styles.inputGroup}>
           <label htmlFor="body">Message Body *</label>
           <textarea 
             id="body" 
             name="body" 
             required 
-            defaultValue={template?.body}
+            value={body}
+            onChange={e => setBody(e.target.value)}
             placeholder={type === "EMAIL" ? "<p>Dear {{name}},</p><p>We have a special offer for {{company}}...</p>" : "Hi {{name}}, here is your offer..."} 
           />
         </div>
