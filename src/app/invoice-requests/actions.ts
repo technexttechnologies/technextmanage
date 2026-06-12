@@ -46,7 +46,7 @@ export async function createInvoiceRequest(formData: FormData) {
     <h2>New Invoice Request</h2>
     <p><strong>Employee:</strong> ${request.requestedBy.name}</p>
     <p><strong>Customer:</strong> ${request.customer.name}</p>
-    <p><strong>Amount:</strong> $${amountRequested.toFixed(2)}</p>
+    <p><strong>Amount:</strong> ₹${amountRequested.toFixed(2)}</p>
     <a href="https://technextmanage.vercel.app/invoice-requests/${request.id}">View Request</a>
   `;
   await sendAdminNotification("New Invoice Request Submitted", adminHtml);

@@ -47,7 +47,7 @@ export default async function NewQuotationRequestPage() {
 
             <div className={styles.inputGroup}>
               <label htmlFor="budget">Customer Budget (Optional)</label>
-              <input type="text" id="budget" name="budget" placeholder="e.g. $5,000" />
+              <input type="text" id="budget" name="budget" placeholder="e.g. ₹50,000" />
             </div>
 
             <div className={styles.inputGroup}>

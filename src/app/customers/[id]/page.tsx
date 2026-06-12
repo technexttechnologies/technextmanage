@@ -138,7 +138,7 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
                         <li key={ref.id}>
                           <Link href={`/invoice-requests/${ref.id}`} className={styles.qNum}>#{ref.id.slice(-6).toUpperCase()}</Link>
                           <span className={styles.qStatus}>{ref.status}</span>
-                          <span className={styles.qAmount}>${ref.amountRequested.toFixed(2)}</span>
+                          <span className={styles.qAmount}>₹{ref.amountRequested.toFixed(2)}</span>
                         </li>
                       ))}
                     </ul>

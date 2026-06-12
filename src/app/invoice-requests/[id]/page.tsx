@@ -78,7 +78,7 @@ export default async function InvoiceRequestDetails({ params }: { params: Promis
               <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
                 <label>Requested Amount</label>
                 <div style={{ padding: '10px', background: 'var(--surface-background)', borderRadius: 'var(--radius-md)', fontWeight: 700, fontSize: '18px', color: '#166534' }}>
-                  ${request.amountRequested.toFixed(2)}
+                  ₹{request.amountRequested.toFixed(2)}
                 </div>
               </div>
               <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>

@@ -53,7 +53,7 @@ export default async function NewInvoiceRequestPage() {
             </div>
 
             <div className={styles.inputGroup}>
-              <label htmlFor="amountRequested">Invoice Amount (USD) *</label>
+              <label htmlFor="amountRequested">Invoice Amount (₹) *</label>
               <input type="number" step="0.01" id="amountRequested" name="amountRequested" required placeholder="e.g. 1500.00" />
             </div>
 
@@ -64,7 +64,7 @@ export default async function NewInvoiceRequestPage() {
                 name="notes" 
                 rows={5} 
                 required 
-                placeholder="List exactly what should be on the invoice. E.g. '1x Web Development - $1000, 1x Hosting - $500'"
+                placeholder="List exactly what should be on the invoice. E.g. '1x Web Development - ₹80000, 1x Hosting - ₹40000'"
               />
             </div>
           </div>

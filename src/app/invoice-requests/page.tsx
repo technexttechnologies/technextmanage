@@ -73,7 +73,7 @@ export default async function InvoiceRequestsPage() {
                       </div>
                     </td>
                     <td style={{ fontWeight: 600 }}>
-                      ${req.amountRequested.toFixed(2)}
+                      ₹{req.amountRequested.toFixed(2)}
                     </td>
                     <td>
                       <span className={`${styles.statusBadge} ${styles[`status_${req.status}`]}`}>
