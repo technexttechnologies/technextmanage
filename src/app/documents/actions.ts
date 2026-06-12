@@ -6,63 +6,76 @@ import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export async function uploadDocument(formData: FormData) {
-  const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  try {
+    const session = await getSession();
+    if (!session) return { success: false, error: "Unauthorized" };
 
-  const file = formData.get('file') as File;
-  const customerId = formData.get('customerId') as string | null;
-  const projectId = formData.get('projectId') as string | null;
+    const file = formData.get('file') as File;
+    const customerId = formData.get('customerId') as string | null;
+    const projectId = formData.get('projectId') as string | null;
 
-  if (!file || !(file instanceof Blob)) throw new Error("No valid file uploaded");
+    if (!file || !(file instanceof Blob)) return { success: false, error: "No valid file uploaded" };
 
-  const fileBuffer = await file.arrayBuffer();
+    const fileBuffer = await file.arrayBuffer();
 
-  // Upload to Vercel Blob
-  const blob = await put(file.name, fileBuffer, { 
-    access: 'public',
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-    contentType: file.type || 'application/octet-stream'
-  });
+    // Upload to Vercel Blob
+    const blob = await put(file.name, fileBuffer, { 
+      access: 'public',
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+      contentType: file.type || 'application/octet-stream'
+    });
 
-  // Save to Database
-  await prisma.document.create({
-    data: {
-      fileName: file.name,
-      fileUrl: blob.url,
-      fileSize: file.size,
-      mimeType: file.type || 'application/octet-stream',
-      uploadedById: session.userId as string,
-      customerId: customerId || null,
-      projectId: projectId || null,
-    }
-  });
+    // Save to Database
+    await prisma.document.create({
+      data: {
+        fileName: file.name,
+        fileUrl: blob.url,
+        fileSize: file.size,
+        mimeType: file.type || 'application/octet-stream',
+        uploadedById: session.userId as string,
+        customerId: customerId || null,
+        projectId: projectId || null,
+      }
+    });
 
-  revalidatePath('/documents');
+    revalidatePath('/documents');
+    return { success: true };
+  } catch (err: any) {
+    console.error("Upload Error:", err);
+    return { success: false, error: err.message || "Failed to upload document" };
+  }
 }
 
 export async function deleteDocument(formData: FormData) {
-  const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
-
-  const documentId = formData.get('documentId') as string;
-
-  const doc = await prisma.document.findUnique({ where: { id: documentId } });
-  if (!doc) throw new Error("Document not found");
-
-  // Admins can delete anything, users can only delete their own
-  if (session.role !== "SUPER_ADMIN" && session.role !== "ADMIN" && doc.uploadedById !== session.userId) {
-    throw new Error("Unauthorized to delete this document");
-  }
-
-  // Delete from Vercel Blob
   try {
-    await del(doc.fileUrl);
-  } catch (err) {
-    console.error("Failed to delete blob from Vercel", err);
+    const session = await getSession();
+    if (!session) return { success: false, error: "Unauthorized" };
+
+    const documentId = formData.get('documentId') as string;
+
+    const doc = await prisma.document.findUnique({ where: { id: documentId } });
+    if (!doc) return { success: false, error: "Document not found" };
+
+    // Admins can delete anything, users can only delete their own
+    if (session.role !== "SUPER_ADMIN" && session.role !== "ADMIN" && doc.uploadedById !== session.userId) {
+      return { success: false, error: "Unauthorized to delete this document" };
+    }
+
+    // Delete from Vercel Blob
+    try {
+      await del(doc.fileUrl);
+    } catch (err) {
+      console.error("Failed to delete blob from Vercel", err);
+      // We continue to delete from DB even if blob delete fails
+    }
+
+    // Delete from DB
+    await prisma.document.delete({ where: { id: documentId } });
+
+    revalidatePath('/documents');
+    return { success: true };
+  } catch (err: any) {
+    console.error("Delete Error:", err);
+    return { success: false, error: err.message || "Failed to delete document" };
   }
-
-  // Delete from DB
-  await prisma.document.delete({ where: { id: documentId } });
-
-  revalidatePath('/documents');
 }

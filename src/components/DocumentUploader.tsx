@@ -38,7 +38,12 @@ export default function DocumentUploader() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      await uploadDocument(formData);
+      const result = await uploadDocument(formData);
+      
+      if (result && !result.success) {
+        throw new Error(result.error);
+      }
+      
       setFile(null);
     } catch (err: any) {
       console.error(err);
