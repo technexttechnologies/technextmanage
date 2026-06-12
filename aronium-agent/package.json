@@ -1,0 +1,12 @@
+{
+  "name": "aronium-cloud-agent",
+  "version": "1.0.0",
+  "description": "Pushes local Aronium DB to TechNext Vercel CRM",
+  "main": "aronium-sync-agent.js",
+  "scripts": {
+    "start": "node aronium-sync-agent.js"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}

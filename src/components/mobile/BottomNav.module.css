@@ -1,0 +1,47 @@
+.bottomNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background-color: var(--surface-card);
+  border-top: 1px solid var(--surface-border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: var(--z-nav);
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+  padding-bottom: env(safe-area-inset-bottom); /* For iOS devices */
+}
+
+/* Hide on desktop */
+@media (min-width: 1024px) {
+  .bottomNav {
+    display: none;
+  }
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 10px;
+  gap: 4px;
+  flex: 1;
+  height: 100%;
+  transition: color 0.2s ease;
+}
+
+.navItem span {
+  font-weight: 500;
+}
+
+.navItem:hover, .navItem:focus {
+  color: var(--brand-primary);
+}
+
+.navItem[aria-current="page"] {
+  color: var(--brand-accent);
+}

@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Core Entity Models
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  passwordHash  String
+  name          String
+  role          String     @default("SALES") // SUPER_ADMIN, ADMIN, HEAD, SALES, PROJECT, SUPPORT
+  customers     Customer[]
+  leads         Lead[]
+  tasks         Task[]
+  followUps     FollowUp[]
+  projects      Project[]
+  quotations    Quotation[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Customer {
+  id            String     @id @default(cuid())
+  name          String
+  company       String?
+  phone         String
+  email         String?
+  gstNumber     String?
+  address       String?
+  notes         String?
+  status        String     @default("LEAD") // LEAD, PROSPECT, ACTIVE, PROJECT_RUNNING, SUPPORT_REQUIRED, RENEWAL_DUE, INACTIVE
+  assignedToId  String
+  assignedTo    User       @relation(fields: [assignedToId], references: [id])
+  // Aronium Fields
+  aroniumId     String?
+  aroniumCode   String?
+  syncStatus    String     @default("PENDING") // SYNCED, PENDING, FAILED
+  lastSyncDate  DateTime?
+  billingNotes  String?
+  paymentStatus String?
+
+  projects      Project[]
+  followUps     FollowUp[]
+  renewals      Renewal[]
+  aroniumRefs   AroniumReference[]
+  quotations    Quotation[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Lead {
+  id            String   @id @default(cuid())
+  source        String
+  status        String   @default("NEW") // NEW, CONTACTED, QUALIFIED, FOLLOW_UP, CONVERTED, LOST
+  notes         String?
+  assignedToId  String
+  assignedTo    User     @relation(fields: [assignedToId], references: [id])
+  name          String
+  phone         String?
+  email         String?
+  company       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Project {
+  id            String     @id @default(cuid())
+  name          String
+  description   String?
+  customerId    String?
+  customer      Customer?  @relation(fields: [customerId], references: [id])
+  startDate     DateTime
+  endDate       DateTime?
+  progress      Int        @default(0) // 0-100
+  status        String     @default("PLANNING") // PLANNING, IN_PROGRESS, TESTING, COMPLETED, ON_HOLD
+  priority      String     @default("MEDIUM")
+  tasks         Task[]
+  assignedToId  String?
+  assignedTo    User?      @relation(fields: [assignedToId], references: [id])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Task {
+  id            String     @id @default(cuid())
+  title         String
+  description   String?
+  assignedToId  String
+  assignedTo    User       @relation(fields: [assignedToId], references: [id])
+  projectId     String?
+  project       Project?   @relation(fields: [projectId], references: [id])
+  priority      String     @default("MEDIUM")
+  dueDate       DateTime?
+  status        String     @default("PENDING")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model FollowUp {
+  id            String     @id @default(cuid())
+  customerId    String
+  customer      Customer   @relation(fields: [customerId], references: [id])
+  type          String     // Call, WhatsApp, Email, Meeting
+  date          DateTime
+  status        String     @default("PENDING") // PENDING, COMPLETED
+  notes         String?
+  assignedToId  String
+  assignedTo    User       @relation(fields: [assignedToId], references: [id])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Renewal {
+  id            String     @id @default(cuid())
+  customerId    String
+  customer      Customer   @relation(fields: [customerId], references: [id])
+  type          String     // Domain, Hosting, SSL, Service
+  expiryDate    DateTime
+  status        String     @default("ACTIVE") // ACTIVE, RENEWED, EXPIRED
+  lastReminded  DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model AroniumReference {
+  id            String     @id @default(cuid())
+  customerId    String
+  customer      Customer   @relation(fields: [customerId], references: [id])
+  refType       String     // Invoice, Quotation, Payment
+  refNumber     String
+  notes         String?
+}
+
+model Quotation {
+  id              String   @id @default(cuid())
+  quotationNumber String   @unique
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id])
+  date            DateTime
+  totalAmount     Float
+  status          String   @default("DRAFT") // DRAFT, SENT, APPROVED, REJECTED, CONVERTED
+  notes           String?
+  pdfUrl          String?  // For uploaded PDFs
+  assignedToId    String?
+  assignedTo      User?    @relation(fields: [assignedToId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model SyncLog {
+  id           String   @id @default(cuid())
+  type         String   // CUSTOMER, QUOTATION, INVOICE
+  status       String   // SUCCESS, FAILED
+  details      String?
+  recordsAdded Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model SystemSettings {
+  id                String   @id @default(cuid())
+  aroniumDbPath     String?
+  autoSyncEnabled   Boolean  @default(false)
+  syncIntervalMins  Int      @default(60)
+  smtpEmail         String?
+  smtpPassword      String?
+  reminderEnabled   Boolean  @default(false)
+  enquirySheetUrl   String?
+  enquirySyncEnabled Boolean @default(false)
+  geminiApiKey      String?
+  updatedAt         DateTime @updatedAt
+}
+
+model EmailLog {
+  id          String   @id @default(cuid())
+  to          String
+  subject     String
+  body        String
+  status      String   // SENT, FAILED
+  error       String?
+  createdAt   DateTime @default(now())
+}
+
+model MessageTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  subject   String?
+  body      String
+  type      String   // EMAIL, WHATSAPP
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

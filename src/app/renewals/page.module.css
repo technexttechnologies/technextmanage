@@ -1,0 +1,239 @@
+.container {
+  padding: var(--spacing-6);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: var(--spacing-1);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-4);
+  }
+  .hideMobile {
+    display: none;
+  }
+}
+
+.controlsBar {
+  margin-bottom: var(--spacing-6);
+}
+
+.searchBar {
+  position: relative;
+  margin-bottom: var(--spacing-4);
+  max-width: 600px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.searchInput {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-border);
+  font-size: 16px;
+  background-color: var(--surface-card);
+  transition: all 0.2s ease;
+  font-family: var(--font-sans);
+}
+
+.filterScroll {
+  display: flex;
+  gap: var(--spacing-2);
+  overflow-x: auto;
+  padding-bottom: var(--spacing-2);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.filterScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.filterTab {
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.filterTab:hover {
+  background-color: var(--surface-background);
+  color: var(--text-primary);
+}
+
+.activeTab {
+  background-color: var(--brand-primary);
+  color: white;
+  border-color: var(--brand-primary);
+}
+
+.activeTab:hover {
+  background-color: var(--brand-primary);
+  color: white;
+}
+
+.emptyState {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-8);
+  text-align: center;
+  border: 1px dashed var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.emptyIcon {
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-4);
+}
+
+.renewalList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-5);
+}
+
+.card {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.expiredCard {
+  border-color: #FECACA;
+  background-color: #FEF2F2;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-4);
+  gap: var(--spacing-2);
+}
+
+.cardHeader h3 {
+  font-size: 18px;
+  margin-top: 6px;
+}
+
+.typeBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-block;
+}
+
+.typeBadge.domain {
+  background-color: #E0E7FF;
+  color: var(--brand-accent);
+}
+
+.typeBadge.hosting {
+  background-color: #FEF3C7;
+  color: #D97706;
+}
+
+.typeBadge.ssl {
+  background-color: #DCFCE7;
+  color: #16A34A;
+}
+
+.defaultType {
+  background-color: var(--surface-background);
+  color: var(--text-muted);
+}
+
+.statusSection {
+  flex-shrink: 0;
+}
+
+.expiredAlert {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+.upcomingAlert {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #D97706;
+}
+
+.safeAlert {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+.cardDetails {
+  margin-bottom: var(--spacing-5);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.cardActions {
+  display: flex;
+  gap: var(--spacing-3);
+  margin-top: auto;
+  border-top: 1px solid var(--surface-border);
+  padding-top: var(--spacing-4);
+}
+
+/* Ensure buttons take equal space */
+.cardActions > a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 8px;
+  font-size: 13px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}

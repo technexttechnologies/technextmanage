@@ -1,0 +1,159 @@
+.container {
+  padding: var(--spacing-6);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.backLink:hover {
+  color: var(--brand-primary);
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.sourceTag {
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--surface-background);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-6);
+}
+
+.card {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--spacing-5);
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-4);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroup label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.formGroup input, .formGroup textarea, .formGroup select {
+  padding: 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-background);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.formGroup input:focus, .formGroup textarea:focus {
+  border-color: var(--brand-primary);
+  outline: none;
+}
+
+.statusContainer {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.statusBtn {
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-background);
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.statusBtn.active {
+  background: var(--brand-primary);
+  color: white;
+  border-color: var(--brand-primary);
+}
+
+.convertCard {
+  background: linear-gradient(135deg, #16A34A 0%, #15803D 100%);
+  color: white;
+  text-align: center;
+}
+
+.convertCard h3 {
+  color: white;
+  margin-bottom: 12px;
+}
+
+.convertCard p {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 20px;
+}
+
+.convertBtn {
+  background: white;
+  color: #16A34A;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.2s;
+}
+
+.convertBtn:hover {
+  transform: translateY(-2px);
+}

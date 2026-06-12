@@ -1,0 +1,219 @@
+.container {
+  padding: var(--spacing-6);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: var(--spacing-1);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-4);
+  }
+  .hideMobile {
+    display: none;
+  }
+}
+
+.controlsBar {
+  margin-bottom: var(--spacing-6);
+}
+
+.searchBar {
+  position: relative;
+  margin-bottom: var(--spacing-4);
+  max-width: 600px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.searchInput {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-border);
+  font-size: 16px;
+  background-color: var(--surface-card);
+  transition: all 0.2s ease;
+  font-family: var(--font-sans);
+}
+
+.filterScroll {
+  display: flex;
+  gap: var(--spacing-2);
+  overflow-x: auto;
+  padding-bottom: var(--spacing-2);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.filterScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.filterTab {
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.filterTab:hover {
+  background-color: var(--surface-background);
+  color: var(--text-primary);
+}
+
+.activeTab {
+  background-color: var(--brand-primary);
+  color: white;
+  border-color: var(--brand-primary);
+}
+
+.emptyState {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-8);
+  text-align: center;
+  border: 1px dashed var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.emptyIcon {
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-4);
+}
+
+.refList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--spacing-5);
+}
+
+.refCard {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.refCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--brand-accent);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-4);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.iconWrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconWrapper.invoice {
+  background-color: #E0E7FF;
+  color: var(--brand-accent);
+}
+
+.iconWrapper.quotation {
+  background-color: #FEF3C7;
+  color: #D97706;
+}
+
+.iconWrapper.payment {
+  background-color: #DCFCE7;
+  color: #16A34A;
+}
+
+.refType {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.refNumber {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.deleteBtn:hover {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.customerInfo {
+  font-size: 15px;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-3);
+  padding-bottom: var(--spacing-3);
+  border-bottom: 1px dashed var(--surface-border);
+}
+
+.notes {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  background-color: var(--surface-background);
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+}

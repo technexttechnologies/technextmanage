@@ -1,0 +1,137 @@
+.container {
+  padding: var(--spacing-6);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.title {
+  font-size: 28px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: var(--spacing-6);
+}
+
+.listCard {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+}
+
+.templateItem {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid transparent;
+}
+
+.templateItem:hover {
+  background: var(--surface-background);
+}
+
+.templateItem.active {
+  background: var(--brand-primary);
+  color: white;
+}
+
+.templateItem.active .typeTag {
+  background: rgba(255,255,255,0.2);
+  color: white;
+}
+
+.templateName {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.typeTag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface-border);
+  color: var(--text-muted);
+}
+
+.editorCard {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+}
+
+.formGroup {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroup label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.input, .select, .textarea {
+  padding: 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-background);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.input:focus, .select:focus, .textarea:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+.deleteBtn {
+  color: #EF4444;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.deleteBtn:hover {
+  text-decoration: underline;
+}
+
+.variablesBox {
+  background: var(--surface-background);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.variablesBox code {
+  background: var(--surface-border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 8px;
+  color: var(--brand-primary);
+}

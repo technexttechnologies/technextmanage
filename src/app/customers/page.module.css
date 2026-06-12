@@ -1,0 +1,211 @@
+.container {
+  padding: var(--spacing-6);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: var(--spacing-1);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-4);
+  }
+  .hideMobile {
+    display: none;
+  }
+}
+
+.searchBar {
+  position: relative;
+  margin-bottom: var(--spacing-6);
+  max-width: 600px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.searchInput {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-border);
+  font-size: 16px;
+  background-color: var(--surface-card);
+  transition: all 0.2s ease;
+  font-family: var(--font-sans);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+}
+
+.emptyState {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-8);
+  text-align: center;
+  border: 1px dashed var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.emptyIcon {
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-4);
+}
+
+.emptyState h2 {
+  font-size: 20px;
+  margin-bottom: var(--spacing-2);
+}
+
+.emptyState p {
+  color: var(--text-secondary);
+}
+
+.customerList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-5);
+}
+
+.customerCard {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.customerCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--brand-accent);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-5);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background-color: var(--brand-light);
+  color: var(--brand-primary);
+  font-weight: 700;
+  font-size: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardInfo h3 {
+  font-size: 16px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.company {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statusBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--surface-background);
+  color: var(--text-muted);
+}
+
+.statusBadge.active {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.statusBadge.lead {
+  background-color: var(--color-info-bg);
+  color: var(--color-info);
+}
+
+.cardActions {
+  display: flex;
+  gap: var(--spacing-3);
+  margin-top: auto;
+  border-top: 1px solid var(--surface-border);
+  padding-top: var(--spacing-4);
+}
+
+.actionBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background-color: var(--surface-background);
+  transition: all 0.2s ease;
+}
+
+.actionBtn:hover {
+  background-color: var(--brand-light);
+  color: var(--brand-primary);
+}
+
+.cardHeaderLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  outline: none;
+}

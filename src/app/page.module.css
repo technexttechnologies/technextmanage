@@ -1,0 +1,172 @@
+.dashboardContainer {
+  padding: var(--spacing-6);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: var(--spacing-8);
+}
+
+.greeting {
+  font-size: 28px;
+  margin-bottom: var(--spacing-1);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-5);
+  margin-bottom: var(--spacing-8);
+}
+
+.metricCard {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--surface-border);
+}
+
+.iconWrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.iconWrapper.blue {
+  background-color: var(--color-info-bg);
+  color: var(--color-info);
+}
+
+.iconWrapper.purple {
+  background-color: #E0E7FF;
+  color: var(--brand-accent);
+}
+
+.iconWrapper.green {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.metricInfo h3 {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.metricValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+}
+
+.alertsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--spacing-5);
+  margin-bottom: var(--spacing-8);
+}
+
+.alertCard {
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  border: 1px solid var(--surface-border);
+}
+
+.warningAlert {
+  background-color: #FFFBEB;
+  border-color: #FDE68A;
+}
+
+.warningAlert .alertHeader h3 {
+  color: #B45309;
+}
+
+.warningAlert .alertHeader svg {
+  color: #D97706;
+}
+
+.dangerAlert {
+  background-color: var(--color-danger-bg);
+  border-color: #FECACA;
+}
+
+.dangerAlert .alertHeader h3 {
+  color: #991B1B;
+}
+
+.dangerAlert .alertHeader svg {
+  color: var(--color-danger);
+}
+
+.alertHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-3);
+}
+
+.alertHeader h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.badge {
+  background-color: var(--surface-card);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.alertCard p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: var(--spacing-4);
+}
+
+.recentActivity {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  border: 1px solid var(--surface-border);
+}
+
+.recentActivity h2 {
+  font-size: 18px;
+  margin-bottom: var(--spacing-4);
+}
+
+.emptyState {
+  padding: var(--spacing-8);
+  text-align: center;
+  color: var(--text-muted);
+  background-color: var(--surface-background);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--surface-border);
+}
+
+@media (max-width: 768px) {
+  .dashboardContainer {
+    padding: var(--spacing-4);
+  }
+  
+  .greeting {
+    font-size: 24px;
+  }
+}
