@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { uploadToCloudinary } from "@/lib/cloudinaryStorage";
+import { uploadPublicFile } from "@/lib/cloudinaryStorage";
 import { sendAdminNotification, sendCustomerStatusUpdate } from "@/lib/mailer";
 
 export async function createInvoiceRequest(formData: FormData) {
@@ -117,8 +117,8 @@ export async function uploadInvoicePdf(formData: FormData) {
 
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-  // Upload to Cloudinary
-  const { secureUrl } = await uploadToCloudinary(
+  // Upload PDF to Cloudinary as a PUBLIC file so it can be shared in emails
+  const { secureUrl } = await uploadPublicFile(
     `invoice-${id}-${file.name}`,
     file.type || 'application/pdf',
     fileBuffer
