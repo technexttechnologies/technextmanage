@@ -48,6 +48,7 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
           </a>
           <EditCustomerButton customer={customer} />
         </div>
+      </header>
 
       <div className={styles.grid}>
         <div className={styles.mainCol}>
