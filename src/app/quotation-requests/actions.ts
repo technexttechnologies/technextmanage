@@ -101,7 +101,8 @@ export async function updateQuotationStatus(formData: FormData) {
       "Quotation Request", 
       status, 
       adminNotes, 
-      request.pdfUrl
+      request.pdfUrl,
+      request.id
     );
   }
 

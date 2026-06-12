@@ -93,7 +93,8 @@ export async function updateInvoiceStatus(formData: FormData) {
       "Invoice", 
       status, 
       adminNotes, 
-      request.pdfUrl
+      request.pdfUrl,
+      request.id
     );
   }
 
