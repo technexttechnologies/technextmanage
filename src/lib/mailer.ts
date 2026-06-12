@@ -10,19 +10,17 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${title}</title>
       <style>
-        body { margin: 0; padding: 0; background-color: #f4f7fb; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        .wrapper { background-color: #f4f7fb; padding: 40px 20px; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(10, 37, 64, 0.08); }
-        .header { background: linear-gradient(135deg, #0A2540 0%, #1a365d 100%); padding: 40px 30px; text-align: center; position: relative; overflow: hidden; }
-        .header::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%); pointer-events: none; }
-        .logo-box { background-color: #ffffff; display: inline-block; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); transition: transform 0.3s ease; }
-        .logo-box:hover { transform: translateY(-3px); }
-        .header-title { color: #e0e7ff; margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
-        .body-section { padding: 40px 30px; }
-        .content { color: #334155; font-size: 16px; line-height: 1.7; margin: 0 0 24px 0; }
-        .cta-btn { display: inline-block; background: linear-gradient(to right, #4f46e5, #6366f1); color: #ffffff !important; font-weight: 600; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-size: 16px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); text-align: center; }
-        .footer { background-color: #f8fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0; }
-        .website-link { color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 15px; }
+        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .wrapper { background-color: #f3f4f6; padding: 40px 20px; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb; border-top: 6px solid #4f46e5; }
+        .header { background-color: #ffffff; padding: 40px 30px 20px; text-align: center; border-bottom: 1px solid #f3f4f6; }
+        .logo-box { display: inline-block; margin-bottom: 16px; }
+        .header-title { color: #6b7280; margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; }
+        .body-section { padding: 40px 30px; background-color: #ffffff; }
+        .content { color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0; }
+        .cta-btn { display: inline-block; background-color: #4f46e5; color: #ffffff !important; font-weight: 600; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-size: 16px; text-align: center; }
+        .footer { background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb; }
+        .website-link { color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 14px; }
       </style>
     </head>
     <body>
@@ -46,7 +44,7 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
           </div>
           <div class="footer">
             <p style="color: #64748b; font-size: 14px; margin: 0 0 12px 0;">
-              Thank you for partnering with <strong>Technext Technologies</strong>
+              Thank you for partnering with <strong style="color: #4f46e5;">Technext Technologies</strong>
             </p>
             <a href="https://technexttechnologies.in" class="website-link">technexttechnologies.in</a>
             <p style="color: #94a3b8; font-size: 12px; margin: 12px 0 0 0;">
