@@ -148,7 +148,7 @@ button {
 /* Mobile Adjustments */
 @media (max-width: 768px) {
   body {
-    padding-bottom: 80px; /* Space for Bottom Nav */
+    padding-bottom: 140px; /* Space for Bottom Nav and QuickActionFAB to ensure bottom buttons are clickable */
   }
 }
 

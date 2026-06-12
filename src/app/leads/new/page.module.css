@@ -97,6 +97,14 @@
 }
 
 @media (max-width: 640px) {
+  .formActions {
+    flex-direction: column-reverse;
+    padding-bottom: 40px; /* Avoid FAB overlap */
+  }
+  .formActions > * {
+    width: 100%;
+    justify-content: center;
+  }
   .container {
     padding: var(--spacing-4);
   }
