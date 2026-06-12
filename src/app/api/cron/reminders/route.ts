@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 
+import { syncEnquiriesFromSheet } from "@/lib/sheetSync";
+
 export async function GET(req: Request) {
   // Verify Vercel Cron Secret for security
   const authHeader = req.headers.get('authorization');
@@ -18,6 +20,15 @@ export async function GET(req: Request) {
   const results: string[] = [];
 
   try {
+    // 0. Auto-sync Website Enquiries from Google Sheet
+    try {
+      const syncResult = await syncEnquiriesFromSheet();
+      results.push(`Synced Enquiries: ${syncResult.added} new leads added.`);
+    } catch (err: any) {
+      console.error("Enquiry sync failed:", err);
+      results.push(`Enquiry sync failed: ${err.message}`);
+    }
+
     // 1. Follow-ups due tomorrow
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -76,19 +87,36 @@ export async function GET(req: Request) {
       include: { customer: true }
     });
 
+    const emailTemplate = await prisma.messageTemplate.findFirst({
+      where: { name: "Renewal Expiring", type: "EMAIL" }
+    });
+
     for (const r of expiringRenewals) {
       if (r.customer.email) {
         const daysLeft = Math.ceil((r.expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-        const bodyHtml = `
-          <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Hello ${r.customer.name},</h2>
-          <p style="font-size: 16px;">Your <strong>${r.type}</strong> service is expiring on <strong>${r.expiryDate.toLocaleDateString()}</strong> (${daysLeft} days from now).</p>
+        
+        let subject = emailTemplate?.subject || `⚠️ Renewal Alert: Your ${r.type} expires in ${daysLeft} days`;
+        let bodyHtml = emailTemplate?.body || `
+          <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Hello {{customer_name}},</h2>
+          <p style="font-size: 16px;">Your <strong>{{renewal_type}}</strong> service is expiring on <strong>{{expiry_date}}</strong> ({{days_left}} days from now).</p>
           <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 1px solid #fecaca; border-left: 4px solid #ef4444; border-radius: 8px; padding: 20px; margin: 30px 0;">
             <p style="margin: 0; color: #991b1b; font-size: 16px; font-weight: 500;">Please contact us to renew your service and avoid any disruption.</p>
           </div>
         `;
+
+        // Replace variables
+        subject = subject.replace(/{{customer_name}}/g, r.customer.name)
+                         .replace(/{{renewal_type}}/g, r.type)
+                         .replace(/{{days_left}}/g, daysLeft.toString());
+        
+        bodyHtml = bodyHtml.replace(/{{customer_name}}/g, r.customer.name)
+                           .replace(/{{renewal_type}}/g, r.type)
+                           .replace(/{{expiry_date}}/g, r.expiryDate.toLocaleDateString())
+                           .replace(/{{days_left}}/g, daysLeft.toString());
+
         await sendEmail(
           r.customer.email,
-          `⚠️ Renewal Alert: Your ${r.type} expires in ${daysLeft} days`,
+          subject,
           generateTechnextEmailHtml("Service Expiration Warning", bodyHtml)
         );
         results.push(`Renewal alert: ${r.customer.name} — ${r.type}`);

@@ -39,6 +39,10 @@ export default async function RenewalsPage({
     orderBy: { expiryDate: 'asc' }
   });
 
+  const whatsappTemplate = await prisma.messageTemplate.findFirst({
+    where: { name: "WhatsApp Renewal", type: "WHATSAPP" }
+  });
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -90,6 +94,12 @@ export default async function RenewalsPage({
             const isExpired = new Date(renewal.expiryDate) < new Date();
             const daysRemaining = Math.ceil((new Date(renewal.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
             
+            let waMsg = whatsappTemplate?.body || `Hello {{customer_name}}, your {{renewal_type}} service is expiring on {{expiry_date}}. Please let us know if you wish to renew!`;
+            waMsg = waMsg.replace(/{{customer_name}}/g, renewal.customer.name)
+                         .replace(/{{renewal_type}}/g, renewal.type)
+                         .replace(/{{expiry_date}}/g, new Date(renewal.expiryDate).toLocaleDateString())
+                         .replace(/{{days_left}}/g, daysRemaining.toString());
+
             return (
               <div key={renewal.id} className={`${styles.card} ${isExpired ? styles.expiredCard : ''}`}>
                 <div className={styles.cardHeader}>
@@ -123,11 +133,21 @@ export default async function RenewalsPage({
                 
                 <div className={styles.cardActions}>
                   <Link href={`/renewals/${renewal.id}/renew`} className="btn-primary" style={{flex: 1}}>
-                    <RefreshCw size={16} /> Process Renewal
+                    <RefreshCw size={16} /> Renew
                   </Link>
-                  <a href={`https://wa.me/${renewal.customer.phone.replace(/[^0-9]/g, '')}`} className="btn-secondary" style={{flex: 1}} target="_blank" rel="noopener noreferrer">
-                    WhatsApp Reminder
+                  <a href={`https://wa.me/${renewal.customer.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(waMsg)}`} className="btn-secondary" style={{flex: 1, backgroundColor: '#25D366', color: 'white', borderColor: '#25D366'}} target="_blank" rel="noopener noreferrer">
+                    WhatsApp
                   </a>
+                  {/* Client component wrapper for the email button could be used, or just a form */}
+                  <form action={async () => {
+                    "use server";
+                    const { sendManualRenewalReminder } = await import("./actions");
+                    await sendManualRenewalReminder(renewal.id);
+                  }} style={{flex: 1, display: 'flex'}}>
+                    <button type="submit" className="btn-secondary" style={{width: '100%', cursor: 'pointer'}}>
+                      Email
+                    </button>
+                  </form>
                 </div>
               </div>
             );
