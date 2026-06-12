@@ -6,9 +6,9 @@ import styles from "./page.module.css";
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
-  const currentStatus = searchParams.status || "ALL";
+  const currentStatus = (await searchParams).status || "ALL";
 
   const projects = await prisma.project.findMany({
     where: currentStatus === "ALL" ? {} : { status: currentStatus },

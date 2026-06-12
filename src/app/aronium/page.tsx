@@ -7,9 +7,9 @@ import { deleteAroniumRef } from "./actions";
 export default async function AroniumPage({
   searchParams,
 }: {
-  searchParams: { filter?: string };
+  searchParams: Promise<{ filter?: string }>;
 }) {
-  const currentFilter = searchParams.filter || "ALL";
+  const currentFilter = (await searchParams).filter || "ALL";
 
   const refs = await prisma.aroniumReference.findMany({
     where: currentFilter === "ALL" ? {} : { refType: currentFilter },

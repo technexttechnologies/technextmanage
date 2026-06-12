@@ -7,9 +7,9 @@ import { updateQuotationStatus } from "./actions";
 export default async function QuotationsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
-  const currentStatus = searchParams.status || "ALL";
+  const currentStatus = (await searchParams).status || "ALL";
 
   const quotations = await prisma.quotation.findMany({
     where: currentStatus === "ALL" ? {} : { status: currentStatus },

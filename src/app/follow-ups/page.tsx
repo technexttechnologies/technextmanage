@@ -7,9 +7,9 @@ import { updateFollowUpStatus } from "./actions";
 export default async function FollowUpsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
-  const currentStatus = searchParams.status || "PENDING";
+  const currentStatus = (await searchParams).status || "PENDING";
 
   const followUps = await prisma.followUp.findMany({
     where: currentStatus === "ALL" ? {} : { status: currentStatus },

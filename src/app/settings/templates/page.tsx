@@ -4,13 +4,14 @@ import { ArrowLeft, Plus, Save, Trash } from "lucide-react";
 import styles from "./page.module.css";
 import { saveTemplate, deleteTemplate } from "./actions";
 
-export default async function TemplatesPage({ searchParams }: { searchParams: { id?: string } }) {
+export default async function TemplatesPage({ searchParams }: { searchParams: Promise<{ id?: string }>}) {
   const templates = await prisma.messageTemplate.findMany({
     orderBy: { createdAt: 'desc' }
   });
 
-  const activeTemplate = searchParams.id 
-    ? templates.find(t => t.id === searchParams.id)
+  const resolvedParams = await searchParams;
+  const activeTemplate = resolvedParams.id 
+    ? templates.find(t => t.id === resolvedParams.id)
     : null;
 
   return (

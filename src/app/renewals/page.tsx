@@ -6,9 +6,9 @@ import styles from "./page.module.css";
 export default async function RenewalsPage({
   searchParams,
 }: {
-  searchParams: { filter?: string };
+  searchParams: Promise<{ filter?: string }>;
 }) {
-  const currentFilter = searchParams.filter || "ALL";
+  const currentFilter = (await searchParams).filter || "ALL";
 
   // Date threshold for "upcoming" (e.g. next 30 days)
   const today = new Date();

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Clock, CheckCircle, XCircle, Key } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Key, Settings } from "lucide-react";
 import styles from "./page.module.css";
 import { saveEmailSettings } from "./actions";
 import ComposeForm from "./ComposeForm";

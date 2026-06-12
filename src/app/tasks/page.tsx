@@ -7,9 +7,9 @@ import { updateTaskStatus } from "./actions";
 export default async function TasksPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
-  const currentStatus = searchParams.status || "ALL";
+  const currentStatus = (await searchParams).status || "ALL";
 
   const tasks = await prisma.task.findMany({
     where: currentStatus === "ALL" ? {} : { status: currentStatus },

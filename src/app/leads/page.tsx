@@ -6,9 +6,9 @@ import styles from "./page.module.css";
 export default async function LeadsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
-  const currentStatus = searchParams.status || "ALL";
+  const currentStatus = (await searchParams).status || "ALL";
 
   const leads = await prisma.lead.findMany({
     where: currentStatus === "ALL" ? {} : { status: currentStatus },
