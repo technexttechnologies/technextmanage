@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import BottomNav from "../mobile/BottomNav";
 import QuickActionFAB from "../mobile/QuickActionFAB";
 import Sidebar from "./Sidebar";
+import MobileHeader from "./MobileHeader";
 import styles from "./AppLayout.module.css";
 
 export default function AppLayoutClient({ 
@@ -22,6 +23,7 @@ export default function AppLayoutClient({
 
   return (
     <div className={styles.layout}>
+      <MobileHeader user={session} />
       <Sidebar user={session} />
       <main className={styles.mainContent}>
         {children}
