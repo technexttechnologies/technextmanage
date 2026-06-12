@@ -87,16 +87,15 @@ export async function updateInvoiceStatus(formData: FormData) {
     }
   });
 
-  if (status === "SENT_TO_CUSTOMER" || status === "PAID") {
-    await sendCustomerStatusUpdate(
-      request.customer.email, 
-      "Invoice", 
-      status, 
-      adminNotes, 
-      request.pdfUrl,
-      request.id
-    );
-  }
+  // Always send customer status update when an admin changes the status
+  await sendCustomerStatusUpdate(
+    request.customer.email, 
+    "Invoice", 
+    status, 
+    adminNotes, 
+    request.pdfUrl,
+    request.id
+  );
 
   revalidatePath(`/invoice-requests/${id}`);
   revalidatePath("/invoice-requests");

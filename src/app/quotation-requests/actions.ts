@@ -94,17 +94,15 @@ export async function updateQuotationStatus(formData: FormData) {
     }
   });
 
-  // If status implies sending to customer, send email
-  if (status === "SENT_TO_CUSTOMER") {
-    await sendCustomerStatusUpdate(
-      request.customer.email, 
-      "Quotation Request", 
-      status, 
-      adminNotes, 
-      request.pdfUrl,
-      request.id
-    );
-  }
+  // Always send customer status update when an admin changes the status
+  await sendCustomerStatusUpdate(
+    request.customer.email, 
+    "Quotation Request", 
+    status, 
+    adminNotes, 
+    request.pdfUrl,
+    request.id
+  );
 
   revalidatePath(`/quotation-requests/${id}`);
   revalidatePath("/quotation-requests");

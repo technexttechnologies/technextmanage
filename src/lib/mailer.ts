@@ -63,8 +63,9 @@ export async function sendCustomerStatusUpdate(customerEmail: string | null, req
         
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); padding: 40px 30px; text-align: center;">
-          <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">TechNext Technologies</h1>
-          <p style="color: #e0e7ff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Document Status Update</p>
+          <img src="https://ui-avatars.com/api/?name=Tech+Next&background=ffffff&color=4f46e5&rounded=true&size=128&font-size=0.33&bold=true" alt="TechNext Logo" style="width: 72px; height: 72px; border-radius: 50%; margin-bottom: 20px; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
+          <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">TechNext Technologies</h1>
+          <p style="color: #e0e7ff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9; font-weight: 500;">Automated Document Update</p>
         </div>
         
         <!-- Body -->

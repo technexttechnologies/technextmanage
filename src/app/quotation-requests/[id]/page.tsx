@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { notFound } from "next/navigation";
-import { ArrowLeft, User, FileText, CheckCircle, Save, Download, FileSignature } from "lucide-react";
+import { ArrowLeft, User, FileText, CheckCircle, Save, Download, FileSignature, MessageCircle } from "lucide-react";
 import styles from "../page.module.css";
 import Link from "next/link";
 import { updateQuotationStatus } from "../actions";
@@ -123,6 +123,17 @@ export default async function QuotationRequestDetails({ params }: { params: Prom
                   <Save size={16} /> Save Admin Updates
                 </button>
               </form>
+              <div style={{ marginTop: '12px' }}>
+                <a 
+                  href={`https://wa.me/${request.customer.phone}?text=${encodeURIComponent(`Hello ${request.customer.name}, the status of your Quotation (#${request.id.slice(-6).toUpperCase()}) has been updated to: ${request.status.replace(/_/g, ' ')}.\n\nView live progress: https://technextmanage.vercel.app/track/${request.id}`)}`} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="btn-primary" 
+                  style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px', background: '#25D366', color: 'white', border: 'none' }}
+                >
+                  <MessageCircle size={16} /> Send WhatsApp Update
+                </a>
+              </div>
 
               <hr style={{ margin: '24px 0', borderTop: '1px solid var(--surface-border)' }} />
               <h3 style={{ fontSize: '14px', marginBottom: '8px' }}>Upload PDF to Cloud</h3>
