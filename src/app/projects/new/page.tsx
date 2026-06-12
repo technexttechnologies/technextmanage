@@ -3,6 +3,7 @@ import { createProject } from "../actions";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
+import { SubmitButton } from "@/components/SubmitButton";
 import styles from "./page.module.css";
 
 export default async function NewProjectPage() {
@@ -77,10 +78,7 @@ export default async function NewProjectPage() {
 
         <div className={styles.formActions}>
           <Link href="/projects" className="btn-secondary">Cancel</Link>
-          <button type="submit" className="btn-primary">
-            <Save size={18} />
-            Save Project
-          </button>
+          <SubmitButton icon={<Save size={18} />}>Create Project</SubmitButton>
         </div>
       </form>
     </div>

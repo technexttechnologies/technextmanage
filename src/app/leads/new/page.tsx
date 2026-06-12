@@ -1,6 +1,7 @@
 import { createLead } from "../actions";
 import Link from "next/link";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
+import { SubmitButton } from "@/components/SubmitButton";
 import styles from "./page.module.css";
 
 export default function NewLeadPage() {
@@ -58,10 +59,7 @@ export default function NewLeadPage() {
 
         <div className={styles.formActions}>
           <Link href="/leads" className="btn-secondary">Cancel</Link>
-          <button type="submit" className="btn-primary">
-            <UserPlus size={18} />
-            Create Lead
-          </button>
+          <SubmitButton icon={<Save size={18} />}>Save Lead</SubmitButton>
         </div>
       </form>
     </div>

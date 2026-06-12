@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Send } from "lucide-react";
 import { createInternalTicket } from "../actions";
 import { redirect } from "next/navigation";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function NewTicketPage() {
   const customers = await prisma.customer.findMany({
@@ -55,9 +56,7 @@ export default async function NewTicketPage() {
             <textarea name="description" required rows={5} placeholder="Detailed issue description..." style={{padding: '10px', borderRadius: '8px', border: '1px solid var(--surface-border)'}} />
           </div>
 
-          <button type="submit" className="btn-primary" style={{marginTop: '16px', alignSelf: 'flex-start'}}>
-            Create Ticket
-          </button>
+          <SubmitButton icon={<Send size={18} />} style={{marginTop: '16px', alignSelf: 'flex-start'}}>Create Ticket</SubmitButton>
         </form>
       </div>
     </div>

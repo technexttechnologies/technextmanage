@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MessageCircle, Copy, ExternalLink, Pin, Trash2, CheckCircle } from "lucide-react";
 import styles from "./page.module.css";
 import { updateProjectStatus, addProjectNote, deleteProjectNote, togglePinNote, createMilestone, completeMilestone, updateProjectWarranty } from "../actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default function ProjectDetailsClient({ project }: { project: any }) {
   const [copied, setCopied] = useState(false);
@@ -87,7 +88,9 @@ Technext Technologies`;
                 <input type="number" name="progress" min="0" max="100" defaultValue={project.progress} />
               </div>
             </div>
-            <button type="submit" className="btn-primary">Update Status & Notify Client</button>
+            <div style={{display: 'flex', gap: '12px', marginTop: '24px'}}>
+              <SubmitButton className="btn-primary" loadingText="Updating & Notifying...">Update Status & Notify Client</SubmitButton>
+            </div>
           </form>
         </div>
 

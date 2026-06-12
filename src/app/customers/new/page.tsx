@@ -1,6 +1,7 @@
 import { createCustomer } from "../actions";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
+import { SubmitButton } from "@/components/SubmitButton";
 import styles from "./page.module.css";
 
 export default function NewCustomerPage() {
@@ -65,10 +66,7 @@ export default function NewCustomerPage() {
 
         <div className={styles.formActions}>
           <Link href="/customers" className="btn-secondary">Cancel</Link>
-          <button type="submit" className="btn-primary">
-            <Save size={18} />
-            Save Customer
-          </button>
+          <SubmitButton icon={<Save size={18} />}>Save Customer</SubmitButton>
         </div>
       </form>
     </div>
