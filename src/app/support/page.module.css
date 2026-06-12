@@ -1,0 +1,109 @@
+.publicContainer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface-background);
+}
+
+.publicHeader {
+  background-color: var(--surface-card);
+  padding: var(--spacing-4) var(--spacing-6);
+  border-bottom: 1px solid var(--surface-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brandName {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
+.formWrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--spacing-8) var(--spacing-4);
+}
+
+.formCard {
+  background-color: var(--surface-card);
+  padding: var(--spacing-8);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--surface-border);
+  width: 100%;
+  max-width: 600px;
+}
+
+.formTitle {
+  font-size: 24px;
+  margin-bottom: var(--spacing-2);
+  text-align: center;
+}
+
+.formSubtitle {
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.formGroup {
+  margin-bottom: var(--spacing-4);
+}
+
+.formGroup label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: var(--spacing-2);
+  font-size: 14px;
+}
+
+.formGroup input,
+.formGroup textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface-background);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  margin-top: var(--spacing-4);
+}
+
+.successState {
+  text-align: center;
+  padding: var(--spacing-8) 0;
+}
+
+.successIcon {
+  color: var(--color-success);
+  margin-bottom: var(--spacing-4);
+}
+
+.successState h2 {
+  font-size: 24px;
+  margin-bottom: var(--spacing-2);
+}
+
+.successState p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-6);
+}

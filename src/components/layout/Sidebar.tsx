@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt } from "lucide-react";
+import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
 
@@ -68,6 +68,9 @@ export default function Sidebar({ user }: { user: any }) {
           </Link>
           <Link href="/tasks" className={`${styles.navItem} ${pathname.startsWith('/tasks') ? styles.active : ''}`}>
             <CheckSquare size={20} /> Tasks
+          </Link>
+          <Link href="/tickets" className={`${styles.navItem} ${pathname.startsWith('/tickets') ? styles.active : ''}`}>
+            <HeadphonesIcon size={20} /> Support Tickets
           </Link>
           {isAdmin && (
             <Link href="/email" className={`${styles.navItem} ${pathname === "/email" ? styles.active : ""}`}>

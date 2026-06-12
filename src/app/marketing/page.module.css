@@ -1,0 +1,159 @@
+.container {
+  padding: var(--spacing-6);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: var(--spacing-1);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-4);
+  }
+  .hideMobile {
+    display: none;
+  }
+}
+
+.emptyState {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-8);
+  text-align: center;
+  border: 1px dashed var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.emptyIcon {
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-4);
+}
+
+.emptyState h2 {
+  font-size: 20px;
+  margin-bottom: var(--spacing-2);
+}
+
+.emptyState p {
+  color: var(--text-secondary);
+}
+
+.campaignList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.campaignCard {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-4);
+}
+
+.campaignInfo {
+  flex: 1;
+  min-width: 250px;
+}
+
+.campaignInfo h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.campaignMeta {
+  display: flex;
+  gap: var(--spacing-4);
+  font-size: 14px;
+  color: var(--text-secondary);
+  align-items: center;
+}
+
+.statusBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--surface-background);
+  color: var(--text-muted);
+}
+
+.statusBadge.completed {
+  background-color: var(--color-success-bg, #dcfce7);
+  color: var(--color-success, #166534);
+}
+
+.statusBadge.draft {
+  background-color: var(--surface-border, #e2e8f0);
+  color: var(--text-secondary, #475569);
+}
+
+.statusBadge.sending {
+  background-color: var(--color-warning-bg, #fef08a);
+  color: var(--color-warning, #854d0e);
+}
+
+.stats {
+  display: flex;
+  gap: var(--spacing-6);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--surface-background);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-md);
+  min-width: 80px;
+}
+
+.statValue {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.statValue.success {
+  color: var(--color-success, #16a34a);
+}
+
+.statValue.error {
+  color: var(--color-danger, #dc2626);
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}

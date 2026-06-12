@@ -1,8 +1,9 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Building2, Phone, Mail, MapPin, Edit, FileText, ShoppingCart, RefreshCw, PhoneCall } from "lucide-react";
+import { ArrowLeft, Building2, Phone, Mail, MapPin, Edit, FileText, ShoppingCart, RefreshCw, PhoneCall, ShieldCheck } from "lucide-react";
 import styles from "./page.module.css";
+import EditCustomerButton from "./EditCustomerButton";
 import { redirect } from "next/navigation";
 
 export default async function CustomerDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -16,7 +17,8 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
       quotations: { orderBy: { date: 'desc' } },
       aroniumRefs: { orderBy: { id: 'desc' } },
       quotationRequests: { orderBy: { createdAt: 'desc' } },
-      invoiceRequests: { orderBy: { createdAt: 'desc' } }
+      invoiceRequests: { orderBy: { createdAt: 'desc' } },
+      amcs: { orderBy: { startDate: 'desc' } }
     }
   });
 
@@ -31,9 +33,7 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
           <ArrowLeft size={20} />
           <span>Back to Customers</span>
         </Link>
-        <button className="btn-secondary">
-          <Edit size={16} /> Edit Profile
-        </button>
+        <EditCustomerButton customer={customer} />
       </header>
 
       <div className={styles.grid}>
@@ -216,6 +216,29 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
               </div>
             )}
             <Link href="/renewals/new" className={styles.linkAction}>+ Add Service</Link>
+          </section>
+
+          {/* AMCs */}
+          <section className={styles.sideSection}>
+            <h3 className={styles.sideTitle}>
+              <ShieldCheck size={18} /> Active AMCs
+            </h3>
+            {customer.amcs.length === 0 ? (
+              <p className={styles.textMuted}>No active AMCs.</p>
+            ) : (
+              <div className={styles.sideList}>
+                {customer.amcs.map(amc => (
+                  <div key={amc.id} className={styles.sideItem}>
+                    <div className={styles.fuHeader}>
+                      <span className={styles.fuType} style={{ color: amc.status === 'ACTIVE' ? '#16A34A' : undefined }}>{amc.title}</span>
+                      <span className={styles.fuDate}>{new Date(amc.endDate).toLocaleDateString()}</span>
+                    </div>
+                    {amc.status !== 'ACTIVE' && <p className={styles.fuNotes}>Status: {amc.status}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+            <Link href="/amc/new" className={styles.linkAction}>+ Add AMC</Link>
           </section>
         </div>
       </div>

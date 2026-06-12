@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { MessageCircle, Copy, ExternalLink, Pin, Trash2, CheckCircle } from "lucide-react";
 import styles from "./page.module.css";
-import { updateProjectStatus, addProjectNote, deleteProjectNote, togglePinNote, createMilestone, completeMilestone } from "../actions";
+import { updateProjectStatus, addProjectNote, deleteProjectNote, togglePinNote, createMilestone, completeMilestone, updateProjectWarranty } from "../actions";
 
 export default function ProjectDetailsClient({ project }: { project: any }) {
   const [copied, setCopied] = useState(false);
@@ -88,6 +88,63 @@ TechNext Technologies`;
               </div>
             </div>
             <button type="submit" className="btn-primary">Update Status & Notify Client</button>
+          </form>
+        </div>
+
+        <div className={styles.card}>
+          <h2 className={styles.cardHeader}>Warranty & AMC Tracking</h2>
+          <div style={{marginBottom: '16px'}}>
+            <p style={{marginBottom: '8px'}}>
+              <strong>Warranty Status: </strong>
+              {project.warrantyEndDate ? (
+                new Date(project.warrantyEndDate) >= new Date() ? (
+                  <span style={{color: '#10B981', fontWeight: 'bold'}}>Active (Ends {new Date(project.warrantyEndDate).toLocaleDateString()})</span>
+                ) : (
+                  <span style={{color: '#EF4444', fontWeight: 'bold'}}>Expired (Ended {new Date(project.warrantyEndDate).toLocaleDateString()})</span>
+                )
+              ) : (
+                <span style={{color: '#6B7280'}}>Not Set</span>
+              )}
+            </p>
+            <p style={{marginBottom: '8px'}}>
+              <strong>Free Updates Status: </strong>
+              {project.freeUpdatesEndDate ? (
+                new Date(project.freeUpdatesEndDate) >= new Date() ? (
+                  <span style={{color: '#10B981', fontWeight: 'bold'}}>Active (Ends {new Date(project.freeUpdatesEndDate).toLocaleDateString()})</span>
+                ) : (
+                  <span style={{color: '#EF4444', fontWeight: 'bold'}}>Expired (Ended {new Date(project.freeUpdatesEndDate).toLocaleDateString()})</span>
+                )
+              ) : (
+                <span style={{color: '#6B7280'}}>Not Set</span>
+              )}
+            </p>
+            <p>
+              <strong>AMC ID: </strong>
+              {project.amcId ? (
+                <span style={{fontWeight: 'bold', color: '#2563EB'}}>{project.amcId}</span>
+              ) : (
+                <span style={{color: '#6B7280'}}>Not Set</span>
+              )}
+            </p>
+          </div>
+          <form action={async (formData) => {
+            await updateProjectWarranty(project.id, formData);
+          }}>
+            <div className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label>Warranty End Date</label>
+                <input type="date" name="warrantyEndDate" defaultValue={project.warrantyEndDate ? new Date(project.warrantyEndDate).toISOString().split('T')[0] : ""} />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Free Updates End Date</label>
+                <input type="date" name="freeUpdatesEndDate" defaultValue={project.freeUpdatesEndDate ? new Date(project.freeUpdatesEndDate).toISOString().split('T')[0] : ""} />
+              </div>
+              <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                <label>AMC ID</label>
+                <input type="text" name="amcId" defaultValue={project.amcId || ""} placeholder="E.g., AMC-2023-001" />
+              </div>
+            </div>
+            <button type="submit" className="btn-secondary" style={{marginTop: '12px'}}>Update Support Details</button>
           </form>
         </div>
 

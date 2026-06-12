@@ -1,0 +1,124 @@
+.container {
+  padding: var(--spacing-6);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: var(--spacing-1);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-4);
+  }
+}
+
+.ticketList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.ticketCard {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  text-decoration: none;
+  color: inherit;
+}
+
+.ticketCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--brand-accent);
+}
+
+.ticketInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.ticketSubject {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.ticketMeta {
+  display: flex;
+  gap: var(--spacing-4);
+  font-size: 13px;
+  color: var(--text-secondary);
+  align-items: center;
+}
+
+.statusBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--surface-background);
+  color: var(--text-muted);
+}
+
+.statusBadge.open {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.statusBadge.in_progress {
+  background-color: var(--color-info-bg);
+  color: var(--color-info);
+}
+
+.statusBadge.resolved {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.statusBadge.closed {
+  background-color: var(--surface-border);
+  color: var(--text-secondary);
+}
+
+.priorityBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid currentColor;
+}
+.priorityBadge.urgent {
+  color: var(--color-error);
+}
+.priorityBadge.high {
+  color: var(--color-warning);
+}
+.priorityBadge.medium {
+  color: var(--color-info);
+}
+.priorityBadge.low {
+  color: var(--text-secondary);
+}

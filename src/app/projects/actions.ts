@@ -194,3 +194,26 @@ export async function completeMilestone(milestoneId: string, projectId: string) 
 
   revalidatePath(`/projects/${projectId}`);
 }
+
+export async function updateProjectWarranty(projectId: string, formData: FormData) {
+  const warrantyEndDateStr = formData.get("warrantyEndDate") as string;
+  const freeUpdatesEndDateStr = formData.get("freeUpdatesEndDate") as string;
+  const amcId = formData.get("amcId") as string;
+  
+  let warrantyEndDate = null;
+  if (warrantyEndDateStr) warrantyEndDate = new Date(warrantyEndDateStr);
+  
+  let freeUpdatesEndDate = null;
+  if (freeUpdatesEndDateStr) freeUpdatesEndDate = new Date(freeUpdatesEndDateStr);
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: {
+      warrantyEndDate,
+      freeUpdatesEndDate,
+      amcId: amcId || null,
+    }
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+}
