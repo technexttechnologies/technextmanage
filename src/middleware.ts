@@ -7,11 +7,11 @@ const encodedKey = new TextEncoder().encode(SECRET_KEY);
 
 const publicRoutes = ['/login', '/api/sync/receive-aronium', '/api/sync-enquiries', '/api/cron/reminders'];
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   
-  // Allow public routes
-  if (publicRoutes.includes(path)) {
+  // Allow public routes and public tracking links
+  if (publicRoutes.includes(path) || path.startsWith('/track/')) {
     return NextResponse.next();
   }
 
