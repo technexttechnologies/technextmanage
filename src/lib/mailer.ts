@@ -55,7 +55,7 @@ export async function sendCustomerStatusUpdate(customerEmail: string | null, req
   if (!customerEmail) return { success: false, error: 'No customer email provided' };
   
   const subject = `Update on your ${requestType} - TechNext Technologies`;
-  const trackingUrl = requestId ? `https://technextmanage1.vercel.app/track/${requestId}` : null;
+  const trackingUrl = requestId ? `https://technextmanage.vercel.app/track/${requestId}` : null;
   
   const html = `
     <div style="font-family: 'Inter', Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; margin: 0;">

@@ -54,7 +54,7 @@ export async function createQuotationRequest(formData: FormData) {
     <p><strong>Customer:</strong> ${request.customer.name}</p>
     <p><strong>Service:</strong> ${serviceName}</p>
     <p><strong>Priority:</strong> ${priority}</p>
-    <a href="https://technextmanage1.vercel.app/quotation-requests/${request.id}">View Request</a>
+    <a href="https://technextmanage.vercel.app/quotation-requests/${request.id}">View Request</a>
   `;
   await sendAdminNotification("New Quotation Request Submitted", adminHtml);
 
