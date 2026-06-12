@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { Clock, CheckCircle, XCircle, Key, Settings } from "lucide-react";
 import styles from "./page.module.css";

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import styles from "./page.module.css";
 import { Users, Target, Briefcase, RefreshCw, PhoneCall, CheckSquare } from "lucide-react";

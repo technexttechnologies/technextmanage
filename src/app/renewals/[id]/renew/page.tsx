@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { markRenewed } from "../../actions";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";

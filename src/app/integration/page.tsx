@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Upload, RefreshCw, CheckCircle, Database, AlertCircle, Users, FileSignature, Receipt } from "lucide-react";

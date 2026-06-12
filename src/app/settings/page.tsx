@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { UserPlus, Shield, Trash2, Settings as SettingsIcon } from "lucide-react";
 import styles from "./page.module.css";
