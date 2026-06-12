@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import path from "path";
-import { sendEmail, generateTechNextEmailHtml } from "@/lib/mailer";
+import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 import { revalidatePath } from "next/cache";
 
 export async function sendComposedEmail(formData: FormData) {
@@ -35,7 +35,7 @@ export async function sendComposedEmail(formData: FormData) {
     </div>
   `;
 
-  const htmlBody = generateTechNextEmailHtml(subject, bodyContent);
+  const htmlBody = generateTechnextEmailHtml(subject, bodyContent);
 
   await sendEmail(to, subject, htmlBody, attachments);
   revalidatePath("/email");

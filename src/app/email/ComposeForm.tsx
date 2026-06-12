@@ -119,7 +119,7 @@ export default function ComposeForm({ customers, isConfigured, templates }: any)
           {!isWhatsApp && (
             <div>
               <label style={{display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase'}}>Subject *</label>
-              <input type="text" name="subject" value={subject} onChange={e => setSubject(e.target.value)} required placeholder="e.g. Your Quotation from TechNext"
+              <input type="text" name="subject" value={subject} onChange={e => setSubject(e.target.value)} required placeholder="e.g. Your Quotation from Technext"
                 style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--surface-border)', fontSize: '14px'}} />
             </div>
           )}

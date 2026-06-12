@@ -26,7 +26,7 @@ export default async function IntegrationPage() {
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>Aronium Integration Center</h1>
-          <p className={styles.subtitle}>Manage synchronization between TechNext CRM and Aronium POS.</p>
+          <p className={styles.subtitle}>Manage synchronization between Technext CRM and Aronium POS.</p>
         </div>
         <Link href="/integration/import" className="btn-primary">
           <Upload size={20} />

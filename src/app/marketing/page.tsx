@@ -16,10 +16,16 @@ export default async function MarketingPage() {
           <h1 className={styles.title}>Marketing Campaigns</h1>
           <p className={styles.subtitle}>Create and monitor email marketing campaigns.</p>
         </div>
-        <Link href="/marketing/new" className="btn-primary">
-          <Plus size={20} />
-          <span className={styles.hideMobile}>New Campaign</span>
-        </Link>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Link href="/marketing/templates" className="btn-secondary">
+            <Mail size={20} />
+            <span className={styles.hideMobile}>Templates</span>
+          </Link>
+          <Link href="/marketing/new" className="btn-primary">
+            <Plus size={20} />
+            <span className={styles.hideMobile}>New Campaign</span>
+          </Link>
+        </div>
       </header>
 
       {campaigns.length === 0 ? (

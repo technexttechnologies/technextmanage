@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TechNext Operations",
-  description: "Central Operations Platform for TechNext Technologies",
+  title: "Technext Operations",
+  description: "Central Operations Platform for Technext Technologies",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "TechNext",
+    title: "Technext",
   },
 };
 

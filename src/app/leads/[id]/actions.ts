@@ -43,7 +43,7 @@ export async function convertToCustomer(leadId: string) {
   if (!lead) throw new Error("Lead not found");
   if (lead.status === "CONVERTED") return; // Already converted
 
-  // 1. Create the customer in TechNext CRM
+  // 1. Create the customer in Technext CRM
   const customer = await prisma.customer.create({
     data: {
       name: lead.name,

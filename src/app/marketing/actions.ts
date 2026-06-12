@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { sendEmail, generateTechNextEmailHtml } from "@/lib/mailer";
+import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -69,7 +69,7 @@ export async function launchCampaign(data: FormData) {
     personalizedBody = personalizedBody.replace(/\{\{company\}\}/g, customer.company || "");
 
     // Create the final HTML using the existing mailer
-    const html = generateTechNextEmailHtml(subject, personalizedBody);
+    const html = generateTechnextEmailHtml(subject, personalizedBody);
 
     const result = await sendEmail(customer.email, subject, html);
 

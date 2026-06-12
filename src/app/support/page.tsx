@@ -3,7 +3,7 @@ import SupportForm from "./SupportForm";
 import { HeadphonesIcon } from "lucide-react";
 
 export const metadata = {
-  title: "Support - TechNext Technologies",
+  title: "Support - Technext Technologies",
   description: "Submit a support ticket",
 };
 
@@ -12,8 +12,8 @@ export default function SupportPage() {
     <div className={styles.publicContainer}>
       <header className={styles.publicHeader}>
         <div className={styles.brandName} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TechNext Logo" style={{ height: '32px', width: 'auto' }} />
-          TechNext Support
+          <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TECHNEXT Logo" style={{ height: '32px', width: 'auto' }} />
+          TECHNEXT Support
         </div>
       </header>
 

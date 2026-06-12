@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { sendEmail } from "@/lib/mailer";
 
 export async function submitPublicTicket(formData: FormData) {
   const email = formData.get("email") as string;
@@ -46,6 +47,16 @@ export async function submitPublicTicket(formData: FormData) {
     },
   });
 
+  if (email) {
+    const template = await prisma.messageTemplate.findFirst({ where: { name: "Ticket Created" } });
+    const emailSubject = template?.subject || "Support Ticket Created";
+    let emailBody = template?.body || `Your support ticket regarding "${subject}" has been created successfully.\n\nTicket ID: ${ticket.id}\nWe will get back to you shortly.`;
+    
+    emailBody = emailBody.replace(/\{\{ticket_id\}\}/g, ticket.id).replace(/\{\{subject\}\}/g, subject).replace(/\n/g, '<br/>');
+
+    await sendEmail(email, emailSubject, emailBody);
+  }
+
   // Revalidate internal tickets page
   revalidatePath("/tickets");
   return { success: true, ticketId: ticket.id };
@@ -83,6 +94,16 @@ export async function createInternalTicket(formData: FormData) {
     },
   });
 
+  if (customer?.email) {
+    const template = await prisma.messageTemplate.findFirst({ where: { name: "Ticket Created" } });
+    const emailSubject = template?.subject || "Support Ticket Created";
+    let emailBody = template?.body || `Your support ticket regarding "${subject}" has been created successfully.\n\nTicket ID: ${ticket.id}\nWe will get back to you shortly.`;
+    
+    emailBody = emailBody.replace(/\{\{ticket_id\}\}/g, ticket.id).replace(/\{\{subject\}\}/g, subject).replace(/\n/g, '<br/>');
+
+    await sendEmail(customer.email, emailSubject, emailBody);
+  }
+
   revalidatePath("/tickets");
   return { success: true, ticketId: ticket.id };
 }
@@ -106,10 +127,21 @@ export async function replyToTicket(ticketId: string, formData: FormData) {
   });
 
   // Also update ticket's updatedAt
-  await prisma.supportTicket.update({
+  const ticket = await prisma.supportTicket.update({
     where: { id: ticketId },
     data: { updatedAt: new Date() },
+    include: { customer: true },
   });
+
+  if (senderId && !isInternal && ticket.customer?.email) {
+    const template = await prisma.messageTemplate.findFirst({ where: { name: "Ticket Reply" } });
+    const emailSubject = template?.subject || `Update on your ticket: ${ticket.subject}`;
+    let emailBody = template?.body || `There is a new reply to your ticket (ID: ${ticket.id}):\n\n${message}`;
+    
+    emailBody = emailBody.replace(/\{\{ticket_id\}\}/g, ticket.id).replace(/\{\{message\}\}/g, message).replace(/\n/g, '<br/>');
+
+    await sendEmail(ticket.customer.email, emailSubject, emailBody);
+  }
 
   revalidatePath(`/tickets/${ticketId}`);
   revalidatePath("/tickets");

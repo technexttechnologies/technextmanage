@@ -39,11 +39,11 @@ export default async function Dashboard() {
     <div className={styles.dashboardContainer}>
       <header className={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-          <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TechNext Logo" style={{ width: '140px', height: 'auto' }} />
+          <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TECHNEXT Logo" style={{ width: '140px', height: 'auto' }} />
         </div>
         <div>
           <h1 className={styles.greeting}>Welcome back, Admin 👋</h1>
-          <p className={styles.subtitle}>Here is what's happening at TechNext today.</p>
+          <p className={styles.subtitle}>Here is what's happening at Technext today.</p>
         </div>
       </header>
 

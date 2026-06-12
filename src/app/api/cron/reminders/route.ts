@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendEmail, generateTechNextEmailHtml } from "@/lib/mailer";
+import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 
 export async function GET(req: Request) {
   // Verify Vercel Cron Secret for security
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
         await sendEmail(
           fu.assignedTo.email,
           `⏰ Follow-up Reminder: ${fu.customer.name} — ${fu.type}`,
-          generateTechNextEmailHtml("Employee Reminder", bodyHtml)
+          generateTechnextEmailHtml("Employee Reminder", bodyHtml)
         );
       }
       // Email to customer
@@ -55,8 +55,8 @@ export async function GET(req: Request) {
         `;
         await sendEmail(
           fu.customer.email,
-          `Reminder: Upcoming ${fu.type} with TechNext Technologies`,
-          generateTechNextEmailHtml("Upcoming Appointment", bodyHtml)
+          `Reminder: Upcoming ${fu.type} with Technext Technologies`,
+          generateTechnextEmailHtml("Upcoming Appointment", bodyHtml)
         );
       }
       results.push(`Follow-up reminder: ${fu.customer.name}`);
@@ -89,7 +89,7 @@ export async function GET(req: Request) {
         await sendEmail(
           r.customer.email,
           `⚠️ Renewal Alert: Your ${r.type} expires in ${daysLeft} days`,
-          generateTechNextEmailHtml("Service Expiration Warning", bodyHtml)
+          generateTechnextEmailHtml("Service Expiration Warning", bodyHtml)
         );
         results.push(`Renewal alert: ${r.customer.name} — ${r.type}`);
       }
@@ -103,7 +103,7 @@ export async function GET(req: Request) {
         await sendEmail(
           settings.smtpEmail,
           `🔄 Renewal Expiring: ${r.customer.name} — ${r.type}`,
-          generateTechNextEmailHtml("Action Required", bodyHtml)
+          generateTechnextEmailHtml("Action Required", bodyHtml)
         );
       }
     }
@@ -132,7 +132,7 @@ export async function GET(req: Request) {
         await sendEmail(
           settings.smtpEmail,
           `📋 Quotation Follow-up: ${q.quotationNumber} — ${q.customer.name}`,
-          generateTechNextEmailHtml("Follow-up Reminder", bodyHtml)
+          generateTechnextEmailHtml("Follow-up Reminder", bodyHtml)
         );
         results.push(`Stale quotation: ${q.quotationNumber}`);
       }

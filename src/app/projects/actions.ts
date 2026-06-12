@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { sendEmail, generateTechNextEmailHtml } from "@/lib/mailer";
+import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 
 function formatStatus(status: string) {
   return status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
@@ -34,13 +34,13 @@ async function notifyCustomer(project: any, eventType: string, customMessage: st
     </div>
   `;
 
-  const html = generateTechNextEmailHtml(
+  const html = generateTechnextEmailHtml(
     `Project Update: ${project.name}`,
     bodyContent,
     { text: "Track My Project", url: trackingLink }
   );
 
-  await sendEmail(project.customer.email, `TechNext Update: ${project.name}`, html);
+  await sendEmail(project.customer.email, `Technext Update: ${project.name}`, html);
 }
 
 export async function createProject(formData: FormData) {

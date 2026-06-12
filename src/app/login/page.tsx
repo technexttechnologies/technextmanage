@@ -22,9 +22,9 @@ export default function LoginPage() {
       <div className={styles.card}>
         <div className={styles.header}>
           <div className={styles.logoIcon} style={{ background: 'transparent', boxShadow: 'none', marginBottom: '16px' }}>
-            <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TechNext Logo" style={{ width: '200px', height: 'auto' }} />
+            <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TECHNEXT Logo" style={{ width: '200px', height: 'auto' }} />
           </div>
-          <h1 style={{ display: 'none' }}>TechNext CRM</h1>
+          <h1 style={{ display: 'none' }}>TECHNEXT CRM</h1>
           <p>Please sign in to access your dashboard</p>
         </div>
 

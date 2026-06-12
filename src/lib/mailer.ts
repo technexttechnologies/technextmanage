@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { prisma } from './prisma';
 
-export function generateTechNextEmailHtml(title: string, bodyContent: string, ctaButton?: { text: string, url: string }) {
+export function generateTechnextEmailHtml(title: string, bodyContent: string, ctaButton?: { text: string, url: string }) {
   return `
     <!DOCTYPE html>
     <html>
@@ -30,7 +30,7 @@ export function generateTechNextEmailHtml(title: string, bodyContent: string, ct
         <div class="container">
           <div class="header">
             <div class="logo-box">
-              <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TechNext Logo" style="width: 220px; height: auto; display: block;" />
+              <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TECHNEXT Logo" style="width: 220px; height: auto; display: block;" />
             </div>
             <p class="header-title">${title}</p>
           </div>
@@ -46,7 +46,7 @@ export function generateTechNextEmailHtml(title: string, bodyContent: string, ct
           </div>
           <div class="footer">
             <p style="color: #64748b; font-size: 14px; margin: 0 0 12px 0;">
-              Thank you for partnering with <strong>TechNext Technologies</strong>
+              Thank you for partnering with <strong>Technext Technologies</strong>
             </p>
             <a href="https://technexttechnologies.in" class="website-link">technexttechnologies.in</a>
             <p style="color: #94a3b8; font-size: 12px; margin: 12px 0 0 0;">
@@ -59,6 +59,8 @@ export function generateTechNextEmailHtml(title: string, bodyContent: string, ct
     </html>
   `;
 }
+
+
 
 export async function getTransporter() {
   const settings = await prisma.systemSettings.findFirst();
@@ -84,37 +86,42 @@ export async function sendEmail(to: string, subject: string, html: string, attac
     return { success: false, error: 'SMTP not configured' };
   }
 
+  let finalHtml = html;
+  if (!html.includes('<!DOCTYPE html>')) {
+    finalHtml = generateTechnextEmailHtml(subject, html);
+  }
+
   try {
     const transporter = await getTransporter();
     await transporter.sendMail({
-      from: `"TechNext Technologies" <${settings.smtpEmail}>`,
+      from: `"Technext Technologies" <${settings.smtpEmail}>`,
       to,
       subject,
-      html,
+      html: finalHtml,
       attachments,
     });
 
     await prisma.emailLog.create({
-      data: { to, subject, body: html, status: 'SENT' }
+      data: { to, subject, body: finalHtml, status: 'SENT' }
     });
     return { success: true };
   } catch (error: any) {
     await prisma.emailLog.create({
-      data: { to, subject, body: html, status: 'FAILED', error: error.message }
+      data: { to, subject, body: finalHtml, status: 'FAILED', error: error.message }
     });
     return { success: false, error: error.message };
   }
 }
 
 export async function sendAdminNotification(subject: string, html: string) {
-  const finalHtml = generateTechNextEmailHtml("Admin Notification", html);
+  const finalHtml = generateTechnextEmailHtml("Admin Notification", html);
   return sendEmail('info.technexttech@gmail.com', subject, finalHtml);
 }
 
 export async function sendCustomerStatusUpdate(customerEmail: string | null, requestType: string, status: string, notes?: string | null, pdfUrl?: string | null, requestId?: string) {
   if (!customerEmail) return { success: false, error: 'No customer email provided' };
   
-  const subject = `Update on your ${requestType} - TechNext Technologies`;
+  const subject = `Update on your ${requestType} - Technext Technologies`;
   const trackingUrl = requestId ? `https://technextmanage.vercel.app/track/${requestId}` : null;
   
   const bodyContent = `
@@ -144,7 +151,7 @@ export async function sendCustomerStatusUpdate(customerEmail: string | null, req
     ` : ''}
   `;
   
-  const finalHtml = generateTechNextEmailHtml(
+  const finalHtml = generateTechnextEmailHtml(
     "Status Update", 
     bodyContent, 
     trackingUrl ? { text: "View Live Tracking Page", url: trackingUrl } : undefined
