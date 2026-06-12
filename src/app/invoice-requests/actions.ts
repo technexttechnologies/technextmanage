@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { put } from '@vercel/blob';
+import { uploadToCloudinary } from "@/lib/cloudinaryStorage";
 import { sendAdminNotification, sendCustomerStatusUpdate } from "@/lib/mailer";
 
 export async function createInvoiceRequest(formData: FormData) {
@@ -115,20 +115,22 @@ export async function uploadInvoicePdf(formData: FormData) {
 
   if (!id || !file || !(file instanceof Blob)) throw new Error("Missing file");
 
-  const fileBuffer = await file.arrayBuffer();
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-  const blob = await put(`invoices/${id}_${file.name}`, fileBuffer, { 
-    access: 'public',
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-    contentType: file.type || 'application/pdf'
-  });
+  // Upload to Cloudinary
+  const { secureUrl } = await uploadToCloudinary(
+    `invoice-${id}-${file.name}`,
+    file.type || 'application/pdf',
+    fileBuffer
+  );
 
   const request = await prisma.invoiceRequest.update({
     where: { id },
     data: { 
-      pdfUrl: blob.url,
+      pdfUrl: secureUrl,
       status: "PDF_UPLOADED"
-    }
+    },
+    include: { customer: true }
   });
 
   await prisma.activityLog.create({

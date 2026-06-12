@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { put } from '@vercel/blob';
+import { uploadToCloudinary } from "@/lib/cloudinaryStorage";
 import { sendAdminNotification, sendCustomerStatusUpdate } from "@/lib/mailer";
 
 export async function createQuotationRequest(formData: FormData) {
@@ -125,18 +125,19 @@ export async function uploadQuotationPdf(formData: FormData) {
     throw new Error("Missing file or request ID");
   }
 
-  const fileBuffer = await file.arrayBuffer();
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-  const blob = await put(`quotations/${id}_${file.name}`, fileBuffer, { 
-    access: 'public',
-    token: process.env.BLOB_READ_WRITE_TOKEN,
-    contentType: file.type || 'application/pdf'
-  });
+  // Upload to Cloudinary
+  const { secureUrl } = await uploadToCloudinary(
+    `quotation-${id}-${file.name}`,
+    file.type || 'application/pdf',
+    fileBuffer
+  );
 
   const request = await prisma.quotationRequest.update({
     where: { id },
     data: { 
-      pdfUrl: blob.url,
+      pdfUrl: secureUrl,
       status: "PDF_UPLOADED"
     },
     include: { customer: true }
@@ -151,6 +152,16 @@ export async function uploadQuotationPdf(formData: FormData) {
       details: "Admin uploaded the official quotation PDF."
     }
   });
+
+  // Notify customer with PDF link
+  await sendCustomerStatusUpdate(
+    request.customer.email,
+    "Quotation Request",
+    "PDF_UPLOADED",
+    "Your official quotation PDF is ready. Please review it.",
+    secureUrl,
+    request.id
+  );
 
   revalidatePath(`/quotation-requests/${id}`);
   revalidatePath("/quotation-requests");
