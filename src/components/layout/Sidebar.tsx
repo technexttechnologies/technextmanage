@@ -53,8 +53,14 @@ export default function Sidebar({ user }: { user: any }) {
           <Link href="/projects" className={`${styles.navItem} ${pathname.startsWith('/projects') ? styles.active : ''}`}>
             <Briefcase size={20} /> Projects
           </Link>
+          <Link href="/amc" className={`${styles.navItem} ${pathname.startsWith('/amc') ? styles.active : ''}`}>
+            <RefreshCw size={20} /> AMC Management
+          </Link>
           <Link href="/quotations" className={`${styles.navItem} ${pathname.startsWith('/quotations') ? styles.active : ''}`}>
             <FileSignature size={20} /> Quotations
+          </Link>
+          <Link href="/marketing" className={`${styles.navItem} ${pathname.startsWith('/marketing') ? styles.active : ''}`}>
+            <Target size={20} /> Marketing
           </Link>
         </div>
 
