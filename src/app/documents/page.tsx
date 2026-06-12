@@ -52,7 +52,7 @@ export default async function DocumentsPage() {
                           <FileText size={20} />
                         </div>
                         <div>
-                          <a href={doc.fileUrl} target="_blank" rel="noreferrer" className={styles.fileName}>
+                          <a href={`/api/documents/download/${doc.id}`} target="_blank" rel="noreferrer" className={styles.fileName}>
                             {doc.fileName}
                           </a>
                           <div className={styles.fileMeta}>{doc.mimeType}</div>
@@ -69,8 +69,8 @@ export default async function DocumentsPage() {
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                        <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="btn-secondary" style={{ padding: '6px 12px' }}>
-                          <Download size={14} /> View
+                        <a href={`/api/documents/download/${doc.id}`} target="_blank" rel="noreferrer" className="btn-secondary" style={{ padding: '6px 12px' }}>
+                          <Download size={14} /> Download
                         </a>
                         <form action={deleteDocument} className={styles.deleteForm}>
                           <input type="hidden" name="documentId" value={doc.id} />

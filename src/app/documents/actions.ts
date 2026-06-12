@@ -20,7 +20,7 @@ export async function uploadDocument(formData: FormData) {
 
     // Upload to Vercel Blob
     const blob = await put(file.name, fileBuffer, { 
-      access: 'public',
+      access: 'private',
       token: process.env.BLOB_READ_WRITE_TOKEN,
       contentType: file.type || 'application/octet-stream'
     });
