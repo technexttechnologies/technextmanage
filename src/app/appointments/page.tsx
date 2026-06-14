@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, Search, Calendar as CalendarIcon, Clock, Video, User } from "lucide-react";
+import { AppointmentActionButtons } from "./AppointmentActionButtons";
 
 export default async function AppointmentsPage() {
   const appointments = await prisma.appointment.findMany({
@@ -60,6 +61,9 @@ export default async function AppointmentsPage() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Video size={16} /> {apt.meetingType} {apt.meetLink && <a href={apt.meetLink} target="_blank" rel="noreferrer" style={{ color: '#2563eb', marginLeft: '4px' }}>Link</a>}
+                </div>
+                <div style={{ borderTop: '1px solid #e2e8f0', marginTop: '8px', paddingTop: '16px' }}>
+                  <AppointmentActionButtons appointmentId={apt.id} />
                 </div>
               </div>
             </div>

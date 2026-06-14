@@ -69,23 +69,23 @@ export function generateICS(appointment: {
   return icsString;
 }
 
-export async function sendCalendarInvite(appointment: any, customerEmail: string) {
+export async function sendCalendarInvite(appointment: any, customerEmail: string, isUpdate: boolean = false) {
   const icsContent = generateICS(appointment);
   
   const htmlBody = `
-    <h2>Meeting Scheduled</h2>
+    <h2>${isUpdate ? 'Meeting Updated' : 'Meeting Scheduled'}</h2>
     <p>Hi,</p>
-    <p>Your meeting regarding <strong>${appointment.meetingPurpose}</strong> has been scheduled.</p>
+    <p>Your meeting regarding <strong>${appointment.meetingPurpose}</strong> has been ${isUpdate ? 'updated' : 'scheduled'}.</p>
     <p><strong>Date:</strong> ${new Date(appointment.date).toLocaleDateString()}</p>
     <p><strong>Time:</strong> ${appointment.time}</p>
     <p><strong>Type:</strong> ${appointment.meetingType}</p>
     ${appointment.meetLink ? `<p><strong>Link:</strong> <a href="${appointment.meetLink}">${appointment.meetLink}</a></p>` : ''}
-    <p>Please find the calendar invite attached.</p>
+    <p>Please find the updated calendar invite attached.</p>
   `;
 
   return sendEmail(
     customerEmail,
-    `Meeting Invite: ${appointment.meetingPurpose}`,
+    `${isUpdate ? 'Updated ' : ''}Meeting Invite: ${appointment.meetingPurpose}`,
     htmlBody,
     [
       {
