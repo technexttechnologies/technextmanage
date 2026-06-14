@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import { prisma } from './prisma';
 
 export function generateTechnextEmailHtml(title: string, bodyContent: string, ctaButton?: { text: string, url: string }) {
-  const whatsappNumber = "+919036987452"; // Example TechNext number
+  const whatsappNumber = "+919446540984"; 
   const whatsappMessage = encodeURIComponent("Hello, I would like to know more about your services.");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
@@ -42,10 +42,8 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
         .footer-heading { color: #ffffff; font-size: 14px; font-weight: 600; margin: 0 0 16px 0; letter-spacing: 1px; text-transform: uppercase; }
         .footer-link { color: #cbd5e1; text-decoration: none; font-size: 14px; display: block; margin-bottom: 10px; transition: color 0.2s ease; }
         .footer-link:hover { color: #ffffff; }
-        .social-container { margin-top: 20px; border-top: 1px solid #1e293b; padding-top: 30px; text-align: center; }
-        .social-link { display: inline-block; margin: 0 8px; width: 36px; height: 36px; background-color: #1e293b; border-radius: 50%; line-height: 36px; text-align: center; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; }
         .wa-btn { display: inline-block; background-color: #25D366; color: #ffffff !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-top: 20px; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3); }
-        .copyright { color: #64748b; font-size: 13px; margin: 20px 0 0 0; text-align: center; }
+        .copyright { color: #64748b; font-size: 13px; margin: 20px 0 0 0; text-align: center; border-top: 1px solid #1e293b; padding-top: 20px; }
         
         @media only screen and (max-width: 600px) {
           .wrapper { padding: 20px 10px; }
@@ -86,7 +84,7 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
               <div class="footer-col">
                 <h4 class="footer-heading">Contact Us</h4>
                 <a href="mailto:info.technexttech@gmail.com" class="footer-link">info.technexttech@gmail.com</a>
-                <a href="tel:+919036987452" class="footer-link">+91 9036987452</a>
+                <a href="tel:+919446540984" class="footer-link">+91 9446540984</a>
                 <a href="${whatsappUrl}" class="wa-btn">Chat on WhatsApp</a>
               </div>
               <div class="footer-col" style="max-width: 220px; float: right;">
@@ -98,12 +96,7 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
               </div>
             </div>
             <div style="clear: both;"></div>
-            <div class="social-container">
-              <p style="margin: 0 0 16px 0; font-size: 14px; color: #cbd5e1;">Connect with us</p>
-              <a href="#" class="social-link">In</a>
-              <a href="#" class="social-link">Tw</a>
-              <a href="#" class="social-link">Fb</a>
-              <a href="#" class="social-link">Ig</a>
+            <div style="text-align: center;">
               <p class="copyright">&copy; ${new Date().getFullYear()} technext. All rights reserved.</p>
               <p style="color: #475569; font-size: 11px; margin-top: 12px; line-height: 1.5;">
                 You are receiving this email because you are a valued client or partner of technext. 
