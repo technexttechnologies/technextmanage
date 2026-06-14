@@ -14,6 +14,7 @@
 @media (min-width: 1024px) {
   .mainContent {
     margin-left: 260px; /* Width of the sidebar */
+    width: calc(100% - 260px);
     padding-bottom: 0;
   }
 }
