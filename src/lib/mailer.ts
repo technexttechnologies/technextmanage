@@ -44,7 +44,7 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
           </div>
           <div class="footer">
             <p style="color: #64748b; font-size: 14px; margin: 0 0 12px 0;">
-              Thank you for partnering with <strong style="color: #4f46e5;">Technext Technologies</strong>
+              Thank you for partnering with <strong style="color: #4f46e5;">technext</strong>
             </p>
             <a href="https://technexttechnologies.in" class="website-link">technexttechnologies.in</a>
             <p style="color: #94a3b8; font-size: 12px; margin: 12px 0 0 0;">
@@ -92,7 +92,7 @@ export async function sendEmail(to: string, subject: string, html: string, attac
   try {
     const transporter = await getTransporter();
     await transporter.sendMail({
-      from: `"Technext Technologies" <${settings.smtpEmail}>`,
+      from: `"technext" <${settings.smtpEmail}>`,
       to,
       subject,
       html: finalHtml,

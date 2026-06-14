@@ -49,7 +49,7 @@ export async function createCustomer(formData: FormData) {
         <p style="font-size: 16px; color: #334155; line-height: 1.6;">We are thrilled to connect with you.</p>
         <p style="font-size: 16px; color: #334155; line-height: 1.6;">At Technext Technologies, we specialize in delivering cutting-edge software, IT solutions, and digital growth strategies tailored to your needs. Our team is dedicated to providing you with the highest quality of service and support.</p>
         <p style="font-size: 16px; color: #334155; line-height: 1.6;">If you have any questions, require technical assistance, or wish to explore our services further, please do not hesitate to reach out to us.</p>
-        <p style="font-size: 16px; color: #334155; margin-top: 24px;">Best regards,<br/><strong>The Technext Team</strong></p>
+        <p style="font-size: 16px; color: #334155; margin-top: 24px;">Best regards,<br/><strong>technext</strong></p>
       `;
       
       const html = generateTechnextEmailHtml(

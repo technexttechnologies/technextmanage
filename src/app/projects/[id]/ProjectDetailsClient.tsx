@@ -25,7 +25,7 @@ You can track your project's live status anytime using your secure link:
 ${trackingLink}
 
 Best regards,
-Technext Technologies`;
+technext`;
 
   const copyToClipboard = async () => {
     try {
