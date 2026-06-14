@@ -173,3 +173,59 @@ export async function uploadQuotationPdf(formData: FormData) {
   revalidatePath(`/quotation-requests/${id}`);
   revalidatePath("/quotation-requests");
 }
+
+export async function updateQuotationRequest(formData: FormData) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+
+  const id = formData.get("id") as string;
+  const serviceName = formData.get("serviceName") as string;
+  const requirementDetails = formData.get("requirementDetails") as string;
+  const budget = formData.get("budget") as string;
+  const priority = formData.get("priority") as string;
+
+  await prisma.quotationRequest.update({
+    where: { id },
+    data: {
+      serviceName,
+      requirementDetails,
+      budget: budget || null,
+      priority
+    }
+  });
+
+  revalidatePath("/quotation-requests");
+  revalidatePath(`/quotation-requests/${id}`);
+  redirect(`/quotation-requests/${id}`);
+}
+
+export async function deleteQuotationRequest(id: string) {
+  const session = await getSession();
+  if (!session || (session.role !== "SUPER_ADMIN" && session.role !== "ADMIN")) {
+    throw new Error("Unauthorized to delete");
+  }
+
+  await prisma.quotationRequest.delete({
+    where: { id }
+  });
+
+  revalidatePath("/quotation-requests");
+}
+
+export async function sendQuotationRequestEmail(requestId: string) {
+  const request = await prisma.quotationRequest.findUnique({
+    where: { id: requestId },
+    include: { customer: true }
+  });
+
+  if (!request) throw new Error("Request not found");
+
+  await sendCustomerStatusUpdate(
+    request.customer.email,
+    "Quotation Request",
+    request.status,
+    "We are currently reviewing your quotation request. We will reach out shortly with an official proposal.",
+    null,
+    request.id
+  );
+}

@@ -8,6 +8,7 @@ import styles from "../page.module.css";
 import Link from "next/link";
 import { updateQuotationStatus } from "../actions";
 import QuotationPdfUploader from "@/components/QuotationPdfUploader";
+import { QuotationRequestActionButtons } from "../QuotationRequestActionButtons";
 
 export default async function QuotationRequestDetails({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -41,9 +42,12 @@ export default async function QuotationRequestDetails({ params }: { params: Prom
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <h1 className={styles.title}>Quote Req: #{request.id.slice(-6).toUpperCase()}</h1>
-            <span className={`${styles.statusBadge} ${styles[`status_${request.status}`]}`}>
-              {request.status.replace(/_/g, ' ')}
-            </span>
+            <div className={styles.statusSection}>
+              <span className={`${styles.statusBadge} ${styles[`status_${request.status}`]}`}>
+                {request.status.replace(/_/g, ' ')}
+              </span>
+              {isAdmin && <QuotationRequestActionButtons requestId={request.id} customerEmail={request.customer.email} />}
+            </div>
           </div>
           <p className={styles.subtitle}>Requested by {request.requestedBy.name} for {request.customer.name}</p>
         </div>

@@ -6,6 +6,7 @@ import { FileSignature, Plus, Search, Calendar } from "lucide-react";
 import styles from "./page.module.css";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { QuotationRequestActionButtons } from "./QuotationRequestActionButtons";
 
 export default async function QuotationRequestsPage() {
   const session = await getSession();
@@ -93,9 +94,12 @@ export default async function QuotationRequestsPage() {
                       </div>
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <Link href={`/quotation-requests/${req.id}`} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>
-                        View Details
-                      </Link>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                        <Link href={`/quotation-requests/${req.id}`} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                          View Details
+                        </Link>
+                        {isAdmin && <QuotationRequestActionButtons requestId={req.id} customerEmail={req.customer.email} />}
+                      </div>
                     </td>
                   </tr>
                 ))}
