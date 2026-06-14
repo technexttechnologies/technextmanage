@@ -5,7 +5,7 @@ import { jwtVerify } from 'jose';
 const SECRET_KEY = process.env.JWT_SECRET || 'technext-super-secret-key-2026';
 const encodedKey = new TextEncoder().encode(SECRET_KEY);
 
-const publicRoutes = ['/login', '/api/sync/receive-aronium', '/api/sync-enquiries', '/api/cron/reminders'];
+const publicRoutes = ['/login', '/api/sync/receive-aronium', '/api/sync-enquiries', '/api/cron/reminders', '/support'];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
