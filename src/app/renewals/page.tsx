@@ -107,7 +107,11 @@ export default async function RenewalsPage({
                     <span className={`${styles.typeBadge} ${styles[renewal.type.toLowerCase()] || styles.defaultType}`}>
                       {renewal.type}
                     </span>
-                    <h3>{renewal.customer.name} {renewal.customer.company ? `(${renewal.customer.company})` : ''}</h3>
+                    <Link href={`/customers/${renewal.customer.id}`} style={{ textDecoration: 'none' }}>
+                      <h3 style={{ display: 'inline-block', margin: 0, color: 'var(--brand-primary)' }}>
+                        {renewal.customer.name} {renewal.customer.company ? `(${renewal.customer.company})` : ''}
+                      </h3>
+                    </Link>
                   </div>
                   
                   <div className={styles.statusSection}>

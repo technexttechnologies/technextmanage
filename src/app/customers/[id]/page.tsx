@@ -1,11 +1,14 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Building2, Phone, Mail, MapPin, Edit, FileText, ShoppingCart, RefreshCw, PhoneCall, ShieldCheck, MessageCircle } from "lucide-react";
+import { ArrowLeft, Building2, Phone, Mail, MapPin, Edit, FileText, ShoppingCart, RefreshCw, PhoneCall, ShieldCheck, MessageCircle, Package, Globe, Server } from "lucide-react";
 import { getWhatsAppLink, waTemplates } from "@/lib/whatsappTemplates";
 import styles from "./page.module.css";
 import EditCustomerButton from "./EditCustomerButton";
 import { CustomerActionButtons } from "../CustomerActionButtons";
+import { PackageActionButtons } from "@/app/packages/PackageActionButtons";
+import { DomainActionButtons } from "@/app/domains/DomainActionButtons";
+import { HostingActionButtons } from "@/app/hosting/HostingActionButtons";
 import { redirect } from "next/navigation";
 
 export default async function CustomerDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,7 +23,10 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
       aroniumRefs: { orderBy: { id: 'desc' } },
       quotationRequests: { orderBy: { createdAt: 'desc' } },
       invoiceRequests: { orderBy: { createdAt: 'desc' } },
-      amcs: { orderBy: { startDate: 'desc' } }
+      amcs: { orderBy: { startDate: 'desc' } },
+      packages: { orderBy: { createdAt: 'desc' } },
+      domains: { orderBy: { expiryDate: 'asc' } },
+      hostingAccounts: { orderBy: { renewalDate: 'asc' } }
     }
   });
 
@@ -206,6 +212,85 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
                 ))}
               </div>
             )}
+          </section>
+
+          {/* Service Packages */}
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              <Package size={20} /> Service Packages
+            </h2>
+            {customer.packages.length === 0 ? (
+              <p className={styles.textMuted}>No service packages linked.</p>
+            ) : (
+              <div className={styles.projectGrid}>
+                {customer.packages.map(pkg => (
+                  <div key={pkg.id} className={styles.projectCard}>
+                    <h3>{pkg.packageName}</h3>
+                    <div className={styles.pMeta}>
+                      <span className={styles.pStatus}>{pkg.status}</span>
+                      <span>Type: {pkg.packageType}</span>
+                    </div>
+                    {pkg.renewalDate && <p className={styles.textMuted} style={{marginTop: '8px', fontSize: '14px'}}>Renewal: {pkg.renewalDate.toLocaleDateString()}</p>}
+                    <div style={{marginTop: '12px'}}>
+                      <PackageActionButtons packageId={pkg.id} customerEmail={customer.email} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Link href={`/packages/new?customerId=${customer.id}`} className={styles.linkAction} style={{marginTop: '16px', display: 'inline-block'}}>+ Add Package</Link>
+          </section>
+
+          {/* Domains */}
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              <Globe size={20} /> Domains
+            </h2>
+            {customer.domains.length === 0 ? (
+              <p className={styles.textMuted}>No domains linked.</p>
+            ) : (
+              <div className={styles.projectGrid}>
+                {customer.domains.map(domain => (
+                  <div key={domain.id} className={styles.projectCard}>
+                    <h3>{domain.domainName}</h3>
+                    <div className={styles.pMeta}>
+                      <span className={styles.pStatus}>{domain.status}</span>
+                      <span>Expiry: {domain.expiryDate.toLocaleDateString()}</span>
+                    </div>
+                    <div style={{marginTop: '12px'}}>
+                      <DomainActionButtons domainId={domain.id} customerEmail={customer.email} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Link href={`/domains/new?customerId=${customer.id}`} className={styles.linkAction} style={{marginTop: '16px', display: 'inline-block'}}>+ Add Domain</Link>
+          </section>
+
+          {/* Hosting */}
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              <Server size={20} /> Hosting Accounts
+            </h2>
+            {customer.hostingAccounts.length === 0 ? (
+              <p className={styles.textMuted}>No hosting accounts linked.</p>
+            ) : (
+              <div className={styles.projectGrid}>
+                {customer.hostingAccounts.map(host => (
+                  <div key={host.id} className={styles.projectCard}>
+                    <h3>{host.hostingPlan}</h3>
+                    <div className={styles.pMeta}>
+                      <span className={styles.pStatus}>{host.status}</span>
+                      <span>Renewal: {host.renewalDate.toLocaleDateString()}</span>
+                    </div>
+                    <div style={{marginTop: '12px'}}>
+                      <HostingActionButtons hostingId={host.id} customerEmail={customer.email} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Link href={`/hosting/new?customerId=${customer.id}`} className={styles.linkAction} style={{marginTop: '16px', display: 'inline-block'}}>+ Add Hosting</Link>
           </section>
         </div>
 
