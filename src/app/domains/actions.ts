@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 import { templates } from "@/lib/email-templates";
 
@@ -28,6 +29,15 @@ export async function createDomainRegistration(formData: FormData) {
     status = "EXPIRED";
   } else if (diffDays <= 30) {
     status = "EXPIRING_SOON";
+  }
+
+  // Prevent crashes from duplicate domain names
+  const existingDomain = await prisma.domainRegistration.findUnique({
+    where: { domainName }
+  });
+
+  if (existingDomain) {
+    redirect("/domains?error=duplicate_domain");
   }
 
   const domainRecord = await prisma.domainRegistration.create({
@@ -61,5 +71,6 @@ export async function createDomainRegistration(formData: FormData) {
     await sendEmail(domainRecord.customer.email, `Domain Registered: ${domainRecord.domainName}`, html);
   }
 
+  revalidatePath("/domains");
   redirect("/domains");
 }

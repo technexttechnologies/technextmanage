@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 import { templates } from "@/lib/email-templates";
 
@@ -59,5 +60,6 @@ export async function createHostingAccount(formData: FormData) {
     await sendEmail(hostRecord.customer.email, `Hosting Setup Complete: ${hostRecord.hostingPlan}`, html);
   }
 
+  revalidatePath("/hosting");
   redirect("/hosting");
 }

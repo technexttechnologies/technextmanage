@@ -17,7 +17,7 @@ export default function AppLayoutClient({
   const pathname = usePathname() || "";
 
   // If no session OR if it's a public page, do not show the app layout
-  if (!session || pathname.startsWith("/track") || pathname.startsWith("/support")) {
+  if (!session || pathname.startsWith("/track") || pathname.startsWith("/support") || pathname.startsWith("/portal")) {
     return <main>{children}</main>;
   }
 

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 import { templates } from "@/lib/email-templates";
 
@@ -48,5 +49,6 @@ export async function createServicePackage(formData: FormData) {
     await sendEmail(packageRecord.customer.email, `Package Activated: ${packageRecord.packageName}`, html);
   }
 
+  revalidatePath("/packages");
   redirect("/packages");
 }
