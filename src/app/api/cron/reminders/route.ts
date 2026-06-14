@@ -97,11 +97,19 @@ export async function GET(req: Request) {
         
         let subject = emailTemplate?.subject || `⚠️ Renewal Alert: Your ${r.type} expires in ${daysLeft} days`;
         let bodyHtml = emailTemplate?.body || `
-          <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Hello {{customer_name}},</h2>
-          <p style="font-size: 16px;">Your <strong>{{renewal_type}}</strong> service is expiring on <strong>{{expiry_date}}</strong> ({{days_left}} days from now).</p>
-          <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 1px solid #fecaca; border-left: 4px solid #ef4444; border-radius: 8px; padding: 20px; margin: 30px 0;">
-            <p style="margin: 0; color: #991b1b; font-size: 16px; font-weight: 500;">Please contact us to renew your service and avoid any disruption.</p>
+          <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Action Required: Service Renewal</h2>
+          <p style="font-size: 16px; color: #334155; line-height: 1.6;">Hello <strong>{{customer_name}}</strong>,</p>
+          <p style="font-size: 16px; color: #334155; line-height: 1.6;">We hope you are enjoying your services with Technext Technologies. This is a gentle reminder that your <strong>{{renewal_type}}</strong> is scheduled to expire in <strong>{{days_left}} days</strong>.</p>
+          
+          <div style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 30px 0; display: flex; align-items: center; justify-content: center; gap: 16px;">
+            <div style="text-align: center;">
+              <p style="margin: 0; font-size: 14px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Expiration Date</p>
+              <p style="margin: 8px 0 0 0; font-size: 24px; color: #0f172a; font-weight: 700;">{{expiry_date}}</p>
+            </div>
           </div>
+
+          <p style="font-size: 16px; color: #334155; line-height: 1.6;">To ensure uninterrupted access to your services, please reply to this email or contact our support team at your earliest convenience to process your renewal.</p>
+          <p style="font-size: 16px; color: #334155; margin-top: 30px;">Best regards,<br/><strong>technext</strong></p>
         `;
 
         // Replace variables
