@@ -96,23 +96,39 @@ async function pullFromCloud() {
   const db = new sqlite3.Database(ARONIUM_DB_PATH, sqlite3.OPEN_READWRITE);
   const confirmations = [];
   
-  for (const cust of pendingCustomers) {
+    for (const cust of pendingCustomers) {
     try {
-      const insertId = await new Promise((resolve, reject) => {
-        db.run(
-          `INSERT INTO Customer (Name, Email, PhoneNumber, IsCustomer, IsSupplier) VALUES (?, ?, ?, 1, 0)`,
-          [cust.name, cust.email || null, cust.phone || null],
-          function(err) {
-            if (err) reject(err);
-            else resolve(this.lastID);
-          }
-        );
-      });
-      
-      console.log(`   -> Added "${cust.name}" to Aronium POS with ID ${insertId}`);
-      confirmations.push({ crmId: cust.id, aroniumId: insertId });
+      if (cust.aroniumId) {
+        // Update existing customer in Aronium
+        await new Promise((resolve, reject) => {
+          db.run(
+            `UPDATE Customer SET Name = ?, Email = ?, PhoneNumber = ? WHERE Id = ?`,
+            [cust.name, cust.email || null, cust.phone || null, cust.aroniumId],
+            function(err) {
+              if (err) reject(err);
+              else resolve(this.changes);
+            }
+          );
+        });
+        console.log(`   -> Updated "${cust.name}" in Aronium POS (ID: ${cust.aroniumId})`);
+        confirmations.push({ crmId: cust.id, aroniumId: cust.aroniumId });
+      } else {
+        // Insert new customer into Aronium
+        const insertId = await new Promise((resolve, reject) => {
+          db.run(
+            `INSERT INTO Customer (Name, Email, PhoneNumber, IsCustomer, IsSupplier) VALUES (?, ?, ?, 1, 0)`,
+            [cust.name, cust.email || null, cust.phone || null],
+            function(err) {
+              if (err) reject(err);
+              else resolve(this.lastID);
+            }
+          );
+        });
+        console.log(`   -> Added "${cust.name}" to Aronium POS with ID ${insertId}`);
+        confirmations.push({ crmId: cust.id, aroniumId: insertId });
+      }
     } catch (err) {
-      console.error(`   -> Failed to add "${cust.name}":`, err.message);
+      console.error(`   -> Failed to process "${cust.name}":`, err.message);
     }
   }
   

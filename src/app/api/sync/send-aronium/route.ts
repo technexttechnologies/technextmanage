@@ -11,18 +11,27 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Find all customers created in CRM that don't have an aroniumId yet
-    // Skip customers without a name
+    // Find all customers created in CRM that don't have an aroniumId yet,
+    // OR customers whose updatedAt is greater than their lastSyncDate
     const pendingCustomers = await prisma.customer.findMany({
       where: {
-        aroniumId: null,
         name: { not: "" },
+        OR: [
+          { aroniumId: null },
+          {
+            AND: [
+              { lastSyncDate: { not: null } },
+              { updatedAt: { gt: prisma.customer.fields.lastSyncDate } }
+            ]
+          }
+        ]
       },
       select: {
         id: true,
         name: true,
         phone: true,
         email: true,
+        aroniumId: true,
       }
     });
 

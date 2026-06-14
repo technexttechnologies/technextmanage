@@ -42,6 +42,9 @@ export async function POST(req: Request) {
         await prisma.customer.update({
           where: { id: existingCustomer.id },
           data: {
+            name: name,
+            phone: row.PhoneNumber || "0000000000",
+            email: row.Email || null,
             aroniumId: aroniumId,
             syncStatus: "SYNCED",
             lastSyncDate: new Date()
