@@ -65,5 +65,10 @@ export async function createCustomer(formData: FormData) {
     }
   }
 
-  redirect("/customers");
+  let redirectUrl = "/customers";
+  if (phone) {
+    redirectUrl += `?wa_welcome=1&wa_phone=${encodeURIComponent(phone)}&wa_name=${encodeURIComponent(name)}`;
+  }
+  
+  redirect(redirectUrl);
 }

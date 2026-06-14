@@ -2,15 +2,19 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, Search, Phone, Mail, Building2, UserCircle } from "lucide-react";
+import { WhatsAppWelcomeTrigger } from "./WhatsAppWelcomeTrigger";
 import styles from "./page.module.css";
 
-export default async function CustomersPage() {
+export default async function CustomersPage({ searchParams }: { searchParams: { wa_welcome?: string, wa_phone?: string, wa_name?: string } }) {
   const customers = await prisma.customer.findMany({
     orderBy: { name: 'asc' }
   });
 
   return (
     <div className={styles.container}>
+      {searchParams?.wa_welcome === "1" && searchParams.wa_phone && (
+        <WhatsAppWelcomeTrigger phone={searchParams.wa_phone} name={searchParams.wa_name || ""} />
+      )}
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>Customers</h1>
