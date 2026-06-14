@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
+export const maxDuration = 60; // Max execution time for Vercel Hobby tier
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {

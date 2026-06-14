@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // Max execution time for Vercel Hobby tier
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
