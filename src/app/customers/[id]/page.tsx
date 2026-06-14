@@ -89,6 +89,11 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
               </div>
               <div className={styles.profileInfo}>
                 <h1 className={styles.name}>{customer.name}</h1>
+                <div style={{ marginBottom: '8px' }}>
+                  <span style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '4px 8px', borderRadius: '4px', fontSize: '13px', fontWeight: 'bold' }}>
+                    TN-{customer.customerNumber}
+                  </span>
+                </div>
                 <span className={`${styles.statusBadge} ${styles[customer.status.toLowerCase()] || styles.default}`}>
                   {customer.status}
                 </span>

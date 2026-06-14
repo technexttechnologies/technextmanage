@@ -55,7 +55,10 @@ export default async function CustomersPage({ searchParams }: { searchParams: { 
                     {customer.name.charAt(0).toUpperCase()}
                   </div>
                   <div className={styles.cardInfo}>
-                    <h3>{customer.name}</h3>
+                    <h3>
+                      {customer.name} 
+                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', marginLeft: '8px' }}>TN-{customer.customerNumber}</span>
+                    </h3>
                     {customer.company && (
                       <p className={styles.company}>
                         <Building2 size={14} /> {customer.company}

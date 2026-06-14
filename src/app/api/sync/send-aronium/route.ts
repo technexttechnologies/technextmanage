@@ -32,10 +32,16 @@ export async function GET(req: Request) {
         phone: true,
         email: true,
         aroniumId: true,
+        customerNumber: true,
       }
     });
 
-    return NextResponse.json({ success: true, customers: pendingCustomers });
+    const mappedCustomers = pendingCustomers.map(c => ({
+      ...c,
+      code: `TN-${c.customerNumber}`
+    }));
+
+    return NextResponse.json({ success: true, customers: mappedCustomers });
   } catch (error: any) {
     console.error("Send to Aronium Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -102,8 +102,8 @@ async function pullFromCloud() {
         // Update existing customer in Aronium
         await new Promise((resolve, reject) => {
           db.run(
-            `UPDATE Customer SET Name = ?, Email = ?, PhoneNumber = ? WHERE Id = ?`,
-            [cust.name, cust.email || null, cust.phone || null, cust.aroniumId],
+            `UPDATE Customer SET Name = ?, Email = ?, PhoneNumber = ?, Code = ? WHERE Id = ?`,
+            [cust.name, cust.email || null, cust.phone || null, cust.code, cust.aroniumId],
             function(err) {
               if (err) reject(err);
               else resolve(this.changes);
@@ -116,8 +116,8 @@ async function pullFromCloud() {
         // Insert new customer into Aronium
         const insertId = await new Promise((resolve, reject) => {
           db.run(
-            `INSERT INTO Customer (Name, Email, PhoneNumber, IsCustomer, IsSupplier) VALUES (?, ?, ?, 1, 0)`,
-            [cust.name, cust.email || null, cust.phone || null],
+            `INSERT INTO Customer (Name, Email, PhoneNumber, Code, IsCustomer, IsSupplier) VALUES (?, ?, ?, ?, 1, 0)`,
+            [cust.name, cust.email || null, cust.phone || null, cust.code],
             function(err) {
               if (err) reject(err);
               else resolve(this.lastID);
