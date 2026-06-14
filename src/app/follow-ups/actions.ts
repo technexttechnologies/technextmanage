@@ -32,6 +32,30 @@ export async function createFollowUp(formData: FormData) {
     }
   });
 
+  const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+  if (customer?.email) {
+    const { templates } = await import("@/lib/email-templates");
+    const { generateTechnextEmailHtml, sendEmail } = await import("@/lib/mailer");
+
+    if (type === "MEETING") {
+      const emailHtml = generateTechnextEmailHtml(
+        "Meeting Confirmed",
+        templates.appointmentConfirmation({
+          name: customer.name,
+          dateTime: new Date(dateStr).toLocaleString(),
+          type: "Discovery Call / Project Discussion"
+        })
+      );
+      await sendEmail(customer.email, "Meeting Confirmation - TechNext", emailHtml);
+    } else if (type === "EMAIL") {
+      const emailHtml = generateTechnextEmailHtml(
+        "Checking in",
+        templates.followUpSequence({ name: customer.name })
+      );
+      await sendEmail(customer.email, "Quick check-in from TechNext", emailHtml);
+    }
+  }
+
   redirect("/follow-ups");
 }
 

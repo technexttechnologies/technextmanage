@@ -90,15 +90,30 @@ export async function updateInvoiceStatus(formData: FormData) {
     }
   });
 
-  // Always send customer status update when an admin changes the status
-  await sendCustomerStatusUpdate(
-    request.customer.email, 
-    "Invoice", 
-    status, 
-    adminNotes, 
-    request.pdfUrl,
-    request.id
-  );
+  // Send payment confirmation if PAID
+  if (status === "PAID" && request.customer.email) {
+    const { templates } = await import("@/lib/email-templates");
+    const { generateTechnextEmailHtml, sendEmail } = await import("@/lib/mailer");
+    const emailHtml = generateTechnextEmailHtml(
+      "Payment Received",
+      templates.paymentConfirmation({
+        receiptNo: `REC-${request.id.substring(0, 8)}`,
+        amount: request.amountRequested,
+        date: new Date().toLocaleDateString()
+      })
+    );
+    await sendEmail(request.customer.email, "Payment Confirmation - TechNext", emailHtml);
+  } else {
+    // Always send customer status update when an admin changes the status
+    await sendCustomerStatusUpdate(
+      request.customer.email, 
+      "Invoice", 
+      status, 
+      adminNotes, 
+      request.pdfUrl,
+      request.id
+    );
+  }
 
   revalidatePath(`/invoice-requests/${id}`);
   revalidatePath("/invoice-requests");
@@ -142,6 +157,24 @@ export async function uploadInvoicePdf(formData: FormData) {
       details: "Admin uploaded the official invoice PDF."
     }
   });
+
+  // Notify customer with PDF link using premium template
+  const { templates } = await import("@/lib/email-templates");
+  const { generateTechnextEmailHtml, sendEmail } = await import("@/lib/mailer");
+  
+  if (request.customer.email) {
+    const emailHtml = generateTechnextEmailHtml(
+      "Your Invoice is Ready",
+      templates.invoiceEmail({
+        customerName: request.customer.name,
+        invoiceNumber: request.aroniumInvoiceNo || `INV-${request.id.substring(0, 8)}`,
+        amount: request.amountRequested,
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString() // Example: 7 days due
+      }),
+      { text: "Download Invoice PDF", url: secureUrl }
+    );
+    await sendEmail(request.customer.email, `Invoice #${request.aroniumInvoiceNo || request.id.substring(0, 8)} from TechNext`, emailHtml);
+  }
 
   revalidatePath(`/invoice-requests/${id}`);
   revalidatePath("/invoice-requests");

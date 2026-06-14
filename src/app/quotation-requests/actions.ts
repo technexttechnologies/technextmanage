@@ -153,15 +153,22 @@ export async function uploadQuotationPdf(formData: FormData) {
     }
   });
 
-  // Notify customer with PDF link
-  await sendCustomerStatusUpdate(
-    request.customer.email,
-    "Quotation Request",
-    "PDF_UPLOADED",
-    "Your official quotation PDF is ready. Please review it.",
-    secureUrl,
-    request.id
-  );
+  // Notify customer with PDF link using premium template
+  const { templates } = await import("@/lib/email-templates");
+  const { generateTechnextEmailHtml, sendEmail } = await import("@/lib/mailer");
+  
+  if (request.customer.email) {
+    const emailHtml = generateTechnextEmailHtml(
+      "Your Quotation is Ready",
+      templates.quotationEmail({
+        customerName: request.customer.name,
+        quotationNumber: request.aroniumQuotationNo || `REQ-${request.id.substring(0, 8)}`,
+        totalAmount: request.budget || 0
+      }),
+      { text: "Download Quotation PDF", url: secureUrl }
+    );
+    await sendEmail(request.customer.email, "Your Official Quotation from TechNext", emailHtml);
+  }
 
   revalidatePath(`/quotation-requests/${id}`);
   revalidatePath("/quotation-requests");

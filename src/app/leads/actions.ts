@@ -24,7 +24,7 @@ export async function createLead(formData: FormData) {
   const source = formData.get("source") as string;
   const notes = formData.get("notes") as string;
 
-  await prisma.lead.create({
+  const newLead = await prisma.lead.create({
     data: {
       name,
       company,
@@ -36,6 +36,16 @@ export async function createLead(formData: FormData) {
       assignedToId: adminUser.id,
     }
   });
+
+  if (email) {
+    const { templates } = await import("@/lib/email-templates");
+    const { generateTechnextEmailHtml, sendEmail } = await import("@/lib/mailer");
+    const emailHtml = generateTechnextEmailHtml(
+      "Thank you for reaching out!",
+      templates.leadAcknowledgement({ name: newLead.name })
+    );
+    await sendEmail(email, "We've received your enquiry - TechNext", emailHtml);
+  }
 
   redirect("/leads");
 }

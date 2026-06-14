@@ -13,26 +13,24 @@ async function notifyCustomer(project: any, eventType: string, customMessage: st
   if (!project.customer?.email) return;
 
   const trackingLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/track/${project.id}`;
+  const { templates } = await import("@/lib/email-templates");
   
-  const bodyContent = `
-    <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Hello ${project.customer.name},</h2>
-    <p style="font-size: 16px;">${customMessage}</p>
-    
-    <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 30px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-      <h3 style="margin-top: 0; color: #1e293b; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px;">Current Status</h3>
-      <p style="margin: 8px 0 0 0; font-size: 20px; font-weight: 700; color: #2563eb;">${formatStatus(project.status)}</p>
-      
-      <div style="margin-top: 20px;">
-        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; font-weight: 600; color: #475569;">
-          <span>Progress</span>
-          <span>${project.progress}%</span>
-        </div>
-        <div style="background-color: #e2e8f0; border-radius: 4px; height: 8px; width: 100%; overflow: hidden;">
-          <div style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); width: ${project.progress}%; height: 100%; border-radius: 4px;"></div>
-        </div>
-      </div>
-    </div>
-  `;
+  let bodyContent = "";
+  if (eventType === "CREATED") {
+    bodyContent = templates.projectKickoff({ 
+      name: project.name, 
+      managerName: "TechNext Projects Team", 
+      managerEmail: "info.technexttech@gmail.com" 
+    });
+  } else if (eventType === "DELIVERED") {
+    bodyContent = templates.projectCompletion({ name: project.name });
+  } else {
+    bodyContent = templates.projectProgressUpdate({ 
+      name: project.name, 
+      progress: project.progress || 0, 
+      completedTasks: [customMessage] 
+    });
+  }
 
   const html = generateTechnextEmailHtml(
     `Project Update: ${project.name}`,

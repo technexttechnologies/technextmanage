@@ -77,6 +77,15 @@ export async function syncEnquiriesFromSheet() {
         );
       }
       
+      // Send Acknowledgement to Lead
+      if (newLead.email) {
+        await sendEmail(
+          newLead.email,
+          "We've received your enquiry - TechNext",
+          generateTechnextEmailHtml("Thank you for reaching out!", templates.leadAcknowledgement({ name: newLead.name }))
+        );
+      }
+      
       added++;
     }
   }
