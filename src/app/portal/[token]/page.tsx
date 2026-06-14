@@ -8,7 +8,9 @@ import {
   Package, 
   Calendar,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  FileSignature,
+  FileText
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -22,6 +24,8 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
       hostingAccounts: true,
       packages: true,
       projects: true,
+      quotations: { orderBy: { date: 'desc' } },
+      invoiceRequests: { orderBy: { createdAt: 'desc' } }
     }
   });
 
@@ -167,6 +171,62 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                       <div style={{ width: '100%', backgroundColor: 'var(--surface-border)', height: '8px', borderRadius: '4px', marginTop: '8px' }}>
                         <div style={{ width: `${project.progress}%`, backgroundColor: 'var(--brand-accent)', height: '100%', borderRadius: '4px' }}></div>
                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Quotations */}
+          <div style={{ backgroundColor: 'var(--surface-card)', padding: '24px', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', color: 'var(--brand-primary)' }}>
+              <FileSignature size={24} />
+              <h2 style={{ fontSize: '20px', margin: 0 }}>Quotations</h2>
+            </div>
+            {customer.quotations.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)' }}>No quotations available.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {customer.quotations.map(quote => (
+                  <div key={quote.id} style={{ border: '1px solid var(--surface-border)', padding: '16px', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '16px' }}>{quote.quotationNumber || `QUOTE-${quote.id.slice(-6).toUpperCase()}`}</strong>
+                      <span style={{ backgroundColor: 'var(--color-info-bg)', color: 'var(--color-info)', padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                        {quote.status}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                      <p style={{ margin: '4px 0' }}>Amount: ₹{quote.totalAmount.toFixed(2)}</p>
+                      <p style={{ margin: '4px 0' }}>Date: {format(new Date(quote.date), 'MMM dd, yyyy')}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Invoices */}
+          <div style={{ backgroundColor: 'var(--surface-card)', padding: '24px', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', color: 'var(--brand-primary)' }}>
+              <FileText size={24} />
+              <h2 style={{ fontSize: '20px', margin: 0 }}>Invoices</h2>
+            </div>
+            {customer.invoiceRequests.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)' }}>No invoices available.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {customer.invoiceRequests.map(invoice => (
+                  <div key={invoice.id} style={{ border: '1px solid var(--surface-border)', padding: '16px', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '16px' }}>{invoice.aroniumInvoiceNo || `INV-${invoice.id.slice(-6).toUpperCase()}`}</strong>
+                      <span style={{ backgroundColor: invoice.status === 'PAID' ? 'var(--color-success-bg)' : 'var(--color-warning-bg)', color: invoice.status === 'PAID' ? 'var(--color-success)' : 'var(--color-warning)', padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                        {invoice.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                      <p style={{ margin: '4px 0' }}>Amount: ₹{invoice.amountRequested.toFixed(2)}</p>
+                      <p style={{ margin: '4px 0' }}>Date: {format(new Date(invoice.createdAt), 'MMM dd, yyyy')}</p>
                     </div>
                   </div>
                 ))}
