@@ -11,14 +11,18 @@ export async function createQuotation(formData: FormData) {
   const customerId = formData.get("customerId") as string;
   const quotationNumber = formData.get("quotationNumber") as string;
   const dateStr = formData.get("date") as string;
-  const totalAmountStr = formData.get("totalAmount") as string;
+  const subtotalStr = formData.get("subtotal") as string;
   const status = formData.get("status") as string;
   const notes = formData.get("notes") as string;
   const file = formData.get("pdfFile") as File | null;
 
-  if (!customerId || !quotationNumber || !dateStr || !totalAmountStr) {
+  if (!customerId || !quotationNumber || !dateStr || !subtotalStr) {
     throw new Error("Missing required fields");
   }
+
+  const subtotal = parseFloat(subtotalStr);
+  const gstPercentage = 18;
+  const totalAmount = parseFloat((subtotal * (1 + gstPercentage / 100)).toFixed(2));
 
   let pdfUrl = null;
 
@@ -45,7 +49,9 @@ export async function createQuotation(formData: FormData) {
       customerId,
       quotationNumber,
       date: new Date(dateStr),
-      totalAmount: parseFloat(totalAmountStr),
+      subtotal,
+      gstPercentage,
+      totalAmount,
       status: status || "DRAFT",
       notes,
       pdfUrl

@@ -37,6 +37,16 @@ export async function createLead(formData: FormData) {
     }
   });
 
+  await prisma.inAppNotification.create({
+    data: {
+      userId: adminUser.id,
+      title: "New Lead Created",
+      message: `A new lead (${name}) has been created from ${source}.`,
+      type: "INFO",
+      link: `/leads/${newLead.id}`
+    }
+  });
+
   if (email) {
     const { templates } = await import("@/lib/email-templates");
     const { generateTechnextEmailHtml, sendEmail } = await import("@/lib/mailer");

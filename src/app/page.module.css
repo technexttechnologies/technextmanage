@@ -161,6 +161,98 @@
   border: 1px dashed var(--surface-border);
 }
 
+.analyticsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+}
+
+.chartCard {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.chartCard h3 {
+  font-size: 16px;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-4);
+}
+
+.barChart {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 200px;
+  padding-top: 20px;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.barCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.barFill {
+  width: 100%;
+  background: linear-gradient(180deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.5s ease;
+}
+
+.barLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.pipelineChart {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.pipelineRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pipelineLabel {
+  width: 80px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.pipelineTrack {
+  flex: 1;
+  height: 12px;
+  background-color: var(--surface-background);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.pipelineFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--color-success) 0%, #10B981 100%);
+}
+
+.pipelineValue {
+  width: 40px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   .dashboardContainer {
     padding: var(--spacing-4);

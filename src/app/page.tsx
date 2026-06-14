@@ -35,6 +35,26 @@ export default async function Dashboard() {
     prisma.task.count({ where: { status: "PENDING" } })
   ]);
 
+  // Mock data for 6 months revenue
+  const revenueData = [
+    { month: "Jan", amount: 150000 },
+    { month: "Feb", amount: 220000 },
+    { month: "Mar", amount: 180000 },
+    { month: "Apr", amount: 350000 },
+    { month: "May", amount: 410000 },
+    { month: "Jun", amount: 290000 },
+  ];
+  const maxRev = Math.max(...revenueData.map(d => d.amount));
+
+  // Pipeline Data
+  const leadPipeline = [
+    { stage: "New", count: 45, max: 50 },
+    { stage: "Contacted", count: 28, max: 50 },
+    { stage: "Proposal", count: 15, max: 50 },
+    { stage: "Negotiation", count: 8, max: 50 },
+    { stage: "Won", count: 22, max: 50 },
+  ];
+
   return (
     <div className={styles.dashboardContainer}>
       <header className={styles.header}>
@@ -100,6 +120,43 @@ export default async function Dashboard() {
           </div>
           <p>You have {upcomingRenewals} services expiring in the next 30 days.</p>
           <Link href="/renewals" className="btn-primary" style={{marginTop: '12px'}}>View Renewals</Link>
+        </div>
+      </div>
+
+      {/* Analytics Charts */}
+      <div className={styles.analyticsGrid}>
+        <div className={styles.chartCard}>
+          <h3>Revenue Overview (Last 6 Months)</h3>
+          <div className={styles.barChart}>
+            {revenueData.map((data, idx) => (
+              <div key={idx} className={styles.barCol}>
+                <div 
+                  className={styles.barFill} 
+                  style={{ height: `${(data.amount / maxRev) * 100}%` }}
+                  title={`₹${data.amount.toLocaleString()}`}
+                ></div>
+                <span className={styles.barLabel}>{data.month}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.chartCard}>
+          <h3>Lead Conversion Pipeline</h3>
+          <div className={styles.pipelineChart}>
+            {leadPipeline.map((stage, idx) => (
+              <div key={idx} className={styles.pipelineRow}>
+                <span className={styles.pipelineLabel}>{stage.stage}</span>
+                <div className={styles.pipelineTrack}>
+                  <div 
+                    className={styles.pipelineFill} 
+                    style={{ width: `${(stage.count / stage.max) * 100}%` }}
+                  ></div>
+                </div>
+                <span className={styles.pipelineValue}>{stage.count}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

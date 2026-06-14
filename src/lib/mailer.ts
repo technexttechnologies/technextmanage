@@ -87,12 +87,12 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
                 <a href="tel:+919446540984" class="footer-link">+91 9446540984</a>
                 <a href="${whatsappUrl}" class="wa-btn">Chat on WhatsApp</a>
               </div>
-              <div class="footer-col" style="max-width: 220px; float: right;">
+              <div class="footer-col" style="vertical-align: top;">
                 <h4 class="footer-heading">Services</h4>
-                <a href="https://technexttechnologies.com" class="footer-link">Custom Software</a>
-                <a href="https://technexttechnologies.com" class="footer-link">Mobile Apps</a>
-                <a href="https://technexttechnologies.com" class="footer-link">Cloud Infrastructure</a>
-                <a href="https://technexttechnologies.com" class="footer-link">IT Consulting</a>
+                <a href="https://technexttechnologies.in" class="footer-link">Custom Software</a>
+                <a href="https://technexttechnologies.in" class="footer-link">Mobile Apps</a>
+                <a href="https://technexttechnologies.in" class="footer-link">Cloud Infrastructure</a>
+                <a href="https://technexttechnologies.in" class="footer-link">IT Consulting</a>
               </div>
             </div>
             <div style="clear: both;"></div>

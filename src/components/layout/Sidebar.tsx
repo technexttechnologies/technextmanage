@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
+import NotificationBell from "./NotificationBell";
 
 export default function Sidebar({ user }: { user: any }) {
   const pathname = usePathname() || "";
@@ -134,11 +135,14 @@ export default function Sidebar({ user }: { user: any }) {
             <p className={styles.userRole}>{user?.role || "Staff"}</p>
           </div>
         </div>
-        <form action={logout}>
-          <button type="submit" style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '8px' }} title="Log out">
-            <LogOut size={20} />
-          </button>
-        </form>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <NotificationBell />
+          <form action={logout}>
+            <button type="submit" style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '8px' }} title="Log out">
+              <LogOut size={20} />
+            </button>
+          </form>
+        </div>
       </div>
     </aside>
     </>

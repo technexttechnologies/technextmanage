@@ -76,9 +76,20 @@ export default async function InvoiceRequestDetails({ params }: { params: Promis
                 </div>
               </div>
               <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
-                <label>Requested Amount</label>
-                <div style={{ padding: '10px', background: 'var(--surface-background)', borderRadius: 'var(--radius-md)', fontWeight: 700, fontSize: '18px', color: '#166534' }}>
-                  ₹{request.amountRequested.toFixed(2)}
+                <label>Amount Details</label>
+                <div style={{ padding: '16px', background: 'var(--surface-background)', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Subtotal:</span>
+                    <span style={{ fontWeight: 500 }}>₹{request.subtotal?.toFixed(2) || "0.00"}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>GST ({request.gstPercentage || 18}%):</span>
+                    <span style={{ fontWeight: 500 }}>₹{((request.subtotal || 0) * ((request.gstPercentage || 18) / 100)).toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--surface-border)', paddingTop: '8px', marginTop: '4px' }}>
+                    <span style={{ fontWeight: 600 }}>Total Amount:</span>
+                    <span style={{ fontWeight: 700, fontSize: '18px', color: '#166534' }}>₹{request.amountRequested.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
               <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>

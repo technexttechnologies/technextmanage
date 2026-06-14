@@ -97,6 +97,10 @@ export default async function QuotationsPage({
 
               <div className={styles.cardBody}>
                 <p><strong>Customer:</strong> {quote.customer.name} {quote.customer.company ? `(${quote.customer.company})` : ''}</p>
+                <div style={{ display: 'flex', gap: '16px', marginTop: '8px', marginBottom: '8px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                  <span>Subtotal: ₹{quote.subtotal?.toFixed(2) || "0.00"}</span>
+                  <span>GST ({quote.gstPercentage || 18}%): ₹{((quote.subtotal || 0) * ((quote.gstPercentage || 18) / 100)).toFixed(2)}</span>
+                </div>
                 {quote.notes && <p className={styles.notes}>{quote.notes}</p>}
                 
                 {quote.pdfUrl && (

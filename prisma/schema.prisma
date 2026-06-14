@@ -32,6 +32,12 @@ model User {
   projectNotes      ProjectNote[]
   assignedTickets   SupportTicket[]    @relation("AssignedTickets")
   ticketMessages    TicketMessage[]
+  departmentId      String?
+  department        Department?        @relation(fields: [departmentId], references: [id])
+  attendances       Attendance[]
+  leaveRequests     LeaveRequest[]
+  notifications     InAppNotification[]
+  resetTokens       PasswordResetToken[]
 }
 
 model Customer {
@@ -194,6 +200,8 @@ model Quotation {
   customer        Customer @relation(fields: [customerId], references: [id])
   date            DateTime
   totalAmount     Float
+  subtotal        Float    @default(0)
+  gstPercentage   Float    @default(18)
   status          String   @default("DRAFT") // DRAFT, SENT, APPROVED, REJECTED, CONVERTED
   notes           String?
   pdfUrl          String? // For uploaded PDFs
@@ -268,6 +276,8 @@ model QuotationRequest {
   serviceName        String
   requirementDetails String   @db.Text
   budget             String?
+  subtotal           Float    @default(0)
+  gstPercentage      Float    @default(18)
   priority           String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
   status             String   @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, QUOTATION_GENERATED, PDF_UPLOADED, SENT_TO_CUSTOMER, ACCEPTED, REJECTED
   pdfUrl             String?
@@ -288,6 +298,8 @@ model InvoiceRequest {
   projectId        String?
   project          Project? @relation(fields: [projectId], references: [id])
   amountRequested  Float
+  subtotal         Float    @default(0)
+  gstPercentage    Float    @default(18)
   notes            String?  @db.Text
   status           String   @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, INVOICE_GENERATED, PDF_UPLOADED, SENT_TO_CUSTOMER, PAID, CANCELLED
   pdfUrl           String?
@@ -380,5 +392,63 @@ model CampaignLog {
   status      String   // SENT, FAILED
   error       String?
   sentAt      DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  clockIn   DateTime
+  clockOut  DateTime?
+  status    String   @default("PRESENT") // PRESENT, LATE, HALF_DAY
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+}
+
+model LeaveRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // SICK, CASUAL, EARNED
+  startDate DateTime
+  endDate   DateTime
+  reason    String   @db.Text
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InAppNotification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String   @db.Text
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ALERT
+  link      String?  // Optional URL to navigate to
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 

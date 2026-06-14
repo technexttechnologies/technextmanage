@@ -3,6 +3,7 @@
 import { LogOut } from "lucide-react";
 import styles from "./MobileHeader.module.css";
 import { logout } from "@/app/login/actions";
+import NotificationBell from "./NotificationBell";
 
 export default function MobileHeader({ user }: { user?: any }) {
   if (!user) return null;
@@ -17,6 +18,7 @@ export default function MobileHeader({ user }: { user?: any }) {
         />
       </div>
       <div className={styles.actions}>
+        <NotificationBell />
         <div className={styles.avatar}>{user?.name?.charAt(0).toUpperCase() || "U"}</div>
         <form action={logout}>
           <button type="submit" className={styles.logoutBtn} title="Log out">

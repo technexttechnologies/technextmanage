@@ -4,6 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { login } from "./actions";
 import styles from "./page.module.css";
 import { Lock, Mail, AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -49,6 +50,11 @@ export default function LoginPage() {
             <div className={styles.inputWrapper}>
               <Lock size={18} className={styles.inputIcon} />
               <input type="password" name="password" placeholder="••••••••" required />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+              <Link href="/forgot-password" style={{ fontSize: '13px', color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 500 }}>
+                Forgot password?
+              </Link>
             </div>
           </div>
 
