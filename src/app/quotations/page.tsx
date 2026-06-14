@@ -90,7 +90,7 @@ export default async function QuotationsPage({
                     {quote.status}
                   </span>
                   <div className={styles.amount}>
-                    ${quote.totalAmount.toFixed(2)}
+                    ₹{quote.totalAmount.toFixed(2)}
                   </div>
                 </div>
               </div>
