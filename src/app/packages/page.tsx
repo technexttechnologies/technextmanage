@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, Package, MessageCircle } from "lucide-react";
 import { getWhatsAppLink, waTemplates } from "@/lib/whatsappTemplates";
+import { PackageActionButtons } from "./PackageActionButtons";
 import styles from "./page.module.css";
 
 export default async function PackagesPage() {

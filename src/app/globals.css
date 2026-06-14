@@ -145,6 +145,24 @@ button {
   background-color: var(--surface-hover);
 }
 
+.btn-danger {
+  background-color: var(--surface-card);
+  color: var(--color-danger);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  border: 1px solid var(--color-danger);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+}
+
+.btn-danger:hover {
+  background-color: var(--color-danger-bg);
+}
+
 /* Mobile Adjustments */
 @media (max-width: 768px) {
   body {

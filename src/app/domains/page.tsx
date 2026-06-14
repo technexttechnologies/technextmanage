@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, Globe, MessageCircle } from "lucide-react";
 import { getWhatsAppLink, waTemplates } from "@/lib/whatsappTemplates";
+import { DomainActionButtons } from "./DomainActionButtons";
 import styles from "./page.module.css";
 
 export default async function DomainsPage() {
@@ -101,6 +102,9 @@ export default async function DomainsPage() {
                   >
                     <MessageCircle size={16} /> Send WhatsApp Alert
                   </a>
+                  <div style={{ marginTop: '8px' }}>
+                    <DomainActionButtons domainId={domain.id} customerEmail={domain.customer.email} />
+                  </div>
                 </div>
               </div>
             );

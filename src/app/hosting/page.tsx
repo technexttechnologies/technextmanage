@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, Server, Shield, Database, MessageCircle } from "lucide-react";
 import { getWhatsAppLink, waTemplates } from "@/lib/whatsappTemplates";
+import { HostingActionButtons } from "./HostingActionButtons";
 import styles from "./page.module.css";
 
 export default async function HostingPage() {
@@ -113,6 +114,9 @@ export default async function HostingPage() {
                   >
                     <MessageCircle size={16} /> Send WhatsApp Alert
                   </a>
+                  <div style={{ marginTop: '8px' }}>
+                    <HostingActionButtons hostingId={account.id} customerEmail={account.customer.email} />
+                  </div>
                 </div>
               </div>
             );

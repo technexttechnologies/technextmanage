@@ -63,3 +63,72 @@ export async function createHostingAccount(formData: FormData) {
   revalidatePath("/hosting");
   redirect("/hosting");
 }
+
+export async function updateHostingAccount(formData: FormData) {
+  const id = formData.get("id") as string;
+  const customerId = formData.get("customerId") as string;
+  const hostingProvider = formData.get("hostingProvider") as string;
+  const hostingPlan = formData.get("hostingPlan") as string;
+  const serverLocation = formData.get("serverLocation") as string;
+  const renewalDate = new Date(formData.get("renewalDate") as string);
+  const hostingCost = parseFloat(formData.get("hostingCost") as string);
+  const storageUsage = formData.get("storageUsage") as string;
+  const bandwidthUsage = formData.get("bandwidthUsage") as string;
+  const sslStatus = formData.get("sslStatus") as string;
+  const backupStatus = formData.get("backupStatus") as string;
+
+  const now = new Date();
+  const diffTime = renewalDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  let status = "ACTIVE";
+  if (diffDays < 0) {
+    status = "EXPIRED";
+  } else if (diffDays <= 30) {
+    status = "EXPIRING_SOON";
+  }
+
+  await prisma.hostingAccount.update({
+    where: { id },
+    data: {
+      customerId, hostingProvider, hostingPlan, serverLocation, renewalDate,
+      hostingCost, storageUsage, bandwidthUsage, sslStatus, backupStatus, status
+    }
+  });
+
+  revalidatePath("/hosting");
+  redirect("/hosting");
+}
+
+export async function deleteHostingAccount(id: string) {
+  await prisma.hostingAccount.delete({ where: { id } });
+  revalidatePath("/hosting");
+}
+
+export async function sendHostingReminderEmail(hostingId: string) {
+  const host = await prisma.hostingAccount.findUnique({
+    where: { id: hostingId },
+    include: { customer: true }
+  });
+
+  if (!host || !host.customer.email) return;
+
+  const daysLeft = Math.ceil((host.renewalDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  
+  const bodyHtml = `
+    <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Action Required: Hosting Renewal</h2>
+    <p>Hello <strong>${host.customer.name}</strong>,</p>
+    <p>Your hosting plan <strong>${host.hostingPlan}</strong> from <strong>${host.hostingProvider}</strong> is due for renewal in <strong>${daysLeft} days</strong> on ${host.renewalDate.toLocaleDateString()}.</p>
+    <p>Please renew your plan to prevent any website downtime.</p>
+  `;
+  
+  await sendEmail(
+    host.customer.email,
+    `⚠️ Hosting Renewal Alert: Plan expires in ${daysLeft} days`,
+    generateTechnextEmailHtml(
+      "Hosting Renewal", 
+      bodyHtml,
+      { text: "Renew Now", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${host.customer.portalToken}` }
+    )
+  );
+}

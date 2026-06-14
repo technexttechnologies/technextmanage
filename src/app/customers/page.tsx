@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, Search, Phone, Mail, Building2, UserCircle } from "lucide-react";
 import { WhatsAppWelcomeTrigger } from "./WhatsAppWelcomeTrigger";
+import { CustomerActionButtons } from "./CustomerActionButtons";
 import styles from "./page.module.css";
 
 export default async function CustomersPage({ searchParams }: { searchParams: { wa_welcome?: string, wa_phone?: string, wa_name?: string } }) {
@@ -61,9 +62,12 @@ export default async function CustomersPage({ searchParams }: { searchParams: { 
                       </p>
                     )}
                   </div>
-                  <span className={`${styles.statusBadge} ${styles[customer.status.toLowerCase()] || styles.default}`}>
-                    {customer.status}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                    <span className={`${styles.statusBadge} ${styles[customer.status.toLowerCase()] || styles.default}`}>
+                      {customer.status}
+                    </span>
+                    <CustomerActionButtons customerId={customer.id} variant="icon" />
+                  </div>
                 </div>
               </Link>
               

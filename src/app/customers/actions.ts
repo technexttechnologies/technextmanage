@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 
 export async function createCustomer(formData: FormData) {
@@ -59,7 +60,7 @@ export async function createCustomer(formData: FormData) {
       const html = generateTechnextEmailHtml(
         "Welcome to Technext",
         emailBody,
-        { text: "Visit Our Website", url: "https://technexttechnologies.com" }
+        { text: "Visit Our Website", url: "https://technexttechnologies.in" }
       );
 
       await sendEmail(email, "Welcome to Technext Technologies", html);
@@ -75,4 +76,33 @@ export async function createCustomer(formData: FormData) {
   }
   
   redirect(redirectUrl);
+}
+
+export async function updateCustomer(formData: FormData) {
+  const id = formData.get("id") as string;
+  const name = formData.get("name") as string;
+  const company = formData.get("company") as string;
+  const phone = formData.get("phone") as string;
+  const email = formData.get("email") as string;
+  const status = formData.get("status") as string;
+  const address = formData.get("address") as string;
+  const gstNumber = formData.get("gstNumber") as string;
+  const notes = formData.get("notes") as string;
+
+  await prisma.customer.update({
+    where: { id },
+    data: { name, company, phone, email, status, address, gstNumber, notes }
+  });
+
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${id}`);
+  redirect(`/customers/${id}`);
+}
+
+export async function softDeleteCustomer(id: string) {
+  await prisma.customer.update({
+    where: { id },
+    data: { status: "INACTIVE" }
+  });
+  revalidatePath("/customers");
 }
