@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 
 export async function createCustomer(formData: FormData) {
   // Hardcode assignment for now until auth is added
@@ -27,7 +28,7 @@ export async function createCustomer(formData: FormData) {
   const gstNumber = formData.get("gstNumber") as string;
   const notes = formData.get("notes") as string;
 
-  await prisma.customer.create({
+  const customer = await prisma.customer.create({
     data: {
       name,
       company,
@@ -40,6 +41,29 @@ export async function createCustomer(formData: FormData) {
       assignedToId: adminUser.id,
     }
   });
+
+  if (email) {
+    try {
+      const emailBody = `
+        <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Welcome to Technext Technologies, ${name}!</h2>
+        <p style="font-size: 16px; color: #334155; line-height: 1.6;">We are thrilled to connect with you.</p>
+        <p style="font-size: 16px; color: #334155; line-height: 1.6;">At Technext Technologies, we specialize in delivering cutting-edge software, IT solutions, and digital growth strategies tailored to your needs. Our team is dedicated to providing you with the highest quality of service and support.</p>
+        <p style="font-size: 16px; color: #334155; line-height: 1.6;">If you have any questions, require technical assistance, or wish to explore our services further, please do not hesitate to reach out to us.</p>
+        <p style="font-size: 16px; color: #334155; margin-top: 24px;">Best regards,<br/><strong>The Technext Team</strong></p>
+      `;
+      
+      const html = generateTechnextEmailHtml(
+        "Welcome to Technext",
+        emailBody,
+        { text: "Visit Our Website", url: "https://technexttechnologies.com" }
+      );
+
+      await sendEmail(email, "Welcome to Technext Technologies", html);
+    } catch (error) {
+      console.error("Failed to send welcome email:", error);
+      // Non-blocking error.
+    }
+  }
 
   redirect("/customers");
 }
