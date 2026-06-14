@@ -44,6 +44,21 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
           >
             <MessageCircle size={16} /> WhatsApp
           </a>
+          <a 
+            href={getWhatsAppLink(
+              customer.phone,
+              waTemplates.portalShare(
+                customer.name,
+                `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${customer.portalToken}`
+              )
+            )}
+            target="_blank" 
+            rel="noreferrer" 
+            className="btn-secondary" 
+            style={{ backgroundColor: '#10B981', color: 'white', borderColor: '#10B981' }}
+          >
+            <MessageCircle size={16} /> Share Portal
+          </a>
           {customer.email && (
             <a 
               href={`mailto:${customer.email}`}

@@ -23,5 +23,8 @@ export const waTemplates = {
     `Hello ${customerName} 🚀\n\nYour hosting environment is now live!\n\nPlan: *${hostingPlan}*\nYour SSL Certificates and automated backups have been successfully enabled.\n\nBest regards,\n*Technext Technologies*`,
     
   projectUpdate: (customerName: string, projectName: string, status: string, progress: number) =>
-    `Hello ${customerName} 📊\n\nQuick update on your project: *${projectName}*.\n\nCurrent Phase: *${status}*\nProgress: *${progress}%*\n\nIf you have any questions, feel free to reply here!\n\nBest regards,\n*Technext Technologies*`
+    `Hello ${customerName} 📊\n\nQuick update on your project: *${projectName}*.\n\nCurrent Phase: *${status}*\nProgress: *${progress}%*\n\nIf you have any questions, feel free to reply here!\n\nBest regards,\n*Technext Technologies*`,
+    
+  portalShare: (customerName: string, portalUrl: string) =>
+    `Hello ${customerName} 👋\n\nHere is your secure client portal link where you can track your projects, invoices, domains, and service packages:\n\n🔗 ${portalUrl}\n\nPlease keep this link secure. Let us know if you need any help!\n\nBest regards,\n*Technext Technologies*`
 };
