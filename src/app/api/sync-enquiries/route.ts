@@ -1,6 +1,5 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-export const maxDuration = 60; // Max execution time for Vercel Hobby tier
 import { syncEnquiriesFromSheet } from "@/lib/sheetSync";
 
 export async function GET(req: Request) {
