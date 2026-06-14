@@ -84,6 +84,9 @@ export default async function PackagesPage() {
                 >
                   <MessageCircle size={16} /> Send WhatsApp Alert
                 </a>
+                <div style={{ marginTop: '8px' }}>
+                  <PackageActionButtons packageId={pkg.id} customerEmail={pkg.customer.email} />
+                </div>
               </div>
             </div>
           ))}
