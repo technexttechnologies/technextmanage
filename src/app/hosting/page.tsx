@@ -1,7 +1,8 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus, Server, Shield, Database } from "lucide-react";
+import { Plus, Server, Shield, Database, MessageCircle } from "lucide-react";
+import { getWhatsAppLink, waTemplates } from "@/lib/whatsappTemplates";
 import styles from "./page.module.css";
 
 export default async function HostingPage() {
@@ -97,6 +98,21 @@ export default async function HostingPage() {
                   }}>
                     {account.renewalDate.toLocaleDateString()}
                   </span>
+                </div>
+                
+                <div style={{ marginTop: '16px', borderTop: '1px solid var(--surface-border)', paddingTop: '16px' }}>
+                  <a 
+                    href={getWhatsAppLink(
+                      account.customer.phone,
+                      waTemplates.hostingProvisioning(account.customer.name, account.hostingPlan)
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary"
+                    style={{ backgroundColor: '#25D366', color: 'white', width: '100%', justifyContent: 'center' }}
+                  >
+                    <MessageCircle size={16} /> Send WhatsApp Alert
+                  </a>
                 </div>
               </div>
             );

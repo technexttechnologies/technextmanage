@@ -1,7 +1,8 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus, Search, FileSignature, CheckCircle, XCircle, ArrowRightCircle, Download } from "lucide-react";
+import { Plus, Search, FileSignature, CheckCircle, XCircle, ArrowRightCircle, Download, MessageCircle } from "lucide-react";
+import { getWhatsAppLink, waTemplates } from "@/lib/whatsappTemplates";
 import styles from "./page.module.css";
 import { updateQuotationStatus } from "./actions";
 
@@ -132,6 +133,19 @@ export default async function QuotationsPage({
                     <XCircle size={16} /> Reject
                   </button>
                 )}
+
+                <a 
+                  href={getWhatsAppLink(
+                    quote.customer.phone, 
+                    waTemplates.quotation(quote.customer.name, quote.quotationNumber, quote.totalAmount, quote.pdfUrl ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}${quote.pdfUrl}` : undefined)
+                  )} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={`${styles.actionBtn} ${styles.waBtn}`}
+                  title="Send via WhatsApp"
+                >
+                  <MessageCircle size={16} /> WhatsApp
+                </a>
               </form>
             </div>
           ))}
