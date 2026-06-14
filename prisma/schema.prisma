@@ -73,6 +73,11 @@ model Customer {
   amcs              AMC[]
   supportTickets    SupportTicket[]
   campaignLogs      CampaignLog[]
+  packages          ServicePackage[]
+  domains           DomainRegistration[]
+  hostingAccounts   HostingAccount[]
+  appointments      Appointment[]
+  portalToken       String?            @unique
 }
 
 model Lead {
@@ -450,5 +455,75 @@ model InAppNotification {
   link      String?  // Optional URL to navigate to
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model ServicePackage {
+  id              String   @id @default(cuid())
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  packageName     String
+  packageType     String   // WEBSITE, ECOMMERCE, SEO, MARKETING, SOFTWARE, CUSTOM
+  packagePrice    Float
+  purchaseDate    DateTime
+  renewalDate     DateTime?
+  contractPeriod  Int      // in months
+  status          String   @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED
+  assignedTeam    String?
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model DomainRegistration {
+  id                String   @id @default(cuid())
+  domainName        String   @unique
+  customerId        String
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  registrar         String
+  registrationDate  DateTime
+  expiryDate        DateTime
+  renewalDate       DateTime?
+  autoRenewalStatus Boolean  @default(false)
+  dnsDetails        String?  @db.Text
+  nameservers       String?  @db.Text
+  domainCost        Float
+  status            String   @default("ACTIVE") // ACTIVE, EXPIRING_SOON, EXPIRED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model HostingAccount {
+  id                String   @id @default(cuid())
+  customerId        String
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  hostingProvider   String
+  hostingPlan       String
+  serverLocation    String?
+  renewalDate       DateTime
+  hostingCost       Float
+  storageUsage      String?
+  bandwidthUsage    String?
+  sslStatus         String   @default("ACTIVE") // ACTIVE, EXPIRING, EXPIRED
+  backupStatus      String   @default("ENABLED") // ENABLED, DISABLED, FAILED
+  status            String   @default("ACTIVE") // ACTIVE, EXPIRING_SOON, EXPIRED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Appointment {
+  id             String   @id @default(cuid())
+  customerId     String?
+  customer       Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  meetingPurpose String
+  date           DateTime
+  time           String
+  meetingType    String   // ONLINE, OFFLINE, PHONE
+  assignedStaff  String?
+  notes          String?  @db.Text
+  googleEventId  String?
+  meetLink       String?
+  status         String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 

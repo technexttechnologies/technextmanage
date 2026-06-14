@@ -1,39 +1,67 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import styles from "./page.module.css";
-import { Users, Target, Briefcase, RefreshCw, PhoneCall, CheckSquare } from "lucide-react";
+import { Users, Target, Briefcase, RefreshCw, PhoneCall, CheckSquare, Globe, Server, Package, Calendar } from "lucide-react";
 import Link from "next/link";
 
 export default async function Dashboard() {
-  // Fetch real counts from DB
+  // Dashboard queries
+  const thirtyDaysFromNow = new Date();
+  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+  
+  const todayStart = new Date();
+  todayStart.setHours(0,0,0,0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23,59,59,999);
+
   const [
-    totalCustomers,
-    activeLeads,
-    activeProjects,
-    upcomingRenewals,
-    todayFollowUps,
-    pendingTasks
+    totalActiveCustomers,
+    activeDomains,
+    domainsExpiringSoon,
+    hostingRenewals,
+    upcomingMeetings,
+    followUpsDueToday,
+    packageRenewals,
+    projects
   ] = await Promise.all([
     prisma.customer.count({ where: { status: { not: "INACTIVE" } } }),
-    prisma.lead.count({ where: { status: { in: ["NEW", "CONTACTED", "FOLLOW_UP"] } } }),
-    prisma.project.count({ where: { status: "IN_PROGRESS" } }),
-    prisma.renewal.count({ 
+    prisma.domainRegistration.count({ where: { status: "ACTIVE" } }),
+    prisma.domainRegistration.count({ 
       where: { 
-        status: "ACTIVE", 
-        expiryDate: { lte: new Date(new Date().setDate(new Date().getDate() + 30)) } // Next 30 days
+        OR: [
+          { status: "EXPIRING_SOON" },
+          { expiryDate: { lte: thirtyDaysFromNow, gte: new Date() } }
+        ]
       } 
+    }),
+    prisma.hostingAccount.count({
+      where: { renewalDate: { lte: thirtyDaysFromNow, gte: new Date() } }
+    }),
+    prisma.appointment.count({
+      where: { date: { gte: todayStart } }
     }),
     prisma.followUp.count({
       where: {
         status: "PENDING",
-        date: {
-          gte: new Date(new Date().setHours(0,0,0,0)),
-          lt: new Date(new Date().setHours(23,59,59,999))
-        }
+        date: { gte: todayStart, lt: todayEnd }
       }
     }),
-    prisma.task.count({ where: { status: "PENDING" } })
+    prisma.servicePackage.count({
+      where: { renewalDate: { lte: thirtyDaysFromNow, gte: new Date() } }
+    }),
+    prisma.project.findMany({ select: { status: true } })
   ]);
+
+  // Project Status Overview
+  const projectStatusCounts = projects.reduce((acc, curr) => {
+    acc[curr.status] = (acc[curr.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const projectStatusOverview = Object.entries(projectStatusCounts).map(([status, count]) => ({
+    status: status.replace(/_/g, ' '),
+    count
+  }));
 
   // Mock data for 6 months revenue
   const revenueData = [
@@ -46,14 +74,7 @@ export default async function Dashboard() {
   ];
   const maxRev = Math.max(...revenueData.map(d => d.amount));
 
-  // Pipeline Data
-  const leadPipeline = [
-    { stage: "New", count: 45, max: 50 },
-    { stage: "Contacted", count: 28, max: 50 },
-    { stage: "Proposal", count: 15, max: 50 },
-    { stage: "Negotiation", count: 8, max: 50 },
-    { stage: "Won", count: 22, max: 50 },
-  ];
+
 
   return (
     <div className={styles.dashboardContainer}>
@@ -68,65 +89,91 @@ export default async function Dashboard() {
       </header>
 
       {/* Main Metrics Grid */}
-      <div className={styles.metricsGrid}>
+      <div className={styles.metricsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
         <div className={styles.metricCard}>
           <div className={`${styles.iconWrapper} ${styles.blue}`}>
             <Users size={24} />
           </div>
           <div className={styles.metricInfo}>
-            <h3>Total Customers</h3>
-            <p className={styles.metricValue}>{totalCustomers}</p>
-          </div>
-        </div>
-
-        <div className={styles.metricCard}>
-          <div className={`${styles.iconWrapper} ${styles.purple}`}>
-            <Target size={24} />
-          </div>
-          <div className={styles.metricInfo}>
-            <h3>Active Leads</h3>
-            <p className={styles.metricValue}>{activeLeads}</p>
+            <h3>Total Active Customers</h3>
+            <p className={styles.metricValue}>{totalActiveCustomers}</p>
           </div>
         </div>
 
         <div className={styles.metricCard}>
           <div className={`${styles.iconWrapper} ${styles.green}`}>
+            <Globe size={24} />
+          </div>
+          <div className={styles.metricInfo}>
+            <h3>Active Domains</h3>
+            <p className={styles.metricValue}>{activeDomains}</p>
+          </div>
+        </div>
+
+        <div className={styles.metricCard}>
+          <div className={`${styles.iconWrapper} ${styles.purple}`}>
             <Briefcase size={24} />
           </div>
           <div className={styles.metricInfo}>
-            <h3>Active Projects</h3>
-            <p className={styles.metricValue}>{activeProjects}</p>
+            <h3>Project Status Overview</h3>
+            <p className={styles.metricValue}>{projects.length}</p>
           </div>
         </div>
       </div>
 
       {/* Action required alerts */}
-      <div className={styles.alertsGrid}>
+      <div className={styles.alertsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
         <div className={`${styles.alertCard} ${styles.warningAlert}`}>
           <div className={styles.alertHeader}>
             <PhoneCall size={20} />
             <h3>Today's Follow-ups</h3>
-            <span className={styles.badge}>{todayFollowUps}</span>
+            <span className={styles.badge}>{followUpsDueToday}</span>
           </div>
-          <p>You have {todayFollowUps} follow-ups scheduled for today.</p>
+          <p>You have {followUpsDueToday} follow-ups scheduled for today.</p>
           <Link href="/follow-ups" className="btn-primary" style={{marginTop: '12px'}}>View Follow-ups</Link>
         </div>
 
         <div className={`${styles.alertCard} ${styles.dangerAlert}`}>
           <div className={styles.alertHeader}>
-            <RefreshCw size={20} />
-            <h3>Upcoming Renewals</h3>
-            <span className={styles.badge}>{upcomingRenewals}</span>
+            <Globe size={20} />
+            <h3>Domains Expiring Soon</h3>
+            <span className={styles.badge}>{domainsExpiringSoon}</span>
           </div>
-          <p>You have {upcomingRenewals} services expiring in the next 30 days.</p>
-          <Link href="/renewals" className="btn-primary" style={{marginTop: '12px'}}>View Renewals</Link>
+          <p>You have {domainsExpiringSoon} domains expiring in the next 30 days.</p>
+        </div>
+
+        <div className={`${styles.alertCard} ${styles.dangerAlert}`}>
+          <div className={styles.alertHeader}>
+            <Server size={20} />
+            <h3>Hosting Renewals</h3>
+            <span className={styles.badge}>{hostingRenewals}</span>
+          </div>
+          <p>You have {hostingRenewals} hostings expiring in the next 30 days.</p>
+        </div>
+
+        <div className={`${styles.alertCard} ${styles.dangerAlert}`}>
+          <div className={styles.alertHeader}>
+            <Package size={20} />
+            <h3>Package Renewals</h3>
+            <span className={styles.badge}>{packageRenewals}</span>
+          </div>
+          <p>You have {packageRenewals} packages expiring in the next 30 days.</p>
+        </div>
+
+        <div className={`${styles.alertCard} ${styles.warningAlert}`}>
+          <div className={styles.alertHeader}>
+            <Calendar size={20} />
+            <h3>Upcoming Meetings</h3>
+            <span className={styles.badge}>{upcomingMeetings}</span>
+          </div>
+          <p>You have {upcomingMeetings} upcoming meetings starting today.</p>
         </div>
       </div>
 
       {/* Analytics Charts */}
       <div className={styles.analyticsGrid}>
         <div className={styles.chartCard}>
-          <h3>Revenue Overview (Last 6 Months)</h3>
+          <h3>Revenue Forecast (Next 6 Months)</h3>
           <div className={styles.barChart}>
             {revenueData.map((data, idx) => (
               <div key={idx} className={styles.barCol}>
@@ -142,20 +189,20 @@ export default async function Dashboard() {
         </div>
 
         <div className={styles.chartCard}>
-          <h3>Lead Conversion Pipeline</h3>
+          <h3>Project Status Overview</h3>
           <div className={styles.pipelineChart}>
-            {leadPipeline.map((stage, idx) => (
+            {projectStatusOverview.length > 0 ? projectStatusOverview.map((stage, idx) => (
               <div key={idx} className={styles.pipelineRow}>
-                <span className={styles.pipelineLabel}>{stage.stage}</span>
+                <span className={styles.pipelineLabel}>{stage.status}</span>
                 <div className={styles.pipelineTrack}>
                   <div 
                     className={styles.pipelineFill} 
-                    style={{ width: `${(stage.count / stage.max) * 100}%` }}
+                    style={{ width: `${(stage.count / Math.max(...projectStatusOverview.map(s => s.count))) * 100}%` }}
                   ></div>
                 </div>
                 <span className={styles.pipelineValue}>{stage.count}</span>
               </div>
-            ))}
+            )) : <p>No active projects.</p>}
           </div>
         </div>
       </div>

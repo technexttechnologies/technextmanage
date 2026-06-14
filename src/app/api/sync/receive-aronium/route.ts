@@ -49,6 +49,7 @@ export async function POST(req: Request) {
         });
         recordsUpdated++;
       } else {
+        const crypto = require("crypto");
         await prisma.customer.create({
           data: {
             name: name,
@@ -58,7 +59,8 @@ export async function POST(req: Request) {
             syncStatus: "SYNCED",
             lastSyncDate: new Date(),
             assignedToId: adminUser.id,
-            status: "ACTIVE"
+            status: "ACTIVE",
+            portalToken: crypto.randomBytes(16).toString("hex"),
           }
         });
         recordsAdded++;

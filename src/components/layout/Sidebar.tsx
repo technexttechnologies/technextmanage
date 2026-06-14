@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon } from "lucide-react";
+import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon, Calendar } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
 import NotificationBell from "./NotificationBell";
@@ -67,6 +67,9 @@ export default function Sidebar({ user }: { user: any }) {
 
         <div className={styles.navSection}>
           <p className={styles.navSectionTitle}>Operations</p>
+          <Link href="/appointments" className={`${styles.navItem} ${pathname.startsWith('/appointments') ? styles.active : ''}`}>
+            <Calendar size={20} /> Appointments
+          </Link>
           <Link href="/follow-ups" className={`${styles.navItem} ${pathname.startsWith('/follow-ups') ? styles.active : ''}`}>
             <PhoneCall size={20} /> Follow-ups
           </Link>
@@ -96,6 +99,19 @@ export default function Sidebar({ user }: { user: any }) {
           <Link href="/invoice-requests" className={`${styles.navItem} ${pathname.startsWith("/invoice-requests") ? styles.active : ""}`}>
             <Receipt size={20} />
             <span>Invoice Requests</span>
+          </Link>
+        </div>
+
+        <div className={styles.navSection}>
+          <p className={styles.navSectionTitle}>Assets</p>
+          <Link href="/packages" className={`${styles.navItem} ${pathname.startsWith('/packages') ? styles.active : ''}`}>
+            <Briefcase size={20} /> Service Packages
+          </Link>
+          <Link href="/domains" className={`${styles.navItem} ${pathname.startsWith('/domains') ? styles.active : ''}`}>
+            <Globe size={20} /> Domains
+          </Link>
+          <Link href="/hosting" className={`${styles.navItem} ${pathname.startsWith('/hosting') ? styles.active : ''}`}>
+            <Database size={20} /> Hosting Accounts
           </Link>
         </div>
 

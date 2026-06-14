@@ -45,7 +45,7 @@ export async function GET(req: Request) {
 
     for (const fu of dueFollowUps) {
       // Email to employee
-      if (fu.assignedTo.email) {
+      if (fu.assignedTo?.email) {
         const bodyHtml = `
           <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Upcoming Follow-up</h2>
           <p>You have a <strong>${fu.type}</strong> scheduled with <strong>${fu.customer.name}</strong> for <strong>tomorrow (${tomorrowStart.toLocaleDateString()})</strong>.</p>
@@ -58,7 +58,7 @@ export async function GET(req: Request) {
         );
       }
       // Email to customer
-      if (fu.customer.email) {
+      if (fu.customer?.email) {
         const bodyHtml = `
           <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Hello ${fu.customer.name},</h2>
           <p style="font-size: 16px;">This is a friendly reminder about your scheduled <strong>${fu.type}</strong> with us on <strong>${tomorrowStart.toLocaleDateString()}</strong>.</p>
@@ -73,7 +73,7 @@ export async function GET(req: Request) {
       results.push(`Follow-up reminder: ${fu.customer.name}`);
     }
 
-    // 2. Renewals expiring in 7 days
+    // 2. Generic Renewals expiring in 7 days (Legacy)
     const in7Days = new Date();
     in7Days.setDate(in7Days.getDate() + 7);
     const in7Start = new Date(new Date().setHours(0, 0, 0, 0));
@@ -129,48 +129,189 @@ export async function GET(req: Request) {
         );
         results.push(`Renewal alert: ${r.customer.name} — ${r.type}`);
       }
+    }
 
-      // Also email admin
-      if (settings.smtpEmail) {
-        const bodyHtml = `
-          <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Renewal Expiring Soon</h2>
-          <p style="font-size: 16px;"><strong>${r.customer.name}</strong>'s <strong>${r.type}</strong> service expires on ${r.expiryDate.toLocaleDateString()}.</p>
-        `;
-        await sendEmail(
-          settings.smtpEmail,
-          `🔄 Renewal Expiring: ${r.customer.name} — ${r.type}`,
-          generateTechnextEmailHtml("Action Required", bodyHtml)
-        );
+    // 3. Cascading Expiry Alerts: Domains & Hosting (90/60/30/15/7/1 days)
+    const expiryDays = [90, 60, 30, 15, 7, 1];
+    for (const days of expiryDays) {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + days);
+      const start = new Date(targetDate.setHours(0, 0, 0, 0));
+      const end = new Date(targetDate.setHours(23, 59, 59, 999));
+
+      // Domains
+      const expiringDomains = await prisma.domainRegistration.findMany({
+        where: {
+          status: "ACTIVE",
+          expiryDate: { gte: start, lte: end }
+        },
+        include: { customer: true }
+      });
+
+      for (const domain of expiringDomains) {
+        if (domain.customer?.email) {
+          const bodyHtml = `
+            <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Action Required: Domain Renewal</h2>
+            <p>Hello <strong>${domain.customer.name}</strong>,</p>
+            <p>Your domain <strong>${domain.domainName}</strong> is expiring in <strong>${days} days</strong> on ${domain.expiryDate.toLocaleDateString()}.</p>
+            <p>To avoid any service interruption, please process the renewal at your earliest convenience.</p>
+          `;
+          await sendEmail(
+            domain.customer.email,
+            `⚠️ Domain Expiry Alert: ${domain.domainName} expires in ${days} days`,
+            generateTechnextEmailHtml("Domain Renewal", bodyHtml)
+          );
+          results.push(`Domain Alert (${days}d): ${domain.domainName}`);
+          console.log(`Sent Domain Alert to ${domain.customer.email} for ${domain.domainName} - ${days} days`);
+        }
+      }
+
+      // Hosting
+      const expiringHosting = await prisma.hostingAccount.findMany({
+        where: {
+          status: "ACTIVE",
+          renewalDate: { gte: start, lte: end }
+        },
+        include: { customer: true }
+      });
+
+      for (const host of expiringHosting) {
+        if (host.customer?.email) {
+          const bodyHtml = `
+            <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Action Required: Hosting Renewal</h2>
+            <p>Hello <strong>${host.customer.name}</strong>,</p>
+            <p>Your hosting plan <strong>${host.hostingPlan}</strong> from <strong>${host.hostingProvider}</strong> is due for renewal in <strong>${days} days</strong> on ${host.renewalDate.toLocaleDateString()}.</p>
+            <p>Please renew your plan to prevent any website downtime.</p>
+          `;
+          await sendEmail(
+            host.customer.email,
+            `⚠️ Hosting Renewal Alert: Plan expires in ${days} days`,
+            generateTechnextEmailHtml("Hosting Renewal", bodyHtml)
+          );
+          results.push(`Hosting Alert (${days}d): ${host.hostingPlan}`);
+          console.log(`Sent Hosting Alert to ${host.customer.email} for ${host.hostingPlan} - ${days} days`);
+        }
       }
     }
 
-    // 3. Quotations pending > 3 days
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    // 4. Lead Drip Campaigns (Day 1/3/7/14)
+    const leadDays = [1, 3, 7, 14];
+    for (const days of leadDays) {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() - days);
+      const start = new Date(targetDate.setHours(0, 0, 0, 0));
+      const end = new Date(targetDate.setHours(23, 59, 59, 999));
 
-    const staleQuotations = await prisma.quotation.findMany({
-      where: {
-        status: "SENT",
-        updatedAt: { lte: threeDaysAgo }
-      },
-      include: { customer: true }
-    });
+      const leads = await prisma.lead.findMany({
+        where: {
+          status: { notIn: ["CONVERTED", "LOST"] },
+          createdAt: { gte: start, lte: end }
+        }
+      });
 
-    for (const q of staleQuotations) {
-      if (settings.smtpEmail) {
-        const bodyHtml = `
-          <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 22px;">Quotation Pending Response</h2>
-          <p style="font-size: 16px;">Quotation <strong>${q.quotationNumber}</strong> for <strong>${q.customer.name}</strong> (₹${q.totalAmount.toFixed(2)}) was sent over 3 days ago and is still pending.</p>
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 30px 0;">
-            <p style="margin: 0; color: #1e293b; font-size: 15px; font-weight: 500;">Please consider following up with the customer directly.</p>
-          </div>
-        `;
-        await sendEmail(
-          settings.smtpEmail,
-          `📋 Quotation Follow-up: ${q.quotationNumber} — ${q.customer.name}`,
-          generateTechnextEmailHtml("Follow-up Reminder", bodyHtml)
-        );
-        results.push(`Stale quotation: ${q.quotationNumber}`);
+      for (const lead of leads) {
+        if (lead.email) {
+          let subject = "";
+          let bodyHtml = "";
+          if (days === 1) {
+            subject = `Thank you for reaching out, ${lead.name}!`;
+            bodyHtml = `<p>Hi ${lead.name},</p><p>Thank you for expressing interest in Technext Technologies! Our team is currently reviewing your details and will be in touch shortly.</p>`;
+          } else if (days === 3) {
+            subject = `Checking in on your inquiry, ${lead.name}`;
+            bodyHtml = `<p>Hi ${lead.name},</p><p>Just a quick follow-up to see if you had any preliminary questions. We'd love to schedule a quick call at your convenience!</p>`;
+          } else if (days === 7) {
+            subject = `Explore our Recent Work, ${lead.name}`;
+            bodyHtml = `<p>Hi ${lead.name},</p><p>While we await your response, we thought you might be interested in seeing some of our recent successful projects. Check out our portfolio on our website!</p>`;
+          } else if (days === 14) {
+            subject = `Let's connect, ${lead.name}`;
+            bodyHtml = `<p>Hi ${lead.name},</p><p>It's been a couple of weeks since your initial inquiry. If you're still looking for a solution, let's jump on a quick call to discuss how we can help.</p>`;
+          }
+
+          await sendEmail(
+            lead.email,
+            subject,
+            generateTechnextEmailHtml("Lead Follow-up", bodyHtml)
+          );
+          results.push(`Lead Drip (${days}d): ${lead.name}`);
+          console.log(`Sent Lead Drip to ${lead.email} - Day ${days}`);
+        }
+      }
+    }
+
+    // 5. Quotation Drip Campaigns (Day 3/7/14)
+    const quoteDays = [3, 7, 14];
+    for (const days of quoteDays) {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() - days);
+      const start = new Date(targetDate.setHours(0, 0, 0, 0));
+      const end = new Date(targetDate.setHours(23, 59, 59, 999));
+
+      const quotations = await prisma.quotation.findMany({
+        where: {
+          status: "SENT",
+          updatedAt: { gte: start, lte: end }
+        },
+        include: { customer: true }
+      });
+
+      for (const q of quotations) {
+        if (q.customer?.email) {
+          const subject = `Following up on Quotation ${q.quotationNumber}`;
+          const bodyHtml = `
+            <p>Hello ${q.customer.name},</p>
+            <p>This is a friendly reminder regarding quotation <strong>${q.quotationNumber}</strong> sent ${days} days ago.</p>
+            <p>If you have any questions or need further clarifications, please feel free to reach out to us.</p>
+          `;
+          await sendEmail(
+            q.customer.email,
+            subject,
+            generateTechnextEmailHtml("Quotation Reminder", bodyHtml)
+          );
+          results.push(`Quotation Drip (${days}d): ${q.quotationNumber}`);
+          console.log(`Sent Quotation Drip to ${q.customer.email} for ${q.quotationNumber} - Day ${days}`);
+        }
+      }
+    }
+
+    // 6. Post-Project Campaigns (Day 30/60/90)
+    const projectDays = [30, 60, 90];
+    for (const days of projectDays) {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() - days);
+      const start = new Date(targetDate.setHours(0, 0, 0, 0));
+      const end = new Date(targetDate.setHours(23, 59, 59, 999));
+
+      const projects = await prisma.project.findMany({
+        where: {
+          status: "COMPLETED",
+          updatedAt: { gte: start, lte: end }
+        },
+        include: { customer: true }
+      });
+
+      for (const p of projects) {
+        if (p.customer?.email) {
+          let subject = "";
+          let bodyHtml = "";
+          if (days === 30) {
+            subject = `How is your project doing, ${p.customer.name}?`;
+            bodyHtml = `<p>Hi ${p.customer.name},</p><p>It's been a month since we successfully delivered <strong>${p.name}</strong>. We'd love to hear your feedback on how everything is running!</p>`;
+          } else if (days === 60) {
+            subject = `Ensure ${p.name} stays in top shape!`;
+            bodyHtml = `<p>Hi ${p.customer.name},</p><p>To ensure <strong>${p.name}</strong> continues to run smoothly, we offer specialized maintenance packages. Let us know if you'd like to learn more.</p>`;
+          } else if (days === 90) {
+            subject = `Ready for the next step, ${p.customer.name}?`;
+            bodyHtml = `<p>Hi ${p.customer.name},</p><p>It's been 3 months since we wrapped up <strong>${p.name}</strong>. If you're ready to add new features or start a new phase, we are here to help you scale.</p>`;
+          }
+
+          await sendEmail(
+            p.customer.email,
+            subject,
+            generateTechnextEmailHtml("Post-Project Check-in", bodyHtml)
+          );
+          results.push(`Post-Project Drip (${days}d): ${p.name}`);
+          console.log(`Sent Post-Project Drip to ${p.customer.email} for ${p.name} - Day ${days}`);
+        }
       }
     }
 
@@ -181,6 +322,7 @@ export async function GET(req: Request) {
     });
 
   } catch (error: any) {
+    console.error("Cron Error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

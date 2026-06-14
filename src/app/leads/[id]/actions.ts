@@ -43,6 +43,9 @@ export async function convertToCustomer(leadId: string) {
   if (!lead) throw new Error("Lead not found");
   if (lead.status === "CONVERTED") return; // Already converted
 
+  const crypto = require("crypto");
+  const portalToken = crypto.randomBytes(16).toString("hex");
+
   // 1. Create the customer in Technext CRM
   const customer = await prisma.customer.create({
     data: {
@@ -52,7 +55,8 @@ export async function convertToCustomer(leadId: string) {
       email: lead.email,
       notes: `Converted from lead. Original notes: ${lead.notes || ''}`,
       status: "ACTIVE",
-      assignedToId: lead.assignedToId
+      assignedToId: lead.assignedToId,
+      portalToken,
     }
   });
 

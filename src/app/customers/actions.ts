@@ -28,6 +28,9 @@ export async function createCustomer(formData: FormData) {
   const gstNumber = formData.get("gstNumber") as string;
   const notes = formData.get("notes") as string;
 
+  const crypto = require("crypto");
+  const portalToken = crypto.randomBytes(16).toString("hex");
+
   const customer = await prisma.customer.create({
     data: {
       name,
@@ -39,6 +42,7 @@ export async function createCustomer(formData: FormData) {
       gstNumber,
       notes,
       assignedToId: adminUser.id,
+      portalToken,
     }
   });
 
