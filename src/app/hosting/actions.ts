@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
+import { templates } from "@/lib/email-templates";
 
 export async function createHostingAccount(formData: FormData) {
   const customerId = formData.get("customerId") as string;
@@ -27,7 +29,7 @@ export async function createHostingAccount(formData: FormData) {
     status = "EXPIRING_SOON";
   }
 
-  await prisma.hostingAccount.create({
+  const hostRecord = await prisma.hostingAccount.create({
     data: {
       customerId,
       hostingProvider,
@@ -40,8 +42,22 @@ export async function createHostingAccount(formData: FormData) {
       sslStatus,
       backupStatus,
       status,
-    }
+    },
+    include: { customer: true }
   });
+
+  if (hostRecord.customer?.email) {
+    const html = generateTechnextEmailHtml(
+      "Hosting Provisioned",
+      templates.hostingActivation({
+        customerName: hostRecord.customer.name,
+        hostingPlan: hostRecord.hostingPlan,
+        hostingProvider: hostRecord.hostingProvider,
+      }),
+      { text: "View Client Portal", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${hostRecord.customer.portalToken}` }
+    );
+    await sendEmail(hostRecord.customer.email, `Hosting Setup Complete: ${hostRecord.hostingPlan}`, html);
+  }
 
   redirect("/hosting");
 }

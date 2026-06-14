@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
+import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
+import { templates } from "@/lib/email-templates";
 
 export async function createQuotation(formData: FormData) {
   const customerId = formData.get("customerId") as string;
@@ -44,7 +46,7 @@ export async function createQuotation(formData: FormData) {
     }
   }
 
-  await prisma.quotation.create({
+  const quotation = await prisma.quotation.create({
     data: {
       customerId,
       quotationNumber,
@@ -55,8 +57,22 @@ export async function createQuotation(formData: FormData) {
       status: status || "DRAFT",
       notes,
       pdfUrl
-    }
+    },
+    include: { customer: true }
   });
+
+  if ((status === "SENT" || status === "APPROVED") && quotation.customer?.email) {
+    const html = generateTechnextEmailHtml(
+      "Your Official Quotation",
+      templates.quotationEmail({
+        customerName: quotation.customer.name,
+        quotationNumber: quotation.quotationNumber,
+        totalAmount: quotation.totalAmount,
+      }),
+      { text: "View Quotation Details", url: pdfUrl ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}${pdfUrl}` : `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${quotation.customer.portalToken}` }
+    );
+    await sendEmail(quotation.customer.email, `Quotation ${quotation.quotationNumber} from Technext`, html);
+  }
 
   redirect("/quotations");
 }
@@ -66,10 +82,24 @@ export async function updateQuotationStatus(formData: FormData) {
   const status = formData.get("status") as string;
 
   if (quotationId && status) {
-    await prisma.quotation.update({
+    const quotation = await prisma.quotation.update({
       where: { id: quotationId },
-      data: { status }
+      data: { status },
+      include: { customer: true }
     });
+
+    if (status === "SENT" && quotation.customer?.email) {
+      const html = generateTechnextEmailHtml(
+        "Your Official Quotation",
+        templates.quotationEmail({
+          customerName: quotation.customer.name,
+          quotationNumber: quotation.quotationNumber,
+          totalAmount: quotation.totalAmount,
+        }),
+        { text: "View Client Portal", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${quotation.customer.portalToken}` }
+      );
+      await sendEmail(quotation.customer.email, `Quotation ${quotation.quotationNumber} from Technext`, html);
+    }
   }
 
   revalidatePath("/quotations");

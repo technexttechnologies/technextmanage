@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
+import { templates } from "@/lib/email-templates";
 
 export async function createServicePackage(formData: FormData) {
   const customerId = formData.get("customerId") as string;
@@ -16,7 +18,7 @@ export async function createServicePackage(formData: FormData) {
   const assignedTeam = formData.get("assignedTeam") as string;
   const notes = formData.get("notes") as string;
 
-  await prisma.servicePackage.create({
+  const packageRecord = await prisma.servicePackage.create({
     data: {
       customerId,
       packageName,
@@ -28,8 +30,23 @@ export async function createServicePackage(formData: FormData) {
       status,
       assignedTeam,
       notes,
-    }
+    },
+    include: { customer: true }
   });
+
+  if (packageRecord.customer?.email) {
+    const html = generateTechnextEmailHtml(
+      "Service Package Activated",
+      templates.packageActivation({
+        customerName: packageRecord.customer.name,
+        packageName: packageRecord.packageName,
+        packageType: packageRecord.packageType,
+        purchaseDate: packageRecord.purchaseDate.toLocaleDateString(),
+      }),
+      { text: "View Client Portal", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${packageRecord.customer.portalToken}` }
+    );
+    await sendEmail(packageRecord.customer.email, `Package Activated: ${packageRecord.packageName}`, html);
+  }
 
   redirect("/packages");
 }

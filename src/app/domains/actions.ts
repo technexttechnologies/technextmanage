@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
+import { templates } from "@/lib/email-templates";
 
 export async function createDomainRegistration(formData: FormData) {
   const customerId = formData.get("customerId") as string;
@@ -28,7 +30,7 @@ export async function createDomainRegistration(formData: FormData) {
     status = "EXPIRING_SOON";
   }
 
-  await prisma.domainRegistration.create({
+  const domainRecord = await prisma.domainRegistration.create({
     data: {
       customerId,
       domainName,
@@ -41,8 +43,23 @@ export async function createDomainRegistration(formData: FormData) {
       dnsDetails,
       nameservers,
       status,
-    }
+    },
+    include: { customer: true }
   });
+
+  if (domainRecord.customer?.email) {
+    const html = generateTechnextEmailHtml(
+      "Domain Registered",
+      templates.domainActivation({
+        customerName: domainRecord.customer.name,
+        domainName: domainRecord.domainName,
+        registrar: domainRecord.registrar,
+        expiryDate: domainRecord.expiryDate.toLocaleDateString(),
+      }),
+      { text: "View Client Portal", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${domainRecord.customer.portalToken}` }
+    );
+    await sendEmail(domainRecord.customer.email, `Domain Registered: ${domainRecord.domainName}`, html);
+  }
 
   redirect("/domains");
 }
