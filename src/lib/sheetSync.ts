@@ -54,7 +54,7 @@ export async function syncEnquiriesFromSheet() {
     });
 
     if (!existingLead) {
-      await prisma.lead.create({
+      const newLead = await prisma.lead.create({
         data: {
           name: name,
           phone: phone && phone !== '#ERROR!' ? phone : undefined,
@@ -64,6 +64,19 @@ export async function syncEnquiriesFromSheet() {
           assignedToId: adminUser.id
         }
       });
+      
+      const { templates } = await import('./email-templates');
+      const { sendEmail, generateTechnextEmailHtml } = await import('./mailer');
+      
+      // Notify Admin
+      if (settings?.smtpEmail) {
+        await sendEmail(
+          settings.smtpEmail,
+          `New Website Enquiry: ${name}`,
+          generateTechnextEmailHtml("New Lead Received", templates.newLeadNotification(newLead))
+        );
+      }
+      
       added++;
     }
   }

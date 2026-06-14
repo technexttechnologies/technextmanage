@@ -48,13 +48,13 @@ export async function submitPublicTicket(formData: FormData) {
   });
 
   if (email) {
-    const template = await prisma.messageTemplate.findFirst({ where: { name: "Ticket Created" } });
-    const emailSubject = template?.subject || "Support Ticket Created";
-    let emailBody = template?.body || `Your support ticket regarding "${subject}" has been created successfully.\n\nTicket ID: ${ticket.id}\nWe will get back to you shortly.`;
-    
-    emailBody = emailBody.replace(/\{\{ticket_id\}\}/g, ticket.id).replace(/\{\{subject\}\}/g, subject).replace(/\n/g, '<br/>');
-
-    await sendEmail(email, emailSubject, emailBody);
+    const { templates } = await import("@/lib/email-templates");
+    const { generateTechnextEmailHtml } = await import("@/lib/mailer");
+    const emailHtml = generateTechnextEmailHtml(
+      "Support Ticket Received",
+      templates.supportTicketCreated({ id: ticket.id, subject, priority: "MEDIUM", customerName: "Customer" })
+    );
+    await sendEmail(email, `Support Ticket #${ticket.id} Received`, emailHtml);
   }
 
   // Revalidate internal tickets page
@@ -95,13 +95,13 @@ export async function createInternalTicket(formData: FormData) {
   });
 
   if (customer?.email) {
-    const template = await prisma.messageTemplate.findFirst({ where: { name: "Ticket Created" } });
-    const emailSubject = template?.subject || "Support Ticket Created";
-    let emailBody = template?.body || `Your support ticket regarding "${subject}" has been created successfully.\n\nTicket ID: ${ticket.id}\nWe will get back to you shortly.`;
-    
-    emailBody = emailBody.replace(/\{\{ticket_id\}\}/g, ticket.id).replace(/\{\{subject\}\}/g, subject).replace(/\n/g, '<br/>');
-
-    await sendEmail(customer.email, emailSubject, emailBody);
+    const { templates } = await import("@/lib/email-templates");
+    const { generateTechnextEmailHtml } = await import("@/lib/mailer");
+    const emailHtml = generateTechnextEmailHtml(
+      "Support Ticket Received",
+      templates.supportTicketCreated({ id: ticket.id, subject, priority, customerName: customer.name })
+    );
+    await sendEmail(customer.email, `Support Ticket #${ticket.id} Received`, emailHtml);
   }
 
   revalidatePath("/tickets");
@@ -148,10 +148,21 @@ export async function replyToTicket(ticketId: string, formData: FormData) {
 }
 
 export async function updateTicketStatus(ticketId: string, status: string) {
-  await prisma.supportTicket.update({
+  const ticket = await prisma.supportTicket.update({
     where: { id: ticketId },
     data: { status },
+    include: { customer: true }
   });
+
+  if ((status === "RESOLVED" || status === "CLOSED") && ticket.customer?.email) {
+    const { templates } = await import("@/lib/email-templates");
+    const { generateTechnextEmailHtml } = await import("@/lib/mailer");
+    const emailHtml = generateTechnextEmailHtml(
+      "Issue Resolved",
+      templates.supportResolution({ id: ticket.id, subject: ticket.subject })
+    );
+    await sendEmail(ticket.customer.email, `Ticket Resolved: ${ticket.subject}`, emailHtml);
+  }
 
   revalidatePath(`/tickets/${ticketId}`);
   revalidatePath("/tickets");

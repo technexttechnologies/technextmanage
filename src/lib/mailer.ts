@@ -2,33 +2,72 @@ import nodemailer from 'nodemailer';
 import { prisma } from './prisma';
 
 export function generateTechnextEmailHtml(title: string, bodyContent: string, ctaButton?: { text: string, url: string }) {
+  const whatsappNumber = "+919036987452"; // Example TechNext number
+  const whatsappMessage = encodeURIComponent("Hello, I would like to know more about your services.");
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+
   return `
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${title}</title>
+      <!--[if mso]>
+      <noscript>
+        <xml>
+          <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+          </o:OfficeDocumentSettings>
+        </xml>
+      </noscript>
+      <![endif]-->
       <style>
-        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        .wrapper { background-color: #f3f4f6; padding: 40px 20px; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb; border-top: 6px solid #4f46e5; }
-        .header { background-color: #ffffff; padding: 40px 30px 20px; text-align: center; border-bottom: 1px solid #f3f4f6; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        .wrapper { background-color: #f8fafc; padding: 40px 20px; }
+        .container { max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0; }
+        .header { background-color: #ffffff; padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid #f1f5f9; position: relative; }
+        .header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #4f46e5 0%, #3b82f6 100%); }
         .logo-box { display: inline-block; margin-bottom: 16px; }
-        .header-title { color: #6b7280; margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; }
-        .body-section { padding: 40px 30px; background-color: #ffffff; }
-        .content { color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0; }
-        .cta-btn { display: inline-block; background-color: #4f46e5; color: #ffffff !important; font-weight: 600; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-size: 16px; text-align: center; }
-        .footer { background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb; }
-        .website-link { color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 14px; }
+        .header-title { color: #64748b; margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+        .body-section { padding: 40px 40px; background-color: #ffffff; }
+        .content { color: #334155; font-size: 16px; line-height: 1.7; margin: 0; }
+        .cta-container { text-align: center; margin-top: 40px; }
+        .cta-btn { display: inline-block; background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); color: #ffffff !important; font-weight: 600; padding: 16px 36px; text-decoration: none; border-radius: 10px; font-size: 16px; text-align: center; box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4); transition: transform 0.2s ease; }
+        .footer { background-color: #0f172a; padding: 40px 40px; text-align: left; color: #94a3b8; }
+        .footer-grid { display: block; width: 100%; margin-bottom: 30px; }
+        .footer-col { display: inline-block; vertical-align: top; width: 100%; max-width: 260px; margin-bottom: 20px; }
+        .footer-heading { color: #ffffff; font-size: 14px; font-weight: 600; margin: 0 0 16px 0; letter-spacing: 1px; text-transform: uppercase; }
+        .footer-link { color: #cbd5e1; text-decoration: none; font-size: 14px; display: block; margin-bottom: 10px; transition: color 0.2s ease; }
+        .footer-link:hover { color: #ffffff; }
+        .social-container { margin-top: 20px; border-top: 1px solid #1e293b; padding-top: 30px; text-align: center; }
+        .social-link { display: inline-block; margin: 0 8px; width: 36px; height: 36px; background-color: #1e293b; border-radius: 50%; line-height: 36px; text-align: center; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; }
+        .wa-btn { display: inline-block; background-color: #25D366; color: #ffffff !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-top: 20px; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3); }
+        .copyright { color: #64748b; font-size: 13px; margin: 20px 0 0 0; text-align: center; }
+        
+        @media only screen and (max-width: 600px) {
+          .wrapper { padding: 20px 10px; }
+          .container { border-radius: 12px; }
+          .header { padding: 30px 20px 20px; }
+          .body-section { padding: 30px 20px; }
+          .footer { padding: 30px 20px; }
+          .footer-col { max-width: 100%; }
+        }
       </style>
     </head>
     <body>
       <div class="wrapper">
+        <!--[if mso | IE]>
+        <table align="center" border="0" cellpadding="0" cellspacing="0" class="" style="width:600px;" width="600" >
+          <tr>
+            <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
+        <![endif]-->
         <div class="container">
           <div class="header">
             <div class="logo-box">
-              <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style="width: 220px; height: auto; display: block;" />
+              <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="technext" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
             </div>
             <p class="header-title">${title}</p>
           </div>
@@ -37,21 +76,47 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
               ${bodyContent}
             </div>
             ${ctaButton ? `
-              <div style="text-align: center; margin-top: 35px;">
+              <div class="cta-container">
                 <a href="${ctaButton.url}" class="cta-btn">${ctaButton.text}</a>
               </div>
             ` : ''}
           </div>
           <div class="footer">
-            <p style="color: #64748b; font-size: 14px; margin: 0 0 12px 0;">
-              Thank you for partnering with <strong style="color: #4f46e5;">technext</strong>
-            </p>
-            <a href="https://technexttechnologies.in" class="website-link">technexttechnologies.in</a>
-            <p style="color: #94a3b8; font-size: 12px; margin: 12px 0 0 0;">
-              If you have any questions, please reply directly to this email.
-            </p>
+            <div class="footer-grid">
+              <div class="footer-col">
+                <h4 class="footer-heading">Contact Us</h4>
+                <a href="mailto:info.technexttech@gmail.com" class="footer-link">info.technexttech@gmail.com</a>
+                <a href="tel:+919036987452" class="footer-link">+91 9036987452</a>
+                <a href="${whatsappUrl}" class="wa-btn">Chat on WhatsApp</a>
+              </div>
+              <div class="footer-col" style="max-width: 220px; float: right;">
+                <h4 class="footer-heading">Services</h4>
+                <a href="https://technexttechnologies.com" class="footer-link">Custom Software</a>
+                <a href="https://technexttechnologies.com" class="footer-link">Mobile Apps</a>
+                <a href="https://technexttechnologies.com" class="footer-link">Cloud Infrastructure</a>
+                <a href="https://technexttechnologies.com" class="footer-link">IT Consulting</a>
+              </div>
+            </div>
+            <div style="clear: both;"></div>
+            <div class="social-container">
+              <p style="margin: 0 0 16px 0; font-size: 14px; color: #cbd5e1;">Connect with us</p>
+              <a href="#" class="social-link">In</a>
+              <a href="#" class="social-link">Tw</a>
+              <a href="#" class="social-link">Fb</a>
+              <a href="#" class="social-link">Ig</a>
+              <p class="copyright">&copy; ${new Date().getFullYear()} technext. All rights reserved.</p>
+              <p style="color: #475569; font-size: 11px; margin-top: 12px; line-height: 1.5;">
+                You are receiving this email because you are a valued client or partner of technext. 
+                <br/>If you wish to update your preferences, please contact support.
+              </p>
+            </div>
           </div>
         </div>
+        <!--[if mso | IE]>
+            </td>
+          </tr>
+        </table>
+        <![endif]-->
       </div>
     </body>
     </html>
