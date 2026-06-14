@@ -254,5 +254,40 @@ export const templates = {
         </div>
       `).join('')}
     </div>
+  `,
+
+  // 16. Package Activation
+  packageActivation: (pkg: any) => `
+    <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Service Package Activated</h2>
+    <p style="font-size: 16px; color: #334155; line-height: 1.7;">Dear ${pkg.customerName},</p>
+    <p style="font-size: 16px; color: #334155; line-height: 1.7;">Your <strong>${pkg.packageName}</strong> (${pkg.packageType}) has been successfully activated.</p>
+    <div style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 30px 0;">
+      <p style="margin: 0; color: #0f172a; font-weight: 600;">Status: Active</p>
+    </div>
+    <p style="font-size: 16px; color: #334155; line-height: 1.7;">Our assigned team will be in touch shortly to begin the necessary provisioning.</p>
+  `,
+
+  // 17. Domain Registration
+  domainActivation: (domain: any) => `
+    <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Domain Registration Confirmed</h2>
+    <p style="font-size: 16px; color: #334155; line-height: 1.7;">Dear ${domain.customerName},</p>
+    <p style="font-size: 16px; color: #334155; line-height: 1.7;">Great news! Your domain name <strong>${domain.domainName}</strong> has been successfully registered.</p>
+    <div style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 30px 0;">
+      <p style="margin: 0; color: #0f172a; font-weight: 600;">Registrar: ${domain.registrar}</p>
+      <p style="margin: 8px 0 0 0; color: #475569;">Expiry Date: ${domain.expiryDate}</p>
+    </div>
+    <p style="font-size: 16px; color: #334155; line-height: 1.7;">You will receive automated reminders when it is time to renew. Please review your Client Portal to manage DNS records if needed.</p>
+  `,
+
+  // 18. Hosting Provisioning
+  hostingActivation: (host: any) => `
+    <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Hosting Provisioned</h2>
+    <p style="font-size: 16px; color: #334155; line-height: 1.7;">Dear ${host.customerName},</p>
+    <p style="font-size: 16px; color: #334155; line-height: 1.7;">Your hosting environment is now live and fully configured.</p>
+    <div style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 30px 0;">
+      <p style="margin: 0; color: #0f172a; font-weight: 600;">Plan: ${host.hostingPlan}</p>
+      <p style="margin: 8px 0 0 0; color: #475569;">Provider: ${host.hostingProvider}</p>
+    </div>
+    <p style="font-size: 16px; color: #334155; line-height: 1.7;">Your SSL Certificates and automated backups have been successfully enabled. The server details will be securely communicated to you shortly.</p>
   `
 };
