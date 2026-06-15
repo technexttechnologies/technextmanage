@@ -22,8 +22,8 @@ export async function uploadPublicFile(
 ): Promise<{ publicId: string; secureUrl: string }> {
   const cl = getCloudinary();
 
-  // Use 'auto' so Cloudinary correctly identifies PDFs and sets the proper Content-Type
-  const resourceType = 'auto';
+  // Use 'raw' to prevent Cloudinary from transforming PDFs into images
+  const resourceType = 'raw';
 
   // Preserve extension so Cloudinary serves file with correct Content-Type
   const ext = fileName.match(/\.[^/.]+$/)?.[0] || '';
@@ -43,9 +43,15 @@ export async function uploadPublicFile(
       },
       (error, result) => {
         if (error) return reject(new Error(`Cloudinary upload failed: ${error.message}`));
+        // Inject fl_attachment to force download rather than browser inline view
+        const rawUrl = result!.secure_url;
+        const secureUrl = rawUrl.includes('/upload/') 
+          ? rawUrl.replace('/upload/', '/upload/fl_attachment/')
+          : rawUrl;
+
         resolve({
           publicId: result!.public_id,
-          secureUrl: result!.secure_url,
+          secureUrl: secureUrl,
         });
       }
     );
@@ -65,7 +71,7 @@ export async function uploadToCloudinary(
 ): Promise<{ publicId: string; secureUrl: string }> {
   const cl = getCloudinary();
 
-  const resourceType = 'auto';
+  const resourceType = 'raw';
 
   const safeFileName = fileName
     .replace(/\.[^/.]+$/, '')
