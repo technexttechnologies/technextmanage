@@ -218,11 +218,16 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                     <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                       <p style={{ margin: '4px 0' }}>Priority: {req.priority}</p>
                       <p style={{ margin: '4px 0' }}>Requested: {format(new Date(req.createdAt), 'MMM dd, yyyy')}</p>
-                      {req.pdfUrl && (
-                        <a href={req.pdfUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: '8px', color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px' }}>
-                          Download Proposal PDF
-                        </a>
-                      )}
+                      <div style={{ display: 'flex', gap: '12px', marginTop: '12px', flexWrap: 'wrap' }}>
+                        <Link href={`/track/${req.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'white', backgroundColor: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
+                          Track Progress 📍
+                        </Link>
+                        {req.pdfUrl && (
+                          <a href={req.pdfUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', backgroundColor: 'var(--surface-background)', border: '1px solid var(--surface-border)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
+                            Download PDF ⬇️
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -251,9 +256,16 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                     <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                       <p style={{ margin: '4px 0' }}>Amount: ₹{quote.totalAmount.toFixed(2)}</p>
                       <p style={{ margin: '4px 0 12px 0' }}>Date: {format(new Date(quote.date), 'MMM dd, yyyy')}</p>
-                      <Link href={`/portal/${token}/quotations/${quote.id}`} style={{ display: 'inline-block', color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px' }}>
-                        View Details →
-                      </Link>
+                      <div style={{ display: 'flex', gap: '12px', marginTop: '12px', flexWrap: 'wrap' }}>
+                        <Link href={`/portal/${token}/quotations/${quote.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'white', backgroundColor: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
+                          View Details →
+                        </Link>
+                        {quote.pdfUrl && (
+                          <a href={quote.pdfUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', backgroundColor: 'var(--surface-background)', border: '1px solid var(--surface-border)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
+                            Download PDF ⬇️
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -281,7 +293,17 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                     </div>
                     <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                       <p style={{ margin: '4px 0' }}>Amount: ₹{invoice.amountRequested.toFixed(2)}</p>
-                      <p style={{ margin: '4px 0' }}>Date: {format(new Date(invoice.createdAt), 'MMM dd, yyyy')}</p>
+                      <p style={{ margin: '4px 0 12px 0' }}>Date: {format(new Date(invoice.createdAt), 'MMM dd, yyyy')}</p>
+                      <div style={{ display: 'flex', gap: '12px', marginTop: '12px', flexWrap: 'wrap' }}>
+                        <Link href={`/portal/${token}/invoices/${invoice.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'white', backgroundColor: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
+                          View Invoice Details →
+                        </Link>
+                        {invoice.pdfUrl && (
+                          <a href={invoice.pdfUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', backgroundColor: 'var(--surface-background)', border: '1px solid var(--surface-border)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
+                            Download PDF ⬇️
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
