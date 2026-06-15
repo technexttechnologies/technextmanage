@@ -155,9 +155,28 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                       {getStatusBadge(pkg.renewalDate)}
                     </div>
                     <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                      <p style={{ margin: '4px 0' }}>Type: {pkg.packageType}</p>
-                      {pkg.renewalDate && (
-                        <p style={{ margin: '4px 0' }}>Renews: {format(new Date(pkg.renewalDate), 'MMM dd, yyyy')}</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: pkg.notes ? '12px' : '0' }}>
+                        <div>
+                          <p style={{ margin: '4px 0' }}><strong>Type:</strong> {pkg.packageType}</p>
+                          <p style={{ margin: '4px 0' }}><strong>Price:</strong> ₹{pkg.packagePrice.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                          <p style={{ margin: '4px 0' }}><strong>Purchased:</strong> {format(new Date(pkg.purchaseDate), 'MMM dd, yyyy')}</p>
+                        </div>
+                        <div>
+                          <p style={{ margin: '4px 0' }}><strong>Contract:</strong> {pkg.isLifetime ? 'Lifetime' : `${pkg.contractPeriod} Months`}</p>
+                          {pkg.renewalDate && !pkg.isLifetime ? (
+                            <p style={{ margin: '4px 0' }}><strong>Renews:</strong> {format(new Date(pkg.renewalDate), 'MMM dd, yyyy')}</p>
+                          ) : pkg.isLifetime ? (
+                            <p style={{ margin: '4px 0' }}><strong>Renews:</strong> Lifetime Access</p>
+                          ) : null}
+                          {pkg.assignedTeam && (
+                            <p style={{ margin: '4px 0' }}><strong>Team:</strong> {pkg.assignedTeam}</p>
+                          )}
+                        </div>
+                      </div>
+                      {pkg.notes && (
+                        <div style={{ padding: '8px 12px', backgroundColor: 'var(--surface-background)', borderRadius: '6px', fontSize: '13px', border: '1px solid var(--surface-border)' }}>
+                          <p style={{ margin: 0, color: 'var(--text-primary)' }}><strong>Notes:</strong> {pkg.notes}</p>
+                        </div>
                       )}
                     </div>
                   </div>
