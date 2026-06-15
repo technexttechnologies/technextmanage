@@ -36,11 +36,12 @@
 }
 
 .header {
-  background: #ffffff;
+  background: #0f172a;
   position: relative;
-  padding: 40px 30px 20px;
+  padding: 40px 30px;
   text-align: center;
-  color: #0f172a;
+  color: white;
+  overflow: hidden;
 }
 
 .header::after {
@@ -49,25 +50,30 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 1px;
-  background: rgba(0,0,0,0.05);
+  height: 4px;
+  background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%);
 }
 
 .logo {
   display: inline-block;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px 30px;
+  border-radius: 16px;
   margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 .logo img {
   height: 40px !important;
   object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
 .title {
   font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.5px;
-  color: #64748b;
+  color: #f8fafc;
 }
 
 .body {
