@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { updateHostingAccount } from "../../actions";
 import Link from "next/link";
-import styles from "../../page.module.css";
+import styles from "../../new/page.module.css";
 import { notFound } from "next/navigation";
 
 export default async function EditHostingPage({ params }: { params: Promise<{ id: string }> }) {

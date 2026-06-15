@@ -138,6 +138,6 @@
   
   .grid2 {
     grid-template-columns: 1fr;
-    gap: 0;
+    gap: var(--spacing-4);
   }
 }
