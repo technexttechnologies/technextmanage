@@ -128,3 +128,15 @@ export async function deleteFromCloudinary(publicId: string, mimeType: string): 
     console.error('Cloudinary delete failed:', err);
   }
 }
+
+/**
+ * Format a Cloudinary PDF URL to force download by injecting fl_attachment.
+ * This is useful for retroactively fixing older database records that
+ * lack the fl_attachment flag.
+ */
+export function formatPdfUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  if (!url.includes('res.cloudinary.com')) return url;
+  if (url.includes('fl_attachment')) return url;
+  return url.replace('/upload/', '/upload/fl_attachment/');
+}

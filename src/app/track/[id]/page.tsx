@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import styles from "./page.module.css";
 import { Check, Clock, FileText, Download } from "lucide-react";
+import { formatPdfUrl } from "@/lib/cloudinaryStorage";
 
 export default async function PublicTrackingPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -175,10 +176,8 @@ export default async function PublicTrackingPage({ params }: { params: Promise<{
           </div>
 
           {request.pdfUrl && (
-            <div className={styles.downloadBox}>
-              <h4 style={{ color: '#166534', marginBottom: '4px' }}>Your Official Document is Ready!</h4>
-              <p style={{ color: '#15803d', fontSize: '14px' }}>You can download it securely using the button below.</p>
-              <a href={request.pdfUrl} target="_blank" rel="noreferrer" className={styles.downloadBtn}>
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <a href={formatPdfUrl(request.pdfUrl)} target="_blank" rel="noreferrer" className={styles.downloadBtn}>
                 <Download size={18} /> Download {type}
               </a>
             </div>

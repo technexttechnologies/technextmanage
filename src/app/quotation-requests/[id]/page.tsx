@@ -9,6 +9,7 @@ import Link from "next/link";
 import { updateQuotationStatus } from "../actions";
 import QuotationPdfUploader from "@/components/QuotationPdfUploader";
 import { QuotationRequestActionButtons } from "../QuotationRequestActionButtons";
+import { formatPdfUrl } from "@/lib/cloudinaryStorage";
 
 export default async function QuotationRequestDetails({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -52,7 +53,7 @@ export default async function QuotationRequestDetails({ params }: { params: Prom
           <p className={styles.subtitle}>Requested by {request.requestedBy.name} for {request.customer.name}</p>
         </div>
         {request.pdfUrl && (
-          <a href={request.pdfUrl} target="_blank" rel="noreferrer" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <a href={formatPdfUrl(request.pdfUrl)} target="_blank" rel="noreferrer" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Download size={18} /> Download Official Quotation
           </a>
         )}

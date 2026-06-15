@@ -5,6 +5,7 @@ import { PortalHeader } from "../../PortalHeader";
 import { FileSignature, Download } from "lucide-react";
 import { format } from "date-fns";
 import { QuotationActionButtons } from "./QuotationActionButtons";
+import { formatPdfUrl } from "@/lib/cloudinaryStorage";
 
 export default async function QuotationPortalPage({ params }: { params: Promise<{ token: string, quoteId: string }> }) {
   const { token, quoteId } = await params;
@@ -72,7 +73,7 @@ export default async function QuotationPortalPage({ params }: { params: Promise<
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             {quote.pdfUrl && (
               <a 
-                href={quote.pdfUrl} 
+                href={formatPdfUrl(quote.pdfUrl)} 
                 target="_blank" 
                 rel="noreferrer"
                 style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--surface-border)', color: 'var(--text-primary)', border: 'none', padding: '12px 24px', borderRadius: '8px', fontSize: '15px', fontWeight: 'bold', textDecoration: 'none' }}

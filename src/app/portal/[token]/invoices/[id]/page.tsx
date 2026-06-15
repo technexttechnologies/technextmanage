@@ -5,6 +5,7 @@ import { PortalHeader } from "../../PortalHeader";
 import { FileText, Download, Receipt } from "lucide-react";
 import { format } from "date-fns";
 import { InvoicePaymentButton } from "./InvoicePaymentButton";
+import { formatPdfUrl } from "@/lib/cloudinaryStorage";
 
 export default async function InvoicePortalPage({ params }: { params: Promise<{ token: string, id: string }> }) {
   const { token, id } = await params;
@@ -72,7 +73,7 @@ export default async function InvoicePortalPage({ params }: { params: Promise<{ 
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             {invoice.pdfUrl && (
               <a 
-                href={invoice.pdfUrl} 
+                href={formatPdfUrl(invoice.pdfUrl)} 
                 target="_blank" 
                 rel="noreferrer"
                 style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--surface-border)', color: 'var(--text-primary)', border: 'none', padding: '16px 24px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', textDecoration: 'none' }}

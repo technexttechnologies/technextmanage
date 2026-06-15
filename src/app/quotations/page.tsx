@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { formatPdfUrl } from "@/lib/cloudinaryStorage";
 import { Plus, Search, FileSignature, CheckCircle, XCircle, ArrowRightCircle, Download, MessageCircle } from "lucide-react";
 import { getWhatsAppLink, waTemplates } from "@/lib/whatsappTemplates";
 import styles from "./page.module.css";
@@ -105,7 +106,7 @@ export default async function QuotationsPage({
                 {quote.notes && <p className={styles.notes}>{quote.notes}</p>}
                 
                 {quote.pdfUrl && (
-                  <a href={quote.pdfUrl} target="_blank" rel="noopener noreferrer" className={styles.pdfLink}>
+                  <a href={formatPdfUrl(quote.pdfUrl)} target="_blank" rel="noopener noreferrer" className={styles.pdfLink}>
                     <Download size={14} /> Download PDF
                   </a>
                 )}

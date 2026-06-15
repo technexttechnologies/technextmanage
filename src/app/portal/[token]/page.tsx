@@ -12,9 +12,11 @@ import {
   FileSignature,
   FileText,
   LifeBuoy,
-  ClipboardList
+  ClipboardList,
+  Download
 } from "lucide-react";
 import { format } from "date-fns";
+import { formatPdfUrl } from "@/lib/cloudinaryStorage";
 import { PortalHeader } from "./PortalHeader";
 import Link from "next/link";
 
@@ -223,7 +225,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                           Track Progress 📍
                         </Link>
                         {req.pdfUrl && (
-                          <a href={req.pdfUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', backgroundColor: 'var(--surface-background)', border: '1px solid var(--surface-border)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
+                          <a href={formatPdfUrl(req.pdfUrl)} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', backgroundColor: 'var(--surface-background)', border: '1px solid var(--surface-border)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
                             Download PDF ⬇️
                           </a>
                         )}
@@ -261,7 +263,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                           View Details →
                         </Link>
                         {quote.pdfUrl && (
-                          <a href={quote.pdfUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', backgroundColor: 'var(--surface-background)', border: '1px solid var(--surface-border)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
+                          <a href={formatPdfUrl(quote.pdfUrl)} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', backgroundColor: 'var(--surface-background)', border: '1px solid var(--surface-border)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
                             Download PDF ⬇️
                           </a>
                         )}
@@ -299,7 +301,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                           View Invoice Details →
                         </Link>
                         {invoice.pdfUrl && (
-                          <a href={invoice.pdfUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', backgroundColor: 'var(--surface-background)', border: '1px solid var(--surface-border)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
+                          <a href={formatPdfUrl(invoice.pdfUrl)} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', backgroundColor: 'var(--surface-background)', border: '1px solid var(--surface-border)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
                             Download PDF ⬇️
                           </a>
                         )}

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { notFound } from "next/navigation";
+import { formatPdfUrl } from "@/lib/cloudinaryStorage";
 import { ArrowLeft, User, Receipt, CheckCircle, Save, Download, FileSignature, MessageCircle } from "lucide-react";
 import styles from "../page.module.css";
 import Link from "next/link";
@@ -49,7 +50,7 @@ export default async function InvoiceRequestDetails({ params }: { params: Promis
           <p className={styles.subtitle}>Requested by {request.requestedBy.name} for {request.customer.name}</p>
         </div>
         {request.pdfUrl && (
-          <a href={request.pdfUrl} target="_blank" rel="noreferrer" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <a href={formatPdfUrl(request.pdfUrl)} target="_blank" rel="noreferrer" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Download size={18} /> Download Official Invoice
           </a>
         )}
