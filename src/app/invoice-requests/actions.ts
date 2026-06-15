@@ -148,14 +148,26 @@ export async function uploadInvoicePdf(formData: FormData) {
     fileBuffer
   );
 
-  // Extract structured data using AI
+  // Extract structured data using AI or use provided data
   let structuredData = null;
-  try {
-    const base64Data = fileBuffer.toString("base64");
-    // Invoices share the same layout structure, so we reuse parseQuotationPdf
-    structuredData = await parseQuotationPdf(base64Data, file.type || "application/pdf");
-  } catch (err) {
-    console.error("AI Parsing failed during upload:", err);
+  const providedStructuredData = formData.get("structuredData") as string;
+  
+  if (providedStructuredData) {
+    try {
+      structuredData = JSON.parse(providedStructuredData);
+    } catch (e) {
+      console.error("Invalid structuredData JSON provided from frontend");
+    }
+  }
+
+  if (!structuredData) {
+    try {
+      const base64Data = fileBuffer.toString("base64");
+      // Invoices share the same layout structure, so we reuse parseQuotationPdf
+      structuredData = await parseQuotationPdf(base64Data, file.type || "application/pdf");
+    } catch (err) {
+      console.error("AI Parsing failed during upload:", err);
+    }
   }
 
   const request = await prisma.invoiceRequest.update({
