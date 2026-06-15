@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { PortalHeader } from "../../../PortalHeader";
+import { PortalHeader } from "../../PortalHeader";
 import { Globe, PenTool } from "lucide-react";
 import { createUpdateRequest } from "./actions";
 
