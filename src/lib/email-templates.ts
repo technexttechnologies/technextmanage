@@ -1,14 +1,14 @@
 export const templates = {
   // 1. New Lead Notification (Admin)
   newLeadNotification: (lead: any) => `
-    <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-      <h2 style="color: #0f172a; margin: 0 0 16px 0; font-size: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 12px; display: inline-block;">New Website Enquiry</h2>
+    <div style="background: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 16px; padding: 30px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+      <h2 style="color: #111827; margin: 0 0 20px 0; font-size: 20px; font-weight: 700; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 16px; display: inline-block;">New Website Enquiry</h2>
       <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 10px 0; color: #64748b; font-size: 14px; border-bottom: 1px solid #e2e8f0;" width="30%">Name</td><td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #e2e8f0;">${lead.name}</td></tr>
-        <tr><td style="padding: 10px 0; color: #64748b; font-size: 14px; border-bottom: 1px solid #e2e8f0;">Email</td><td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #e2e8f0;">${lead.email || 'N/A'}</td></tr>
-        <tr><td style="padding: 10px 0; color: #64748b; font-size: 14px; border-bottom: 1px solid #e2e8f0;">Phone</td><td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #e2e8f0;">${lead.phone || 'N/A'}</td></tr>
-        <tr><td style="padding: 10px 0; color: #64748b; font-size: 14px; border-bottom: 1px solid #e2e8f0;">Source</td><td style="padding: 10px 0; color: #0f172a; font-weight: 600; border-bottom: 1px solid #e2e8f0;">${lead.source}</td></tr>
-        <tr><td style="padding: 10px 0; color: #64748b; font-size: 14px;">Notes</td><td style="padding: 10px 0; color: #0f172a; font-weight: 600;">${lead.notes || 'None'}</td></tr>
+        <tr><td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid rgba(0,0,0,0.03);" width="30%">Name</td><td style="padding: 12px 0; color: #111827; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.03);">${lead.name}</td></tr>
+        <tr><td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid rgba(0,0,0,0.03);">Email</td><td style="padding: 12px 0; color: #111827; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.03);">${lead.email || 'N/A'}</td></tr>
+        <tr><td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid rgba(0,0,0,0.03);">Phone</td><td style="padding: 12px 0; color: #111827; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.03);">${lead.phone || 'N/A'}</td></tr>
+        <tr><td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid rgba(0,0,0,0.03);">Source</td><td style="padding: 12px 0; color: #111827; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.03);">${lead.source}</td></tr>
+        <tr><td style="padding: 12px 0; color: #6b7280; font-size: 14px;">Notes</td><td style="padding: 12px 0; color: #111827; font-weight: 500;">${lead.notes || 'None'}</td></tr>
       </table>
     </div>
     <p style="color: #475569; font-size: 15px;">Please assign this lead and follow up as soon as possible.</p>
@@ -31,11 +31,11 @@ export const templates = {
     <p style="font-size: 16px; color: #334155; line-height: 1.7;">Dear ${quote.customerName},</p>
     <p style="font-size: 16px; color: #334155; line-height: 1.7;">Based on our recent discussions, we have prepared a detailed quotation for your project.</p>
     
-    <div style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 30px 0;">
+    <div style="background: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 16px; padding: 32px; margin: 35px 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
       <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 8px 0; color: #64748b; font-size: 15px; width: 40%;">Quotation No:</td><td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">${quote.quotationNumber}</td></tr>
-        <tr><td style="padding: 8px 0; color: #64748b; font-size: 15px; width: 40%;">Total Investment:</td><td style="padding: 8px 0; color: #4f46e5; font-size: 18px; font-weight: 700;">₹${quote.totalAmount.toLocaleString()}</td></tr>
-        <tr><td style="padding: 8px 0; color: #64748b; font-size: 15px; width: 40%;">Validity:</td><td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">15 Days</td></tr>
+        <tr><td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 40%;">Quotation No:</td><td style="padding: 10px 0; color: #111827; font-size: 15px; font-weight: 600;">${quote.quotationNumber}</td></tr>
+        <tr><td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 40%;">Total Investment:</td><td style="padding: 10px 0; color: #10b981; font-size: 20px; font-weight: 700;">₹${quote.totalAmount.toLocaleString()}</td></tr>
+        <tr><td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 40%;">Validity:</td><td style="padding: 10px 0; color: #111827; font-size: 15px; font-weight: 500;">15 Days</td></tr>
       </table>
     </div>
     
@@ -64,11 +64,13 @@ export const templates = {
     <p style="font-size: 16px; color: #334155; line-height: 1.7;">Dear ${invoice.customerName},</p>
     <p style="font-size: 16px; color: #334155; line-height: 1.7;">We hope you are satisfied with our recent services. Attached to this email is your invoice for the recent project milestones.</p>
     
-    <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 30px 0; text-align: center;">
-      <p style="margin: 0 0 8px 0; font-size: 14px; color: #64748b; text-transform: uppercase;">Amount Due</p>
-      <p style="margin: 0; font-size: 32px; color: #0f172a; font-weight: 800;">₹${invoice.amount.toLocaleString()}</p>
-      <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0; font-size: 14px; color: #ef4444; font-weight: 600;">Due By: ${invoice.dueDate}</p>
+    <div style="background: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 16px; padding: 40px 24px; margin: 35px 0; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+      <p style="margin: 0 0 12px 0; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Amount Due</p>
+      <p style="margin: 0; font-size: 36px; color: #111827; font-weight: 800; letter-spacing: -1px;">₹${invoice.amount.toLocaleString()}</p>
+      <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(0,0,0,0.05);">
+        <p style="margin: 0; font-size: 14px; color: #ef4444; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+          Due By: ${invoice.dueDate}
+        </p>
       </div>
     </div>
   `,
@@ -153,13 +155,13 @@ export const templates = {
     <p style="font-size: 16px; color: #334155; line-height: 1.7;">Hello ${ticket.customerName},</p>
     <p style="font-size: 16px; color: #334155; line-height: 1.7;">We have successfully received your support request. A ticket has been created and assigned to our technical team.</p>
     
-    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 30px 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <div style="background: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 16px; padding: 32px; margin: 35px 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
       <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 8px 0; color: #64748b; font-size: 15px; width: 35%;">Ticket ID:</td><td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">#${ticket.id}</td></tr>
-        <tr><td style="padding: 8px 0; color: #64748b; font-size: 15px;">Subject:</td><td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">${ticket.subject}</td></tr>
-        <tr><td style="padding: 8px 0; color: #64748b; font-size: 15px;">Priority:</td>
-            <td style="padding: 8px 0;">
-              <span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; ${ticket.priority === 'URGENT' ? 'background: #fee2e2; color: #b91c1c;' : 'background: #e0e7ff; color: #4338ca;'}">${ticket.priority}</span>
+        <tr><td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 35%; border-bottom: 1px solid rgba(0,0,0,0.03);">Ticket ID:</td><td style="padding: 10px 0; color: #111827; font-size: 15px; font-weight: 600; border-bottom: 1px solid rgba(0,0,0,0.03);">#${ticket.id}</td></tr>
+        <tr><td style="padding: 10px 0; color: #6b7280; font-size: 15px; border-bottom: 1px solid rgba(0,0,0,0.03);">Subject:</td><td style="padding: 10px 0; color: #111827; font-size: 15px; font-weight: 600; border-bottom: 1px solid rgba(0,0,0,0.03);">${ticket.subject}</td></tr>
+        <tr><td style="padding: 10px 0; color: #6b7280; font-size: 15px;">Priority:</td>
+            <td style="padding: 10px 0;">
+              <span style="display: inline-block; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; ${ticket.priority === 'URGENT' ? 'background: #fee2e2; color: #b91c1c;' : 'background: #f3f4f6; color: #374151;'}">${ticket.priority}</span>
             </td>
         </tr>
       </table>

@@ -23,34 +23,33 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
       </noscript>
       <![endif]-->
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
         table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        .wrapper { background-color: #f8fafc; padding: 40px 20px; }
-        .container { max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0; }
-        .header { background-color: #ffffff; padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid #f1f5f9; position: relative; }
-        .header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #4f46e5 0%, #3b82f6 100%); }
-        .logo-box { display: inline-block; margin-bottom: 16px; }
-        .header-title { color: #64748b; margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
-        .body-section { padding: 40px 40px; background-color: #ffffff; }
-        .content { color: #334155; font-size: 16px; line-height: 1.7; margin: 0; }
-        .cta-container { text-align: center; margin-top: 40px; }
-        .cta-btn { display: inline-block; background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); color: #ffffff !important; font-weight: 600; padding: 16px 36px; text-decoration: none; border-radius: 10px; font-size: 16px; text-align: center; box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4); transition: transform 0.2s ease; }
-        .footer { background-color: #0f172a; padding: 40px 40px; text-align: left; color: #94a3b8; }
-        .footer-grid { display: block; width: 100%; margin-bottom: 30px; }
-        .footer-col { display: inline-block; vertical-align: top; width: 100%; max-width: 260px; margin-bottom: 20px; }
-        .footer-heading { color: #ffffff; font-size: 14px; font-weight: 600; margin: 0 0 16px 0; letter-spacing: 1px; text-transform: uppercase; }
-        .footer-link { color: #cbd5e1; text-decoration: none; font-size: 14px; display: block; margin-bottom: 10px; transition: color 0.2s ease; }
-        .footer-link:hover { color: #ffffff; }
-        .wa-btn { display: inline-block; background-color: #25D366; color: #ffffff !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-top: 20px; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3); }
-        .copyright { color: #64748b; font-size: 13px; margin: 20px 0 0 0; text-align: center; border-top: 1px solid #1e293b; padding-top: 20px; }
+        .wrapper { background-color: #f3f4f6; padding: 50px 20px; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05); border: 1px solid rgba(0,0,0,0.05); }
+        .header { background-color: #ffffff; padding: 40px 40px 20px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.03); position: relative; }
+        .header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%); }
+        .logo-box { display: inline-block; margin-bottom: 24px; }
+        .header-title { color: #94a3b8; margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; }
+        .body-section { padding: 40px; background-color: #ffffff; }
+        .content { color: #374151; font-size: 16px; line-height: 1.8; margin: 0; font-weight: 400; }
+        .cta-container { text-align: center; margin-top: 45px; margin-bottom: 15px; }
+        .cta-btn { display: inline-block; background: #0f172a; color: #ffffff !important; font-weight: 500; padding: 16px 40px; text-decoration: none; border-radius: 12px; font-size: 16px; text-align: center; box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.2); transition: all 0.2s ease; }
+        .footer { background-color: #0f172a; padding: 45px 40px; text-align: left; color: #94a3b8; }
+        .footer-grid { display: block; width: 100%; margin-bottom: 35px; }
+        .footer-col { display: inline-block; vertical-align: top; width: 100%; max-width: 250px; margin-bottom: 20px; }
+        .footer-heading { color: #f8fafc; font-size: 13px; font-weight: 600; margin: 0 0 16px 0; letter-spacing: 1.5px; text-transform: uppercase; }
+        .footer-link { color: #cbd5e1; text-decoration: none; font-size: 14px; display: block; margin-bottom: 12px; font-weight: 400; }
+        .wa-btn { display: inline-block; background-color: rgba(37, 211, 102, 0.1); color: #25D366 !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-top: 20px; border: 1px solid rgba(37, 211, 102, 0.2); }
+        .copyright { color: #64748b; font-size: 12px; margin: 20px 0 0 0; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; font-weight: 400; }
         
         @media only screen and (max-width: 600px) {
           .wrapper { padding: 20px 10px; }
-          .container { border-radius: 12px; }
-          .header { padding: 30px 20px 20px; }
+          .container { border-radius: 16px; }
+          .header { padding: 30px 20px 15px; }
           .body-section { padding: 30px 20px; }
-          .footer { padding: 30px 20px; }
+          .footer { padding: 40px 20px; }
           .footer-col { max-width: 100%; }
         }
       </style>
