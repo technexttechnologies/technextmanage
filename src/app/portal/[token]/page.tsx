@@ -124,7 +124,11 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                     </div>
                     <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                       <p style={{ margin: '4px 0' }}>Provider: {hosting.hostingProvider}</p>
+                    {hosting.renewalDate ? (
                       <p style={{ margin: '4px 0' }}>Renews: {format(new Date(hosting.renewalDate), 'MMM dd, yyyy')}</p>
+                    ) : (
+                      <p style={{ margin: '4px 0' }}>Renews: <span style={{ fontWeight: 600 }}>Lifetime</span></p>
+                    )}
                     </div>
                   </div>
                 ))}

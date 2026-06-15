@@ -11,9 +11,9 @@ export async function createServicePackage(formData: FormData) {
   const packageName = formData.get("packageName") as string;
   const packageType = formData.get("packageType") as string;
   const packagePrice = parseFloat(formData.get("packagePrice") as string);
-  const purchaseDate = new Date(formData.get("purchaseDate") as string);
+  const purchaseDateStr = formData.get("purchaseDate") as string;
   const renewalDateStr = formData.get("renewalDate") as string;
-  const renewalDate = renewalDateStr ? new Date(renewalDateStr) : null;
+  const isLifetime = formData.get("isLifetime") === "on";
   const contractPeriod = parseInt(formData.get("contractPeriod") as string);
   const status = formData.get("status") as string;
   const assignedTeam = formData.get("assignedTeam") as string;
@@ -25,8 +25,9 @@ export async function createServicePackage(formData: FormData) {
       packageName,
       packageType,
       packagePrice,
-      purchaseDate,
-      renewalDate,
+      purchaseDate: new Date(purchaseDateStr),
+      renewalDate: isLifetime ? null : (renewalDateStr ? new Date(renewalDateStr) : null),
+      isLifetime,
       contractPeriod,
       status,
       assignedTeam,

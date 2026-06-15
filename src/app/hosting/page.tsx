@@ -41,12 +41,18 @@ export default async function HostingPage() {
       ) : (
         <div className={styles.grid}>
           {hostingAccounts.map(account => {
-            const diffTime = account.renewalDate.getTime() - now.getTime();
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            let diffDays = 0;
+            if (account.renewalDate) {
+              const diffTime = account.renewalDate.getTime() - now.getTime();
+              diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
             
             let statusClass = "active";
             let statusLabel = "ACTIVE";
-            if (diffDays < 0) {
+            if (account.isLifetime) {
+                statusClass = "active";
+                statusLabel = "LIFETIME";
+            } else if (diffDays < 0) {
               statusClass = "expired";
               statusLabel = "EXPIRED";
             } else if (diffDays <= 30) {
@@ -97,7 +103,7 @@ export default async function HostingPage() {
                     color: diffDays < 0 ? '#dc2626' : diffDays <= 30 ? '#d97706' : '#16a34a',
                     fontWeight: 600
                   }}>
-                    {account.renewalDate.toLocaleDateString()}
+                    {account.isLifetime || !account.renewalDate ? 'Lifetime' : account.renewalDate.toLocaleDateString()}
                   </span>
                 </div>
                 

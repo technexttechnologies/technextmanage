@@ -24,6 +24,10 @@ export async function createCustomer(formData: FormData) {
   const company = formData.get("company") as string;
   const phone = formData.get("phone") as string;
   const email = formData.get("email") as string;
+
+  if (!name || !phone) {
+    throw new Error("Missing required fields: Name and Phone are required.");
+  }
   const status = formData.get("status") as string || "LEAD";
   const address = formData.get("address") as string;
   const gstNumber = formData.get("gstNumber") as string;

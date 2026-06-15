@@ -215,3 +215,12 @@ export async function updateProjectWarranty(projectId: string, formData: FormDat
 
   revalidatePath(`/projects/${projectId}`);
 }
+
+export async function deleteProject(projectId: string) {
+  // Relying on Prisma Cascade deletes for notes, milestones, etc.
+  await prisma.project.delete({
+    where: { id: projectId }
+  });
+  revalidatePath("/projects");
+  redirect("/projects");
+}

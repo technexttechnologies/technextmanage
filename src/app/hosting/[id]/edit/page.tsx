@@ -53,9 +53,14 @@ export default async function EditHostingPage({ params }: { params: Promise<{ id
           <input type="text" name="serverLocation" className={styles.input} defaultValue={account.serverLocation || ''} />
         </div>
 
+        <div className={styles.formGroup} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', gridColumn: '1 / -1' }}>
+          <input type="checkbox" id="isLifetime" name="isLifetime" defaultChecked={account.isLifetime} style={{ width: 'auto' }} />
+          <label htmlFor="isLifetime" style={{ margin: 0 }}>This is a Lifetime Hosting (No renewal required)</label>
+        </div>
+
         <div className={styles.formGroup}>
           <label className={styles.label}>Renewal Date</label>
-          <input type="date" name="renewalDate" required className={styles.input} defaultValue={account.renewalDate.toISOString().split('T')[0]} />
+          <input type="date" name="renewalDate" className={styles.input} defaultValue={account.renewalDate ? account.renewalDate.toISOString().split('T')[0] : ''} />
         </div>
 
         <div className={styles.formGroup}>

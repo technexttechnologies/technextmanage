@@ -54,13 +54,23 @@ export default async function EditPackagePage({ params }: { params: Promise<{ id
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>Price</label>
-          <input type="number" step="0.01" name="packagePrice" required className={styles.input} defaultValue={pkg.packagePrice} />
+          <label htmlFor="purchaseDate">Purchase Date</label>
+          <input type="date" id="purchaseDate" name="purchaseDate" required defaultValue={pkg.purchaseDate ? pkg.purchaseDate.toISOString().split('T')[0] : ''} />
+        </div>
+
+        <div className={styles.formGroup} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', gridColumn: '1 / -1' }}>
+          <input type="checkbox" id="isLifetime" name="isLifetime" defaultChecked={pkg.isLifetime} style={{ width: 'auto' }} />
+          <label htmlFor="isLifetime" style={{ margin: 0 }}>This is a Lifetime Package (No renewal required)</label>
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>Renewal Date</label>
-          <input type="date" name="renewalDate" className={styles.input} defaultValue={pkg.renewalDate ? pkg.renewalDate.toISOString().split('T')[0] : ''} />
+          <label htmlFor="renewalDate">Renewal Date</label>
+          <input type="date" id="renewalDate" name="renewalDate" defaultValue={pkg.renewalDate ? pkg.renewalDate.toISOString().split('T')[0] : ""} />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Price</label>
+          <input type="number" step="0.01" name="packagePrice" required className={styles.input} defaultValue={pkg.packagePrice} />
         </div>
 
         <div className={styles.formGroup}>

@@ -51,18 +51,23 @@ export default async function NewPackagePage() {
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>Purchase Date</label>
-          <input type="date" name="purchaseDate" required className={styles.input} />
+          <label htmlFor="purchaseDate">Purchase Date</label>
+          <input type="date" id="purchaseDate" name="purchaseDate" required defaultValue={new Date().toISOString().split('T')[0]} className={styles.input} />
+        </div>
+
+        <div className={styles.formGroup} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', gridColumn: '1 / -1' }}>
+          <input type="checkbox" id="isLifetime" name="isLifetime" style={{ width: 'auto' }} />
+          <label htmlFor="isLifetime" style={{ margin: 0 }}>This is a Lifetime Package (No renewal required)</label>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label htmlFor="renewalDate">Renewal Date</label>
+          <input type="date" id="renewalDate" name="renewalDate" className={styles.input} />
         </div>
 
         <div className={styles.formGroup}>
           <label className={styles.label}>Contract Period (Months)</label>
           <input type="number" name="contractPeriod" required className={styles.input} defaultValue="12" />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Renewal Date</label>
-          <input type="date" name="renewalDate" className={styles.input} />
         </div>
 
         <div className={styles.formGroup}>

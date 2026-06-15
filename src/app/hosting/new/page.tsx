@@ -48,9 +48,14 @@ export default async function NewHostingPage() {
           <input type="number" step="0.01" name="hostingCost" required className={styles.input} />
         </div>
 
+        <div className={styles.formGroup} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', gridColumn: '1 / -1' }}>
+          <input type="checkbox" id="isLifetime" name="isLifetime" style={{ width: 'auto' }} />
+          <label htmlFor="isLifetime" style={{ margin: 0 }}>This is a Lifetime Hosting (No renewal required)</label>
+        </div>
+
         <div className={styles.formGroup}>
           <label className={styles.label}>Renewal Date</label>
-          <input type="date" name="renewalDate" required className={styles.input} />
+          <input type="date" name="renewalDate" className={styles.input} />
         </div>
 
         <div className={styles.formGroup}>

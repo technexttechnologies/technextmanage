@@ -467,6 +467,7 @@ model ServicePackage {
   packagePrice    Float
   purchaseDate    DateTime
   renewalDate     DateTime?
+  isLifetime      Boolean  @default(false)
   contractPeriod  Int      // in months
   status          String   @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED
   assignedTeam    String?
@@ -500,7 +501,8 @@ model HostingAccount {
   hostingProvider   String
   hostingPlan       String
   serverLocation    String?
-  renewalDate       DateTime
+  renewalDate       DateTime?
+  isLifetime        Boolean  @default(false)
   hostingCost       Float
   storageUsage      String?
   bandwidthUsage    String?

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { MessageCircle, Copy, ExternalLink, Pin, Trash2, CheckCircle } from "lucide-react";
 import styles from "./page.module.css";
-import { updateProjectStatus, addProjectNote, deleteProjectNote, togglePinNote, createMilestone, completeMilestone, updateProjectWarranty } from "../actions";
+import { updateProjectStatus, addProjectNote, deleteProjectNote, togglePinNote, createMilestone, completeMilestone, updateProjectWarranty, deleteProject } from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
 
 export default function ProjectDetailsClient({ project }: { project: any }) {

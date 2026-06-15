@@ -170,12 +170,14 @@ export async function GET(req: Request) {
       const expiringHosting = await prisma.hostingAccount.findMany({
         where: {
           status: "ACTIVE",
+          isLifetime: false,
           renewalDate: { gte: start, lte: end }
         },
         include: { customer: true }
       });
 
       for (const host of expiringHosting) {
+        if (!host.renewalDate) continue;
         if (host.customer?.email) {
           const bodyHtml = `
             <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Action Required: Hosting Renewal</h2>

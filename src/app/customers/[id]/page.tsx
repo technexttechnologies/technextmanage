@@ -286,7 +286,7 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
                     <h3>{host.hostingPlan}</h3>
                     <div className={styles.pMeta}>
                       <span className={styles.pStatus}>{host.status}</span>
-                      <span>Renewal: {host.renewalDate.toLocaleDateString()}</span>
+                      <span>Renewal: {host.isLifetime || !host.renewalDate ? 'Lifetime' : host.renewalDate.toLocaleDateString()}</span>
                     </div>
                     <div style={{marginTop: '12px'}}>
                       <HostingActionButtons hostingId={host.id} customerEmail={customer.email} />
