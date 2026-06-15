@@ -32,10 +32,10 @@ export default async function WebsiteUpdatePortalPage({ params }: { params: Prom
             </div>
             <div>
               <h1 style={{ fontSize: '24px', margin: '0 0 4px 0', color: 'var(--text-primary)' }}>
-                Request Website Update
+                Request Project Update
               </h1>
               <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                Need changes to your website? Let us know what you need and our team will get it done.
+                Need changes to your project or website? Let us know what you need and our team will get it done.
               </p>
             </div>
           </div>

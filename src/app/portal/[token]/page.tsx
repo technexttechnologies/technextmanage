@@ -11,7 +11,8 @@ import {
   AlertCircle,
   FileSignature,
   FileText,
-  LifeBuoy
+  LifeBuoy,
+  ClipboardList
 } from "lucide-react";
 import { format } from "date-fns";
 import { PortalHeader } from "./PortalHeader";
@@ -27,6 +28,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
       hostingAccounts: true,
       packages: true,
       projects: true,
+      quotationRequests: { orderBy: { createdAt: 'desc' } },
       quotations: { orderBy: { date: 'desc' } },
       invoiceRequests: { orderBy: { createdAt: 'desc' } },
       supportTickets: { orderBy: { createdAt: 'desc' } }
@@ -69,7 +71,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
         {/* Quick Actions */}
         <div style={{ display: 'flex', gap: '16px', marginBottom: '30px', flexWrap: 'wrap' }}>
           <Link href={`/portal/${token}/updates/new`} style={{ flex: '1', minWidth: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', backgroundColor: '#8B5CF6', color: 'white', padding: '16px', borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '16px', boxShadow: 'var(--shadow-sm)', transition: 'transform 0.2s' }}>
-            <Globe size={20} /> Request Website Update
+            <Globe size={20} /> Request Project Update
           </Link>
           <Link href={`/portal/${token}/tickets/new`} style={{ flex: '1', minWidth: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', backgroundColor: 'var(--brand-primary)', color: 'white', padding: '16px', borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '16px', boxShadow: 'var(--shadow-sm)', transition: 'transform 0.2s' }}>
             <LifeBuoy size={20} /> Open Support Ticket
@@ -184,6 +186,39 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                       <Link href={`/portal/${token}/projects/${project.id}`} style={{ display: 'inline-block', color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px' }}>
                         View Details →
                       </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Proposals / Quotation Requests */}
+          <div style={{ backgroundColor: 'var(--surface-card)', padding: '24px', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', color: 'var(--brand-primary)' }}>
+              <ClipboardList size={24} />
+              <h2 style={{ fontSize: '20px', margin: 0 }}>Proposals</h2>
+            </div>
+            {customer.quotationRequests.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)' }}>No proposals requested.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {customer.quotationRequests.map(req => (
+                  <div key={req.id} style={{ border: '1px solid var(--surface-border)', padding: '16px', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '16px' }}>{req.serviceName}</strong>
+                      <span style={{ backgroundColor: 'var(--color-info-bg)', color: 'var(--color-info)', padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                        {req.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                      <p style={{ margin: '4px 0' }}>Priority: {req.priority}</p>
+                      <p style={{ margin: '4px 0' }}>Requested: {format(new Date(req.createdAt), 'MMM dd, yyyy')}</p>
+                      {req.pdfUrl && (
+                        <a href={req.pdfUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: '8px', color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px' }}>
+                          Download Proposal PDF
+                        </a>
+                      )}
                     </div>
                   </div>
                 ))}
