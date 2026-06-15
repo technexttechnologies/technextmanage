@@ -10,7 +10,7 @@ export function PortalHeader({ customer, token, backLink = false }: { customer: 
         </Link>
       )}
       <div style={{ display: 'inline-block', alignSelf: 'flex-start', marginBottom: '10px' }}>
-        <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{ width: '150px' }} />
+        <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{ width: '150px', filter: 'brightness(0)' }} />
       </div>
       <h1 style={{ fontSize: '28px', color: 'var(--text-primary)', margin: 0 }}>Client Portal</h1>
       <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '18px' }}>Welcome back, {customer.name} {customer.company && `(${customer.company})`}</p>

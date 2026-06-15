@@ -27,6 +27,7 @@
   height: 48px;
   width: auto;
   margin-bottom: 16px;
+  filter: brightness(0);
 }
 
 .companyInfo p {
