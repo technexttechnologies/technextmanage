@@ -23,8 +23,7 @@ export default async function DynamicInvoiceRequestPage({ params }: { params: Pr
 
   const crmCompanyInfo = {
     name: "TechNext Technologies",
-    address: "Kozhikode, Kerala, India",
-    phone: "+91 9446540984",
+    address: "pulpally, wayanad, kerala(673579)",
     email: "info.technexttech@gmail.com",
     website: "technexttechnologies.in"
   };
@@ -42,7 +41,7 @@ export default async function DynamicInvoiceRequestPage({ params }: { params: Pr
             <div className={styles.companyInfo}>
               <p><strong>{crmCompanyInfo.name}</strong></p>
               <p>{crmCompanyInfo.address}</p>
-              <p>{crmCompanyInfo.phone} | {crmCompanyInfo.email}</p>
+              <p>{crmCompanyInfo.email}</p>
             </div>
           </div>
           <div className={styles.quoteMeta}>
@@ -127,7 +126,7 @@ export default async function DynamicInvoiceRequestPage({ params }: { params: Pr
           <div className={styles.grid2}>
             {data.terms && data.terms.length > 0 && (
               <div style={{ gridColumn: '1 / -1' }}>
-                <h2 className={styles.sectionTitle}>Terms & Conditions</h2>
+                <h2 className={styles.sectionTitle}>Project Details</h2>
                 <ul className={styles.list}>
                   {data.terms.map((term: any, idx: number) => (
                     <li key={idx} className={styles.listItem}>
