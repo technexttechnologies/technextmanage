@@ -64,7 +64,7 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
         <div class="container">
           <div class="header">
             <div class="logo-box">
-              <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT TECHNOLOGIES" style="width: 300px; height: auto; display: block; margin: 0 auto;" />
+              <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT TECHNOLOGIES" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
             </div>
             <p class="header-title">${title}</p>
           </div>

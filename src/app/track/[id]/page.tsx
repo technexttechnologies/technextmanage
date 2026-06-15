@@ -187,8 +187,8 @@ export default async function PublicTrackingPage({ params }: { params: Promise<{
                 <FileSignature size={18} /> View Dynamic Invoice
               </Link>
             )}
-            {request.pdfUrl && !request.structuredData && (
-              <a href={formatPdfUrl(request.pdfUrl)} target="_blank" rel="noreferrer" className={styles.btnPrimary}>
+            {request.pdfUrl && (
+              <a href={formatPdfUrl(request.pdfUrl)} target="_blank" rel="noreferrer" className={styles.btnSecondary} style={{ textDecoration: 'none' }}>
                 <Download size={18} /> Download Original Document
               </a>
             )}
