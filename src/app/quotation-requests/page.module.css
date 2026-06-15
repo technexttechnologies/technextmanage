@@ -189,6 +189,15 @@
   .card {
     padding: 16px;
   }
+  .actions {
+    flex-direction: column-reverse;
+    padding-bottom: 40px;
+  }
+  .cancelBtn, .submitBtn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
   .formGrid {
     grid-template-columns: 1fr;
   }

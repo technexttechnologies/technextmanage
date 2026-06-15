@@ -62,7 +62,10 @@ export async function updatePackage(formData: FormData) {
   const contractPeriod = parseInt(formData.get("contractPeriod") as string);
   const packagePrice = parseFloat(formData.get("packagePrice") as string);
   const renewalDateStr = formData.get("renewalDate") as string;
-  const renewalDate = renewalDateStr ? new Date(renewalDateStr) : null;
+  const isLifetime = formData.get("isLifetime") === "on";
+  const renewalDate = isLifetime ? null : (renewalDateStr ? new Date(renewalDateStr) : null);
+  const purchaseDateStr = formData.get("purchaseDate") as string;
+  const purchaseDate = purchaseDateStr ? new Date(purchaseDateStr) : undefined;
   const status = formData.get("status") as string;
   const notes = formData.get("notes") as string;
 
@@ -70,7 +73,9 @@ export async function updatePackage(formData: FormData) {
     where: { id },
     data: {
       customerId, packageName, packageType, contractPeriod,
-      packagePrice, renewalDate, status, notes
+      packagePrice, renewalDate, status, notes,
+      isLifetime,
+      ...(purchaseDate && { purchaseDate })
     }
   });
 

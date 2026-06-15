@@ -82,6 +82,8 @@ export async function updateDomainRegistration(formData: FormData) {
   const registrar = formData.get("registrar") as string;
   const registrationDate = new Date(formData.get("registrationDate") as string);
   const expiryDate = new Date(formData.get("expiryDate") as string);
+  const renewalDateStr = formData.get("renewalDate") as string;
+  const renewalDate = renewalDateStr ? new Date(renewalDateStr) : null;
   const autoRenewalStatus = formData.get("autoRenewalStatus") === "true";
   const domainCost = parseFloat(formData.get("domainCost") as string);
   const dnsDetails = formData.get("dnsDetails") as string;
@@ -107,7 +109,7 @@ export async function updateDomainRegistration(formData: FormData) {
   await prisma.domainRegistration.update({
     where: { id },
     data: {
-      customerId, domainName, registrar, registrationDate, expiryDate,
+      customerId, domainName, registrar, registrationDate, expiryDate, renewalDate,
       autoRenewalStatus, domainCost, dnsDetails, nameservers, status
     }
   });
