@@ -121,7 +121,7 @@ export async function uploadQuotationPdf(formData: FormData) {
   const id = formData.get("requestId") as string;
   const file = formData.get("pdf") as File;
 
-  if (!id || !file || !(file instanceof Blob)) {
+  if (!id || !file || typeof (file as any).arrayBuffer !== 'function') {
     throw new Error("Missing file or request ID");
   }
 

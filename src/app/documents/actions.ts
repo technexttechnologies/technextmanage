@@ -14,7 +14,7 @@ export async function uploadDocument(formData: FormData) {
     const customerId = formData.get('customerId') as string | null;
     const projectId = formData.get('projectId') as string | null;
 
-    if (!file || !(file instanceof Blob)) return { success: false, error: "No valid file uploaded" };
+    if (!file || typeof (file as any).arrayBuffer !== 'function') return { success: false, error: "No valid file uploaded" };
     
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) return { success: false, error: "File too large. Maximum size is 10MB." };
