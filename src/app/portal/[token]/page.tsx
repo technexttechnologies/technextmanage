@@ -224,11 +224,15 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                         <Link href={`/track/${req.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'white', backgroundColor: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
                           Track Progress 📍
                         </Link>
-                        {req.pdfUrl && (
+                        {req.structuredData ? (
+                          <Link href={`/request/quotation/${req.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', backgroundColor: 'var(--surface-background)', border: '1px solid var(--surface-border)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
+                            View Dynamic Proposal 📄
+                          </Link>
+                        ) : req.pdfUrl ? (
                           <a href={formatPdfUrl(req.pdfUrl)} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', backgroundColor: 'var(--surface-background)', border: '1px solid var(--surface-border)', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', padding: '8px 16px', borderRadius: '8px' }}>
                             Download PDF ⬇️
                           </a>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </div>

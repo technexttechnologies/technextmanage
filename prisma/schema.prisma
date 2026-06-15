@@ -329,6 +329,7 @@ model QuotationRequest {
   priority           String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
   status             String   @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, QUOTATION_GENERATED, PDF_UPLOADED, SENT_TO_CUSTOMER, ACCEPTED, REJECTED
   pdfUrl             String?
+  structuredData     Json?    // AI Parsed PDF data
   adminNotes         String?  @db.Text
   aroniumQuotationNo String?
   requestedById      String
@@ -351,6 +352,7 @@ model InvoiceRequest {
   notes            String?  @db.Text
   status           String   @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, INVOICE_GENERATED, PDF_UPLOADED, SENT_TO_CUSTOMER, PAID, CANCELLED
   pdfUrl           String?
+  structuredData   Json?    // AI Parsed PDF data
   adminNotes       String?  @db.Text
   aroniumInvoiceNo String?
   requestedById    String

@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { uploadPublicFile } from "@/lib/cloudinaryStorage";
 import { sendAdminNotification, sendCustomerStatusUpdate } from "@/lib/mailer";
+import { parseQuotationPdf } from "@/lib/aiQuotationParser";
 
 export async function createQuotationRequest(formData: FormData) {
   const session = await getSession();
@@ -134,10 +135,20 @@ export async function uploadQuotationPdf(formData: FormData) {
     fileBuffer
   );
 
+  // Extract structured data using AI
+  let structuredData = null;
+  try {
+    const base64Data = fileBuffer.toString("base64");
+    structuredData = await parseQuotationPdf(base64Data, file.type || "application/pdf");
+  } catch (err) {
+    console.error("AI Parsing failed during upload:", err);
+  }
+
   const request = await prisma.quotationRequest.update({
     where: { id },
     data: { 
       pdfUrl: secureUrl,
+      structuredData: structuredData as any,
       status: "PDF_UPLOADED"
     },
     include: { customer: true }
@@ -165,7 +176,7 @@ export async function uploadQuotationPdf(formData: FormData) {
         quotationNumber: request.aroniumQuotationNo || `REQ-${request.id.substring(0, 8)}`,
         totalAmount: request.budget || 0
       }),
-      { text: "Download Quotation PDF", url: secureUrl }
+      { text: "View Dynamic Proposal", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/request/quotation/${request.id}` }
     );
     await sendEmail(request.customer.email, "Your Official Quotation from TechNext", emailHtml);
   }

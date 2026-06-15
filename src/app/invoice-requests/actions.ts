@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { uploadPublicFile } from "@/lib/cloudinaryStorage";
 import { sendAdminNotification, sendCustomerStatusUpdate } from "@/lib/mailer";
+import { parseQuotationPdf } from "@/lib/aiQuotationParser";
 
 export async function createInvoiceRequest(formData: FormData) {
   const session = await getSession();
@@ -147,10 +148,21 @@ export async function uploadInvoicePdf(formData: FormData) {
     fileBuffer
   );
 
+  // Extract structured data using AI
+  let structuredData = null;
+  try {
+    const base64Data = fileBuffer.toString("base64");
+    // Invoices share the same layout structure, so we reuse parseQuotationPdf
+    structuredData = await parseQuotationPdf(base64Data, file.type || "application/pdf");
+  } catch (err) {
+    console.error("AI Parsing failed during upload:", err);
+  }
+
   const request = await prisma.invoiceRequest.update({
     where: { id },
     data: { 
       pdfUrl: secureUrl,
+      structuredData: structuredData as any,
       status: "PDF_UPLOADED"
     },
     include: { customer: true }
@@ -179,7 +191,7 @@ export async function uploadInvoicePdf(formData: FormData) {
         amount: request.amountRequested,
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString() // Example: 7 days due
       }),
-      { text: "Download Invoice PDF", url: secureUrl }
+      { text: "View Dynamic Invoice", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/request/invoice/${request.id}` }
     );
     await sendEmail(request.customer.email, `Invoice #${request.aroniumInvoiceNo || request.id.substring(0, 8)} from TechNext`, emailHtml);
   }

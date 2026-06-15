@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import styles from "./page.module.css";
-import { Check, Clock, FileText, Download } from "lucide-react";
+import Link from "next/link";
+import { Check, Clock, FileText, Download, FileSignature, ArrowLeft } from "lucide-react";
 import { formatPdfUrl } from "@/lib/cloudinaryStorage";
 
 export default async function PublicTrackingPage({ params }: { params: Promise<{ id: string }> }) {
@@ -175,13 +176,26 @@ export default async function PublicTrackingPage({ params }: { params: Promise<{
             </div>
           </div>
 
-          {request.pdfUrl && (
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
-              <a href={formatPdfUrl(request.pdfUrl)} target="_blank" rel="noreferrer" className={styles.downloadBtn}>
-                <Download size={18} /> Download {type}
+          <div className={styles.actionBar}>
+            {type === "Quotation" && request.structuredData && (
+              <Link href={`/request/quotation/${request.id}`} className={styles.btnPrimary} style={{ textDecoration: 'none' }}>
+                <FileSignature size={18} /> View Dynamic Proposal
+              </Link>
+            )}
+            {type === "Invoice" && request.structuredData && (
+              <Link href={`/request/invoice/${request.id}`} className={styles.btnPrimary} style={{ textDecoration: 'none' }}>
+                <FileSignature size={18} /> View Dynamic Invoice
+              </Link>
+            )}
+            {request.pdfUrl && !request.structuredData && (
+              <a href={formatPdfUrl(request.pdfUrl)} target="_blank" rel="noreferrer" className={styles.btnPrimary}>
+                <Download size={18} /> Download Original Document
               </a>
-            </div>
-          )}
+            )}
+            <Link href={`/portal/${request.customer.portalToken}`} className={styles.btnSecondary} style={{ textDecoration: 'none' }}>
+              <ArrowLeft size={18} /> Back to Portal
+            </Link>
+          </div>
         </div>
       </div>
     </div>
