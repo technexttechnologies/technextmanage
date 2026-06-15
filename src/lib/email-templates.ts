@@ -17,7 +17,7 @@ export const templates = {
   // 2. Lead Acknowledgement (Customer)
   leadAcknowledgement: (lead: any) => `
     <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Thank you for reaching out, ${lead.name}!</h2>
-    <p style="font-size: 16px; color: #334155; line-height: 1.7;">We have successfully received your enquiry. At <strong>technext</strong>, we pride ourselves on delivering premium technology solutions tailored to your unique needs.</p>
+    <p style="font-size: 16px; color: #334155; line-height: 1.7;">We have successfully received your enquiry. At <strong>TECHNEXT TECHNOLOGIES</strong>, we pride ourselves on delivering premium technology solutions tailored to your unique needs.</p>
     <div style="background: #f8fafc; border-left: 4px solid #4f46e5; padding: 20px; border-radius: 0 12px 12px 0; margin: 30px 0;">
       <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">Next Steps</h3>
       <p style="margin: 0; color: #475569; font-size: 15px; line-height: 1.6;">One of our technical experts will review your request and get back to you within <strong>24 business hours</strong>.</p>
@@ -237,7 +237,7 @@ export const templates = {
   // 15. Newsletter
   newsletter: (data: any) => `
     <div style="text-align: center; margin-bottom: 40px;">
-      <span style="display: inline-block; background: #e0e7ff; color: #4338ca; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; padding: 6px 12px; border-radius: 999px; margin-bottom: 16px;">TechNext Monthly</span>
+      <span style="display: inline-block; background: #e0e7ff; color: #4338ca; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; padding: 6px 12px; border-radius: 999px; margin-bottom: 16px;">TECHNEXT TECHNOLOGIES Monthly</span>
       <h2 style="color: #0f172a; margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px;">The Tech Innovator</h2>
     </div>
     

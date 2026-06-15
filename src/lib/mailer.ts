@@ -65,7 +65,7 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
         <div class="container">
           <div class="header">
             <div class="logo-box">
-              <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="technext" style="width: 200px; height: auto; display: block; margin: 0 auto;" />
+              <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT TECHNOLOGIES" style="width: 300px; height: auto; display: block; margin: 0 auto;" />
             </div>
             <p class="header-title">${title}</p>
           </div>
@@ -97,9 +97,9 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
             </div>
             <div style="clear: both;"></div>
             <div style="text-align: center;">
-              <p class="copyright">&copy; ${new Date().getFullYear()} technext. All rights reserved.</p>
+              <p class="copyright">&copy; ${new Date().getFullYear()} TECHNEXT TECHNOLOGIES. All rights reserved.</p>
               <p style="color: #475569; font-size: 11px; margin-top: 12px; line-height: 1.5;">
-                You are receiving this email because you are a valued client or partner of technext. 
+                You are receiving this email because you are a valued client or partner of TECHNEXT TECHNOLOGIES. 
                 <br/>If you wish to update your preferences, please contact support.
               </p>
             </div>
@@ -150,7 +150,7 @@ export async function sendEmail(to: string, subject: string, html: string, attac
   try {
     const transporter = await getTransporter();
     await transporter.sendMail({
-      from: `"technext" <${settings.smtpEmail}>`,
+      from: `"TECHNEXT TECHNOLOGIES" <${settings.smtpEmail}>`,
       to,
       subject,
       html: finalHtml,
@@ -177,7 +177,7 @@ export async function sendAdminNotification(subject: string, html: string) {
 export async function sendCustomerStatusUpdate(customerEmail: string | null, requestType: string, status: string, notes?: string | null, pdfUrl?: string | null, requestId?: string) {
   if (!customerEmail) return { success: false, error: 'No customer email provided' };
   
-  const subject = `Update on your ${requestType} - Technext Technologies`;
+  const subject = `Update on your ${requestType} - TECHNEXT TECHNOLOGIES`;
   const trackingUrl = requestId ? `https://technextmanage.vercel.app/track/${requestId}` : null;
   
   const bodyContent = `
