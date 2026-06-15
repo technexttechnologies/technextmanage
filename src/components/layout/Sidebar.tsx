@@ -32,8 +32,8 @@ export default function Sidebar({ user }: { user: any }) {
         onClick={() => setIsMobileOpen(false)}
       />
       <aside className={`${styles.sidebar} ${isMobileOpen ? styles.mobileOpen : ''}`}>
-      <div className={styles.logoContainer}>
-        <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{ width: '150px', height: 'auto' }} className={styles.logo} />
+      <div className={styles.logoContainer} style={{ padding: '10px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'inline-flex', justifyContent: 'center' }}>
+        <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{ width: '150px', height: 'auto', filter: 'brightness(0) invert(1)' }} className={styles.logo} />
       </div>
       
       <nav className={styles.nav}>
