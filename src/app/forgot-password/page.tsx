@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
               <label>Email Address</label>
               <div className={styles.inputWrapper}>
                 <Mail size={18} className={styles.inputIcon} />
-                <input type="email" name="email" placeholder="admin@technext.com" required />
+                <input type="email" name="email" placeholder="technexttechnologies@gmail.com" required />
               </div>
             </div>
 

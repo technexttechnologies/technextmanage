@@ -17,7 +17,7 @@ export async function createFollowUp(formData: FormData) {
   let adminUser = await prisma.user.findFirst({ where: { role: "SUPER_ADMIN" } });
   if (!adminUser) {
     adminUser = await prisma.user.create({
-      data: { email: "admin@technext.com", name: "Admin", passwordHash: "dummy", role: "SUPER_ADMIN" }
+      data: { email: "technexttechnologies@gmail.com", name: "Admin", passwordHash: "dummy", role: "SUPER_ADMIN" }
     });
   }
 

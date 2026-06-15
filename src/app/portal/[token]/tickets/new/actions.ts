@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createNotification } from "@/app/notifications/actions";
 
 export async function createSupportTicket(token: string, formData: FormData) {
   const customer = await prisma.customer.findUnique({ where: { portalToken: token } });
@@ -36,9 +37,19 @@ export async function createSupportTicket(token: string, formData: FormData) {
       entityType: "SUPPORT_TICKET",
       entityId: ticket.id,
       userId: customer.assignedToId,
-      details: `Customer ${customer.name} opened a new support ticket via the portal: ${subject}`
+      details: `Customer ${customer.name} opened ticket: ${subject}`
     }
   });
+
+  if (customer.assignedToId) {
+    await createNotification(
+      customer.assignedToId,
+      `New Support Ticket`,
+      `${customer.name} opened a ticket: ${subject}`,
+      `/tickets/${ticket.id}`,
+      "WARNING"
+    );
+  }
 
   revalidatePath(`/portal/${token}`);
   revalidatePath(`/tickets`);

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { createNotification } from "@/app/notifications/actions";
 
 export async function updateQuotationStatus(quoteId: string, token: string, newStatus: "APPROVED" | "REJECTED") {
   const customer = await prisma.customer.findUnique({ where: { portalToken: token } });
@@ -29,9 +30,19 @@ export async function updateQuotationStatus(quoteId: string, token: string, newS
       entityType: "QUOTATION",
       entityId: quoteId,
       userId: customer.assignedToId, // We attribute it to the assigned admin in the logs, but add details
-      details: `Customer ${customer.name} marked the quotation as ${newStatus} via the client portal.`
+      details: `Customer ${customer.name} has APPROVED Quotation ${quote.quotationNumber || quote.id}`
     }
   });
+
+  if (customer.assignedToId) {
+    await createNotification(
+      customer.assignedToId,
+      `Quotation Approved!`,
+      `${customer.name} just approved Quotation ${quote.quotationNumber || quote.id}`,
+      `/quotations`,
+      "SUCCESS"
+    );
+  }
 
   revalidatePath(`/portal/${token}/quotations/${quoteId}`);
   revalidatePath(`/portal/${token}`);

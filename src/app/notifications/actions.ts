@@ -3,6 +3,18 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
+export async function createNotification(userId: string, title: string, message: string, link?: string, type: string = "INFO") {
+  await prisma.inAppNotification.create({
+    data: {
+      userId,
+      title,
+      message,
+      link,
+      type
+    }
+  });
+}
+
 export async function getUnreadNotifications() {
   const session = await getSession();
   if (!session) return [];

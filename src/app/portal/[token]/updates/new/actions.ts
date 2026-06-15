@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createNotification } from "@/app/notifications/actions";
 
 export async function createUpdateRequest(token: string, formData: FormData) {
   const customer = await prisma.customer.findUnique({ where: { portalToken: token } });
@@ -40,6 +41,16 @@ export async function createUpdateRequest(token: string, formData: FormData) {
       details: `Customer ${customer.name} requested an update for ${websiteUrl}.`
     }
   });
+
+  if (customer.assignedToId) {
+    await createNotification(
+      customer.assignedToId,
+      `New Project Update Request`,
+      `${customer.name} requested an update for ${websiteUrl}. Priority: ${priority}`,
+      `/tickets/${ticket.id}`,
+      "ALERT"
+    );
+  }
 
   revalidatePath(`/portal/${token}`);
   revalidatePath(`/tickets`);

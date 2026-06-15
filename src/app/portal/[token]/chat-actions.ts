@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { sendEmail } from "@/lib/mailer";
+import { createNotification } from "@/app/notifications/actions";
 
 // We need a stable identifier for a live chat ticket.
 const CHAT_SUBJECT = "Live Chat Request";
@@ -81,8 +82,17 @@ export async function sendChatMessage(token: string, messageText: string) {
   revalidatePath(`/portal/${token}`);
   revalidatePath(`/tickets/${ticket.id}`);
 
-  // Send email notification to the assigned admin
+  // Send email and in-app notification to the assigned admin
   if (customer.assignedToId) {
+    // In-app notification
+    await createNotification(
+      customer.assignedToId,
+      `New Chat Message: ${customer.name}`,
+      `Received a new live chat message from ${customer.name}`,
+      `/tickets/${ticket.id}`,
+      "INFO"
+    );
+
     const adminUser = await prisma.user.findUnique({ where: { id: customer.assignedToId } });
     if (adminUser && adminUser.email) {
       const emailHtml = `

@@ -12,7 +12,7 @@ export async function createCustomer(formData: FormData) {
   if (!adminUser) {
     adminUser = await prisma.user.create({
       data: {
-        email: "admin@technext.com",
+        email: "technexttechnologies@gmail.com",
         name: "Admin User",
         passwordHash: "dummy",
         role: "SUPER_ADMIN"
