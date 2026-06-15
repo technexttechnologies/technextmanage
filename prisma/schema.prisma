@@ -210,11 +210,53 @@ model Quotation {
   gstPercentage   Float    @default(18)
   status          String   @default("DRAFT") // DRAFT, SENT, APPROVED, REJECTED, CONVERTED
   notes           String?
-  pdfUrl          String? // For uploaded PDFs
+  pdfUrl          String? // For uploaded PDFs or backup original PDF
+  
+  // New Structured AI Data fields
+  expiryDate      DateTime?
+  companyName     String?
+  companyAddress  String?
+  companyGst      String?
+  needsReview     Boolean  @default(false)
+  meta            Json?    // Stores smart detection meta like package types (Website, SEO, etc)
+  
+  // Relations for structured data
+  items           QuotationItem[]
+  terms           QuotationTerm[]
+  milestones      QuotationMilestone[]
+
   assignedToId    String?
   assignedTo      User?    @relation(fields: [assignedToId], references: [id])
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model QuotationItem {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  name        String
+  description String?   @db.Text
+  quantity    Int       @default(1)
+  price       Float
+  total       Float
+}
+
+model QuotationTerm {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  content     String    @db.Text
+  order       Int       @default(0)
+}
+
+model QuotationMilestone {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  name        String
+  duration    String?
+  order       Int       @default(0)
 }
 
 model SyncLog {

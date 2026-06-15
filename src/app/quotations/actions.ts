@@ -3,11 +3,9 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { writeFile } from "fs/promises";
-import { join } from "path";
-import { randomUUID } from "crypto";
 import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 import { templates } from "@/lib/email-templates";
+import { uploadPublicFile, formatPdfUrl } from "@/lib/cloudinaryStorage";
 
 export async function createQuotation(formData: FormData) {
   const customerId = formData.get("customerId") as string;
@@ -17,6 +15,16 @@ export async function createQuotation(formData: FormData) {
   const status = formData.get("status") as string;
   const notes = formData.get("notes") as string;
   const file = formData.get("pdfFile") as File | null;
+
+  const companyName = formData.get("companyName") as string || null;
+  const companyAddress = formData.get("companyAddress") as string || null;
+  const companyGst = formData.get("companyGst") as string || null;
+  const expiryDateStr = formData.get("expiryDate") as string || null;
+  const metaStr = formData.get("meta") as string || null;
+  
+  const itemsStr = formData.get("items") as string || "[]";
+  const termsStr = formData.get("terms") as string || "[]";
+  const milestonesStr = formData.get("milestones") as string || "[]";
 
   if (!customerId || !quotationNumber || !dateStr || !subtotalStr) {
     throw new Error("Missing required fields");
@@ -28,35 +36,59 @@ export async function createQuotation(formData: FormData) {
 
   let pdfUrl = null;
 
-  if (file && file.size > 0) {
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    
-    // In a real app, you'd sanitize the filename. For MVP:
-    const uniqueSuffix = randomUUID();
-    const filename = `${uniqueSuffix}-${file.name.replace(/\s+/g, '_')}`;
-    const publicUploadDir = join(process.cwd(), "public", "uploads");
-    
-    // Attempt to write the file
+  if (file && file.size > 0 && typeof (file as any).arrayBuffer === "function") {
     try {
-      await writeFile(join(publicUploadDir, filename), buffer);
-      pdfUrl = `/uploads/${filename}`;
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const uploadResult = await uploadPublicFile(file.name, file.type, buffer);
+      pdfUrl = uploadResult.secureUrl;
     } catch (err) {
-      console.error("Failed to save file locally. Ensure public/uploads exists.", err);
+      console.error("Failed to save PDF to Cloudinary.", err);
     }
   }
+
+  const items = JSON.parse(itemsStr);
+  const terms = JSON.parse(termsStr);
+  const milestones = JSON.parse(milestonesStr);
 
   const quotation = await prisma.quotation.create({
     data: {
       customerId,
       quotationNumber,
       date: new Date(dateStr),
+      expiryDate: expiryDateStr ? new Date(expiryDateStr) : null,
+      companyName,
+      companyAddress,
+      companyGst,
+      meta: metaStr ? JSON.parse(metaStr) : null,
       subtotal,
       gstPercentage,
       totalAmount,
       status: status || "DRAFT",
       notes,
-      pdfUrl
+      pdfUrl,
+      items: {
+        create: items.map((item: any) => ({
+          name: item.name,
+          description: item.description,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.total
+        }))
+      },
+      terms: {
+        create: terms.map((term: any) => ({
+          content: term.content,
+          order: term.order
+        }))
+      },
+      milestones: {
+        create: milestones.map((ms: any) => ({
+          name: ms.name,
+          duration: ms.duration,
+          order: ms.order
+        }))
+      }
     },
     include: { customer: true }
   });
@@ -69,7 +101,7 @@ export async function createQuotation(formData: FormData) {
         quotationNumber: quotation.quotationNumber,
         totalAmount: quotation.totalAmount,
       }),
-      { text: "View Quotation Details", url: pdfUrl ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}${pdfUrl}` : `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${quotation.customer.portalToken}` }
+      { text: "View Dynamic Quotation", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/quotation/${quotation.id}` }
     );
     await sendEmail(quotation.customer.email, `Quotation ${quotation.quotationNumber} from Technext`, html);
   }
@@ -96,7 +128,7 @@ export async function updateQuotationStatus(formData: FormData) {
           quotationNumber: quotation.quotationNumber,
           totalAmount: quotation.totalAmount,
         }),
-        { text: "View Client Portal", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${quotation.customer.portalToken}` }
+        { text: "View Dynamic Quotation", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/quotation/${quotation.id}` }
       );
       await sendEmail(quotation.customer.email, `Quotation ${quotation.quotationNumber} from Technext`, html);
     }
