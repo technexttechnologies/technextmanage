@@ -88,8 +88,31 @@ technext`;
                 <input type="number" name="progress" min="0" max="100" defaultValue={project.progress} />
               </div>
             </div>
-            <div style={{display: 'flex', gap: '12px', marginTop: '24px'}}>
+            <div style={{display: 'flex', gap: '12px', marginTop: '24px', alignItems: 'center'}}>
               <SubmitButton className="btn-primary" loadingText="Updating & Notifying...">Update Status & Notify Client</SubmitButton>
+              <button 
+                type="button"
+                onClick={async () => {
+                  if (confirm('Are you absolutely sure you want to permanently delete this project? This action cannot be undone.')) {
+                    await deleteProject(project.id);
+                  }
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 20px',
+                  backgroundColor: '#FEF2F2',
+                  color: '#EF4444',
+                  border: '1px solid #FCA5A5',
+                  borderRadius: 'var(--radius-md)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                <Trash2 size={16} /> Delete Project
+              </button>
             </div>
           </form>
         </div>
