@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { updateQuotationRequest } from "../../actions";
 import Link from "next/link";
-import styles from "../../new/page.module.css";
+import styles from "../../page.module.css";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Save, Briefcase, FileText, DollarSign, AlertCircle } from "lucide-react";
 

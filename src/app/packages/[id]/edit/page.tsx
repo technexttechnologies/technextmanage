@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { updatePackage } from "../../actions";
 import Link from "next/link";
-import styles from "../../new/page.module.css";
+import styles from "../../page.module.css";
 import { notFound } from "next/navigation";
 
 export default async function EditPackagePage({ params }: { params: Promise<{ id: string }> }) {
