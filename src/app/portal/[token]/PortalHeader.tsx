@@ -9,8 +9,8 @@ export function PortalHeader({ customer, token, backLink = false }: { customer: 
           <ArrowLeft size={16} /> Back to Dashboard
         </Link>
       )}
-      <div style={{ backgroundColor: '#1e293b', padding: '15px', borderRadius: '12px', display: 'inline-block', alignSelf: 'flex-start', marginBottom: '10px' }}>
-        <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{ width: '150px', filter: 'brightness(0) invert(1)' }} />
+      <div style={{ display: 'inline-block', alignSelf: 'flex-start', marginBottom: '10px' }}>
+        <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{ width: '150px' }} />
       </div>
       <h1 style={{ fontSize: '28px', color: 'var(--text-primary)', margin: 0 }}>Client Portal</h1>
       <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '18px' }}>Welcome back, {customer.name} {customer.company && `(${customer.company})`}</p>
