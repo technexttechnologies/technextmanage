@@ -22,8 +22,8 @@ export async function uploadPublicFile(
 ): Promise<{ publicId: string; secureUrl: string }> {
   const cl = getCloudinary();
 
-  // Always use 'raw' for non-images so the actual file is served
-  const resourceType = mimeType.startsWith('image/') ? 'image' : 'raw';
+  // Use 'auto' so Cloudinary correctly identifies PDFs and sets the proper Content-Type
+  const resourceType = 'auto';
 
   // Preserve extension so Cloudinary serves file with correct Content-Type
   const ext = fileName.match(/\.[^/.]+$/)?.[0] || '';
@@ -65,7 +65,7 @@ export async function uploadToCloudinary(
 ): Promise<{ publicId: string; secureUrl: string }> {
   const cl = getCloudinary();
 
-  const resourceType = mimeType.startsWith('image/') ? 'image' : 'raw';
+  const resourceType = 'auto';
 
   const safeFileName = fileName
     .replace(/\.[^/.]+$/, '')
