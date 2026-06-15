@@ -11,7 +11,8 @@ export default async function WebsiteUpdatePortalPage({ params }: { params: Prom
   const customer = await prisma.customer.findUnique({
     where: { portalToken: token },
     include: {
-      domains: true
+      domains: true,
+      projects: { where: { status: { not: "COMPLETED" } } }
     }
   });
 
@@ -42,18 +43,29 @@ export default async function WebsiteUpdatePortalPage({ params }: { params: Prom
           <form action={actionWithToken} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', gap: '20px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 2 }}>
-                <label htmlFor="websiteUrl" style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Website URL / Page <span style={{ color: 'var(--color-danger)' }}>*</span></label>
-                {customer.domains.length > 0 ? (
+                <label htmlFor="websiteUrl" style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Target Asset (Project / Domain) <span style={{ color: 'var(--color-danger)' }}>*</span></label>
+                {(customer.domains.length > 0 || customer.projects.length > 0) ? (
                   <select 
                     id="websiteUrl" 
                     name="websiteUrl" 
                     required
                     style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--surface-border)', fontSize: '15px', fontFamily: 'inherit', backgroundColor: 'white' }}
                   >
-                    {customer.domains.map(d => (
-                      <option key={d.id} value={d.domainName}>{d.domainName}</option>
-                    ))}
-                    <option value="Other">Other URL (specify in description)</option>
+                    {customer.domains.length > 0 && (
+                      <optgroup label="Domains / Websites">
+                        {customer.domains.map(d => (
+                          <option key={`domain-${d.id}`} value={d.domainName}>{d.domainName}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {customer.projects.length > 0 && (
+                      <optgroup label="Projects">
+                        {customer.projects.map(p => (
+                          <option key={`proj-${p.id}`} value={p.name}>{p.name}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                    <option value="Other">Other (specify in description)</option>
                   </select>
                 ) : (
                   <input 
