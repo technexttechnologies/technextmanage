@@ -10,9 +10,12 @@ import {
   CheckCircle2,
   AlertCircle,
   FileSignature,
-  FileText
+  FileText,
+  LifeBuoy
 } from "lucide-react";
 import { format } from "date-fns";
+import { PortalHeader } from "./PortalHeader";
+import Link from "next/link";
 
 export default async function PortalPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -25,7 +28,8 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
       packages: true,
       projects: true,
       quotations: { orderBy: { date: 'desc' } },
-      invoiceRequests: { orderBy: { createdAt: 'desc' } }
+      invoiceRequests: { orderBy: { createdAt: 'desc' } },
+      supportTickets: { orderBy: { createdAt: 'desc' } }
     }
   });
 
@@ -60,11 +64,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
         
         {/* Header */}
-        <div style={{ backgroundColor: 'var(--surface-card)', padding: '30px', borderRadius: '16px', boxShadow: 'var(--shadow-md)', marginBottom: '30px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{ width: '150px', marginBottom: '10px' }} />
-          <h1 style={{ fontSize: '28px', color: 'var(--text-primary)', margin: 0 }}>Client Portal</h1>
-          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '18px' }}>Welcome back, {customer.name} {customer.company && `(${customer.company})`}</p>
-        </div>
+        <PortalHeader customer={customer} token={token} />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
           
@@ -168,9 +168,12 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                     </div>
                     <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                       <p style={{ margin: '4px 0' }}>Progress: {project.progress}%</p>
-                      <div style={{ width: '100%', backgroundColor: 'var(--surface-border)', height: '8px', borderRadius: '4px', marginTop: '8px' }}>
+                      <div style={{ width: '100%', backgroundColor: 'var(--surface-border)', height: '8px', borderRadius: '4px', marginTop: '8px', marginBottom: '12px' }}>
                         <div style={{ width: `${project.progress}%`, backgroundColor: 'var(--brand-accent)', height: '100%', borderRadius: '4px' }}></div>
                       </div>
+                      <Link href={`/portal/${token}/projects/${project.id}`} style={{ display: 'inline-block', color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px' }}>
+                        View Details →
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -198,7 +201,10 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                     </div>
                     <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                       <p style={{ margin: '4px 0' }}>Amount: ₹{quote.totalAmount.toFixed(2)}</p>
-                      <p style={{ margin: '4px 0' }}>Date: {format(new Date(quote.date), 'MMM dd, yyyy')}</p>
+                      <p style={{ margin: '4px 0 12px 0' }}>Date: {format(new Date(quote.date), 'MMM dd, yyyy')}</p>
+                      <Link href={`/portal/${token}/quotations/${quote.id}`} style={{ display: 'inline-block', color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px' }}>
+                        View Details →
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -227,6 +233,39 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                     <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                       <p style={{ margin: '4px 0' }}>Amount: ₹{invoice.amountRequested.toFixed(2)}</p>
                       <p style={{ margin: '4px 0' }}>Date: {format(new Date(invoice.createdAt), 'MMM dd, yyyy')}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Support Tickets */}
+          <div style={{ backgroundColor: 'var(--surface-card)', padding: '24px', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--brand-primary)' }}>
+                <LifeBuoy size={24} />
+                <h2 style={{ fontSize: '20px', margin: 0 }}>Support Tickets</h2>
+              </div>
+              <Link href={`/portal/${token}/tickets/new`} style={{ backgroundColor: 'var(--brand-primary)', color: 'white', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold', textDecoration: 'none' }}>
+                New Ticket
+              </Link>
+            </div>
+            {customer.supportTickets.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)' }}>No support tickets found.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {customer.supportTickets.map(ticket => (
+                  <div key={ticket.id} style={{ border: '1px solid var(--surface-border)', padding: '16px', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '16px' }}>{ticket.subject}</strong>
+                      <span style={{ backgroundColor: ticket.status === 'CLOSED' || ticket.status === 'RESOLVED' ? 'var(--color-success-bg)' : 'var(--color-warning-bg)', color: ticket.status === 'CLOSED' || ticket.status === 'RESOLVED' ? 'var(--color-success)' : 'var(--color-warning)', padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                        {ticket.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                      <p style={{ margin: '4px 0' }}>Priority: {ticket.priority}</p>
+                      <p style={{ margin: '4px 0' }}>Date: {format(new Date(ticket.createdAt), 'MMM dd, yyyy')}</p>
                     </div>
                   </div>
                 ))}
