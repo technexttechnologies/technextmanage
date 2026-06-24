@@ -211,3 +211,19 @@ export async function uploadInvoicePdf(formData: FormData) {
   revalidatePath(`/invoice-requests/${id}`);
   revalidatePath("/invoice-requests");
 }
+
+export async function deleteInvoiceRequest(formData: FormData) {
+  const session = await getSession();
+  if (!session || (session.role !== "SUPER_ADMIN" && session.role !== "ADMIN")) {
+    throw new Error("Only admins can delete requests");
+  }
+
+  const requestId = formData.get("requestId") as string;
+  
+  await prisma.invoiceRequest.delete({
+    where: { id: requestId }
+  });
+
+  revalidatePath("/invoice-requests");
+  redirect("/invoice-requests");
+}
