@@ -143,7 +143,7 @@ export const templates = {
     
     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 30px 0; text-align: center;">
       <p style="margin: 0 0 16px 0; font-size: 15px; color: #334155;">We would greatly appreciate your feedback on the experience.</p>
-      <a href="https://g.page/r/technext" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px;">Leave a Review</a>
+      <a href="https://g.page/r/Cb3TAmXgJGHWEBM/review" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px;">Leave a Review</a>
     </div>
     
     <p style="font-size: 16px; color: #334155; line-height: 1.7;">If you are interested in an Annual Maintenance Contract (AMC) for ongoing support, please let us know!</p>
