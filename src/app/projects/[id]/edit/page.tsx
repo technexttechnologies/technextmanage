@@ -53,7 +53,16 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
 
           <div className={styles.inputGroup}>
             <label htmlFor="type">Project Type</label>
-            <input type="text" id="type" name="type" defaultValue={project.type || ""} autoComplete="off" />
+            <input type="text" id="type" name="type" list="project-types" defaultValue={project.type || ""} autoComplete="off" />
+            <datalist id="project-types">
+              <option value="Website" />
+              <option value="Mobile App" />
+              <option value="SEO" />
+              <option value="Billing Software" />
+              <option value="Custom Software" />
+              <option value="CRM" />
+              <option value="Software Reselling" />
+            </datalist>
           </div>
 
           <div className={styles.inputGroup}>

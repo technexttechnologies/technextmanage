@@ -43,7 +43,16 @@ export default async function NewProjectPage() {
 
           <div className={styles.inputGroup}>
             <label htmlFor="type">Project Type</label>
-            <input type="text" id="type" name="type" placeholder="e.g. Website, Mobile App, SEO" autoComplete="off" />
+            <input type="text" id="type" name="type" list="project-types" placeholder="e.g. Website, Mobile App, SEO" autoComplete="off" />
+            <datalist id="project-types">
+              <option value="Website" />
+              <option value="Mobile App" />
+              <option value="SEO" />
+              <option value="Billing Software" />
+              <option value="Custom Software" />
+              <option value="CRM" />
+              <option value="Software Reselling" />
+            </datalist>
           </div>
 
           <div className={styles.inputGroup}>
@@ -58,9 +67,14 @@ export default async function NewProjectPage() {
             <div className={styles.inputGroup}>
               <label htmlFor="status">Initial Status</label>
               <select id="status" name="status">
-                <option value="PROJECT_RECEIVED">Project Received</option>
-                <option value="REQUIREMENT_ANALYSIS">Requirement Analysis</option>
-                <option value="PLANNING">Planning</option>
+                <optgroup label="Development">
+                  <option value="PROJECT_RECEIVED">Project Received</option>
+                  <option value="REQUIREMENT_ANALYSIS">Requirement Analysis</option>
+                  <option value="PLANNING">Planning</option>
+                </optgroup>
+                <optgroup label="Software Reselling">
+                  <option value="INSTALLATION">Installation</option>
+                </optgroup>
               </select>
             </div>
             

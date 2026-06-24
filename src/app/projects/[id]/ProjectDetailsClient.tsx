@@ -70,17 +70,27 @@ technext`;
               <div className={styles.formGroup}>
                 <label>Current Status</label>
                 <select name="status" defaultValue={project.status}>
-                  <option value="PROJECT_RECEIVED">Project Received</option>
-                  <option value="REQUIREMENT_ANALYSIS">Requirement Analysis</option>
-                  <option value="PLANNING">Planning</option>
-                  <option value="UI_UX_DESIGN">UI/UX Design</option>
-                  <option value="DEVELOPMENT">Development</option>
-                  <option value="TESTING">Testing</option>
-                  <option value="CLIENT_REVIEW">Client Review</option>
-                  <option value="REVISION">Revision</option>
-                  <option value="DEPLOYMENT">Deployment</option>
-                  <option value="COMPLETED">Completed</option>
-                  <option value="ON_HOLD">On Hold</option>
+                  <optgroup label="Development / General">
+                    <option value="PROJECT_RECEIVED">Project Received</option>
+                    <option value="REQUIREMENT_ANALYSIS">Requirement Analysis</option>
+                    <option value="PLANNING">Planning</option>
+                    <option value="UI_UX_DESIGN">UI/UX Design</option>
+                    <option value="DEVELOPMENT">Development</option>
+                    <option value="TESTING">Testing</option>
+                    <option value="CLIENT_REVIEW">Client Review</option>
+                    <option value="REVISION">Revision</option>
+                    <option value="DEPLOYMENT">Deployment</option>
+                  </optgroup>
+                  <optgroup label="Software Reselling / Setup">
+                    <option value="INSTALLATION">Installation</option>
+                    <option value="DATA_MIGRATION">Data Migration</option>
+                    <option value="CUSTOMER_TRAINING">Customer Training</option>
+                    <option value="GO_LIVE">Go Live</option>
+                  </optgroup>
+                  <optgroup label="Final Stages">
+                    <option value="COMPLETED">Completed</option>
+                    <option value="ON_HOLD">On Hold</option>
+                  </optgroup>
                 </select>
               </div>
               <div className={styles.formGroup}>
