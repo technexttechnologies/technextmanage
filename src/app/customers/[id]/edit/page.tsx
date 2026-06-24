@@ -72,6 +72,25 @@ export default async function EditCustomerPage({ params }: { params: Promise<{ i
           <textarea name="notes" className={styles.textarea} defaultValue={customer.notes || ''}></textarea>
         </div>
 
+        <div style={{ marginTop: '24px', marginBottom: '16px', padding: '16px', border: '1px solid var(--surface-border)', borderRadius: 'var(--radius-md)', background: '#F8FAFC' }}>
+          <h3 style={{ fontSize: '16px', marginBottom: '16px', color: '#0F172A' }}>Remote Support Credentials</h3>
+          
+          <div className={styles.formGroup}>
+            <label className={styles.label}>AnyDesk ID</label>
+            <input type="text" name="anydeskId" className={styles.input} defaultValue={customer.anydeskId || ''} placeholder="e.g. 123 456 789" />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>TeamViewer ID / Pass</label>
+            <input type="text" name="teamviewerId" className={styles.input} defaultValue={customer.teamviewerId || ''} placeholder="ID: xxxx / Pass: xxxx" />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>PC Login Details</label>
+            <textarea name="pcLoginDetails" className={styles.textarea} defaultValue={customer.pcLoginDetails || ''} placeholder="Any passwords or PINs for the PC"></textarea>
+          </div>
+        </div>
+
         <div className={styles.actions}>
           <Link href={`/customers/${customer.id}`} className={styles.cancelBtn}>Cancel</Link>
           <button type="submit" className={styles.submitBtn}>Update Customer</button>

@@ -15,6 +15,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
       assignedTo: true,
       notes: { orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }] },
       milestones: { orderBy: { dueDate: 'asc' } },
+      hardware: { orderBy: { createdAt: 'desc' } },
       tasks: true
     }
   });

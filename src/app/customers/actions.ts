@@ -32,6 +32,9 @@ export async function createCustomer(formData: FormData) {
   const address = formData.get("address") as string;
   const gstNumber = formData.get("gstNumber") as string;
   const notes = formData.get("notes") as string;
+  const anydeskId = formData.get("anydeskId") as string;
+  const teamviewerId = formData.get("teamviewerId") as string;
+  const pcLoginDetails = formData.get("pcLoginDetails") as string;
 
   const crypto = require("crypto");
   const portalToken = crypto.randomBytes(16).toString("hex");
@@ -46,6 +49,9 @@ export async function createCustomer(formData: FormData) {
       address,
       gstNumber,
       notes,
+      anydeskId,
+      teamviewerId,
+      pcLoginDetails,
       assignedToId: adminUser.id,
       portalToken,
     }
@@ -92,10 +98,13 @@ export async function updateCustomer(formData: FormData) {
   const address = formData.get("address") as string;
   const gstNumber = formData.get("gstNumber") as string;
   const notes = formData.get("notes") as string;
+  const anydeskId = formData.get("anydeskId") as string;
+  const teamviewerId = formData.get("teamviewerId") as string;
+  const pcLoginDetails = formData.get("pcLoginDetails") as string;
 
   await prisma.customer.update({
     where: { id },
-    data: { name, company, phone, email, status, address, gstNumber, notes }
+    data: { name, company, phone, email, status, address, gstNumber, notes, anydeskId, teamviewerId, pcLoginDetails }
   });
 
   revalidatePath("/customers");

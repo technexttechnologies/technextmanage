@@ -230,6 +230,11 @@ export async function updateProject(formData: FormData) {
   let endDate = null;
   if (endDateStr) endDate = new Date(endDateStr);
 
+  const licenseKey = formData.get("licenseKey") as string;
+  const licenseType = formData.get("licenseType") as string;
+  const softwareVersion = formData.get("softwareVersion") as string;
+  const machineId = formData.get("machineId") as string;
+
   await prisma.project.update({
     where: { id: projectId },
     data: {
@@ -238,7 +243,11 @@ export async function updateProject(formData: FormData) {
       type,
       startDate,
       endDate,
-      customerId: customerId || null
+      customerId: customerId || null,
+      licenseKey,
+      licenseType,
+      softwareVersion,
+      machineId
     }
   });
 
@@ -252,4 +261,31 @@ export async function deleteProject(projectId: string) {
   });
   revalidatePath("/projects");
   redirect("/projects");
+}
+
+export async function addProjectHardware(formData: FormData) {
+  const projectId = formData.get("projectId") as string;
+  const itemName = formData.get("itemName") as string;
+  const serialNo = formData.get("serialNo") as string;
+  const warrantyEndStr = formData.get("warrantyEnd") as string;
+  const notes = formData.get("notes") as string;
+
+  await prisma.projectHardware.create({
+    data: {
+      projectId,
+      itemName,
+      serialNo,
+      warrantyEnd: warrantyEndStr ? new Date(warrantyEndStr) : null,
+      notes
+    }
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function deleteProjectHardware(hardwareId: string, projectId: string) {
+  await prisma.projectHardware.delete({
+    where: { id: hardwareId }
+  });
+  revalidatePath(`/projects/${projectId}`);
 }

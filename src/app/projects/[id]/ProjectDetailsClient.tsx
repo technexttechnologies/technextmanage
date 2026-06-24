@@ -185,6 +185,68 @@ technext`;
         </div>
 
         <div className={styles.card}>
+          <h2 className={styles.cardHeader}>Hardware & Asset Tracking</h2>
+          <div style={{marginBottom: '20px'}}>
+            {project.hardware && project.hardware.length > 0 ? (
+              <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                {project.hardware.map((hw: any) => (
+                  <div key={hw.id} style={{padding: '12px', border: '1px solid var(--surface-border)', borderRadius: 'var(--radius-md)', background: '#F8FAFC'}}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                      <div>
+                        <strong style={{fontSize: '14px', color: '#0F172A'}}>{hw.itemName}</strong>
+                        {hw.serialNo && <div style={{fontSize: '13px', color: '#475569', marginTop: '2px'}}>S/N: {hw.serialNo}</div>}
+                        {hw.warrantyEnd && (
+                          <div style={{fontSize: '13px', color: new Date(hw.warrantyEnd) >= new Date() ? '#10B981' : '#EF4444', marginTop: '2px', fontWeight: '500'}}>
+                            Warranty: {new Date(hw.warrantyEnd).toLocaleDateString()}
+                          </div>
+                        )}
+                        {hw.notes && <div style={{fontSize: '12px', color: '#64748B', marginTop: '4px'}}>{hw.notes}</div>}
+                      </div>
+                      <button onClick={async () => {
+                        if(confirm('Delete this hardware asset?')) {
+                          await import('../actions').then(m => m.deleteProjectHardware(hw.id, project.id));
+                        }
+                      }} style={{color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer'}}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{fontSize: '14px', color: '#6B7280'}}>No hardware assigned to this project.</p>
+            )}
+          </div>
+
+          <form action={async (formData) => {
+            await import('../actions').then(m => m.addProjectHardware(formData));
+            // @ts-ignore
+            document.getElementById('hardwareForm')?.reset();
+          }} id="hardwareForm">
+            <input type="hidden" name="projectId" value={project.id} />
+            <div className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label>Item Name *</label>
+                <input type="text" name="itemName" placeholder="Thermal Printer..." required />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Serial Number</label>
+                <input type="text" name="serialNo" placeholder="S/N..." />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Warranty End Date</label>
+                <input type="date" name="warrantyEnd" />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Notes</label>
+                <input type="text" name="notes" placeholder="Brand, Model, etc." />
+              </div>
+            </div>
+            <button type="submit" className="btn-secondary" style={{marginTop: '12px'}}>Add Hardware</button>
+          </form>
+        </div>
+
+        <div className={styles.card}>
           <h2 className={styles.cardHeader}>Project Milestones</h2>
           
           <div style={{marginBottom: '20px'}}>
@@ -264,6 +326,18 @@ technext`;
             </button>
           </div>
         </div>
+
+        {(project.licenseKey || project.softwareVersion || project.machineId) && (
+          <div className={styles.card} style={{ borderLeft: '4px solid #3B82F6' }}>
+            <h2 className={styles.cardHeader}>Software License Info</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px' }}>
+              {project.softwareVersion && <div><strong>Software:</strong> {project.softwareVersion}</div>}
+              {project.licenseKey && <div><strong>License Key:</strong> <code style={{background: '#F1F5F9', padding: '2px 6px', borderRadius: '4px'}}>{project.licenseKey}</code></div>}
+              {project.licenseType && <div><strong>Type:</strong> {project.licenseType}</div>}
+              {project.machineId && <div><strong>Machine ID:</strong> {project.machineId}</div>}
+            </div>
+          </div>
+        )}
 
         <div className={styles.card}>
           <h2 className={styles.cardHeader}>Activity Timeline</h2>

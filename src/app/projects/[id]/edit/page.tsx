@@ -72,6 +72,37 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         </div>
 
         <div className={styles.formSection}>
+          <h2 className={styles.sectionTitle}>Software License Tracking (Optional)</h2>
+          <div className={styles.grid2}>
+            <div className={styles.inputGroup}>
+              <label htmlFor="licenseKey">License Key</label>
+              <input type="text" id="licenseKey" name="licenseKey" defaultValue={project.licenseKey || ""} placeholder="XXXX-XXXX-XXXX-XXXX" autoComplete="off" />
+            </div>
+            
+            <div className={styles.inputGroup}>
+              <label htmlFor="licenseType">License Type</label>
+              <input type="text" id="licenseType" name="licenseType" defaultValue={project.licenseType || ""} list="license-types" placeholder="e.g. Lifetime, Annual" autoComplete="off" />
+              <datalist id="license-types">
+                <option value="Lifetime" />
+                <option value="Annual" />
+                <option value="Monthly" />
+                <option value="Demo / Trial" />
+              </datalist>
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label htmlFor="softwareVersion">Software Version</label>
+              <input type="text" id="softwareVersion" name="softwareVersion" defaultValue={project.softwareVersion || ""} placeholder="e.g. Aronium Pro v1.2" autoComplete="off" />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label htmlFor="machineId">Device / Machine ID</label>
+              <input type="text" id="machineId" name="machineId" defaultValue={project.machineId || ""} placeholder="If node-locked" autoComplete="off" />
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.formSection}>
           <h2 className={styles.sectionTitle}>Timeline</h2>
           <div className={styles.grid2}>
             <div className={styles.inputGroup}>

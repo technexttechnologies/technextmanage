@@ -131,6 +131,17 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
                 <p>{customer.notes}</p>
               </div>
             )}
+
+            {(customer.anydeskId || customer.teamviewerId || customer.pcLoginDetails) && (
+              <div className={styles.notesSection} style={{ marginTop: '16px', borderTop: '1px solid var(--surface-border)', paddingTop: '16px' }}>
+                <h3 style={{ color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShieldCheck size={16} /> Remote Credentials
+                </h3>
+                {customer.anydeskId && <p><strong>AnyDesk:</strong> {customer.anydeskId}</p>}
+                {customer.teamviewerId && <p><strong>TeamViewer:</strong> {customer.teamviewerId}</p>}
+                {customer.pcLoginDetails && <p><strong>PC Details:</strong> {customer.pcLoginDetails}</p>}
+              </div>
+            )}
           </section>
 
           {/* Aronium Integration Section */}

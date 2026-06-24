@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon, Calendar } from "lucide-react";
+import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon, Calendar, MonitorPlay } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
 import NotificationBell from "./NotificationBell";
@@ -53,6 +53,9 @@ export default function Sidebar({ user }: { user: any }) {
           </Link>
           <Link href="/projects" className={`${styles.navItem} ${pathname.startsWith('/projects') ? styles.active : ''}`}>
             <Briefcase size={20} /> Projects
+          </Link>
+          <Link href="/reseller" className={`${styles.navItem} ${pathname.startsWith('/reseller') ? styles.active : ''}`}>
+            <MonitorPlay size={20} /> Reseller Dashboard
           </Link>
           <Link href="/amc" className={`${styles.navItem} ${pathname.startsWith('/amc') ? styles.active : ''}`}>
             <RefreshCw size={20} /> AMC Management
