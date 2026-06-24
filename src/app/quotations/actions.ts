@@ -31,8 +31,8 @@ export async function createQuotation(formData: FormData) {
   }
 
   const subtotal = parseFloat(subtotalStr);
-  const gstPercentage = 18;
-  const totalAmount = parseFloat((subtotal * (1 + gstPercentage / 100)).toFixed(2));
+  const gstPercentage = 0;
+  const totalAmount = parseFloat(subtotal.toFixed(2));
 
   let pdfUrl = null;
 

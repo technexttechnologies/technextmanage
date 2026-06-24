@@ -60,10 +60,6 @@ export default async function QuotationPortalPage({ params }: { params: Promise<
               <span style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>Subtotal</span>
               <span style={{ fontWeight: '600' }}>₹{quote.subtotal.toFixed(2)}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', backgroundColor: 'var(--surface-background)', borderRadius: '12px' }}>
-              <span style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>GST ({quote.gstPercentage}%)</span>
-              <span style={{ fontWeight: '600' }}>₹{(quote.totalAmount - quote.subtotal).toFixed(2)}</span>
-            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', backgroundColor: 'var(--surface-border)', borderRadius: '12px' }}>
               <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Total Amount</span>
               <span style={{ fontSize: '20px', fontWeight: '900', color: 'var(--brand-primary)' }}>₹{quote.totalAmount.toFixed(2)}</span>

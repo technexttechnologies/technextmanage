@@ -86,8 +86,8 @@ export default function QuotationForm({ customers }: { customers: any[] }) {
   const removeMilestone = (index: number) => setMilestones(milestones.filter((_, i) => i !== index));
 
   const subtotal = items.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
-  const gstPercentage = 18;
-  const totalAmount = (subtotal * (1 + gstPercentage / 100)).toFixed(2);
+  const gstPercentage = 0;
+  const totalAmount = subtotal.toFixed(2);
 
   return (
     <form action={createQuotation} className={styles.formCard} encType="multipart/form-data">
@@ -179,7 +179,7 @@ export default function QuotationForm({ customers }: { customers: any[] }) {
             <input type="number" step="0.01" name="subtotal" value={subtotal.toFixed(2)} readOnly style={{backgroundColor: 'var(--background)'}} />
           </div>
           <div className={styles.inputGroup} style={{margin: 0}}>
-            <label>Grand Total + {gstPercentage}% GST (₹)</label>
+            <label>Grand Total (₹)</label>
             <input type="number" step="0.01" value={totalAmount} readOnly style={{fontWeight: 'bold', backgroundColor: 'var(--background)'}} />
           </div>
         </div>

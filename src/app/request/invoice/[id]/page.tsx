@@ -113,10 +113,6 @@ export default async function DynamicInvoiceRequestPage({ params }: { params: Pr
               <span>Subtotal</span>
               <span>₹{Number(data.subtotal || request.subtotal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
             </div>
-            <div className={styles.totalRow}>
-              <span>GST ({data.gstPercentage || request.gstPercentage || 18}%)</span>
-              <span>₹{(Number(data.totalAmount || request.amountRequested || 0) - Number(data.subtotal || request.subtotal || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-            </div>
             <div className={`${styles.totalRow} ${styles.grand}`}>
               <span>Total Due</span>
               <span>₹{Number(data.totalAmount || request.amountRequested || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>

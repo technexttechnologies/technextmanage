@@ -8,8 +8,8 @@ import { createInvoiceRequest } from "../actions";
 
 export default function InvoiceRequestForm({ customers }: { customers: any[] }) {
   const [subtotal, setSubtotal] = useState<string>("");
-  const gstPercentage = 18;
-  const totalAmount = subtotal ? (parseFloat(subtotal) * (1 + gstPercentage / 100)).toFixed(2) : "0.00";
+  const gstPercentage = 0;
+  const totalAmount = subtotal ? parseFloat(subtotal).toFixed(2) : "0.00";
 
   return (
     <form action={createInvoiceRequest}>
@@ -52,15 +52,7 @@ export default function InvoiceRequestForm({ customers }: { customers: any[] }) 
           />
         </div>
 
-        <div className={styles.inputGroup}>
-          <label>GST ({gstPercentage}%)</label>
-          <input 
-            type="text" 
-            disabled 
-            value={`₹${subtotal ? (parseFloat(subtotal) * (gstPercentage / 100)).toFixed(2) : "0.00"}`} 
-            style={{ backgroundColor: "var(--background)", cursor: "not-allowed" }}
-          />
-        </div>
+          {/* GST Calculation Removed */}
 
         <div className={styles.inputGroup}>
           <label>Total Amount (₹)</label>

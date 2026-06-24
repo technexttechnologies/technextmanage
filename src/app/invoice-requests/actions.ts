@@ -18,8 +18,8 @@ export async function createInvoiceRequest(formData: FormData) {
   const subtotal = parseFloat(subtotalStr || "0");
   const notes = formData.get("notes") as string;
 
-  const gstPercentage = 18;
-  const amountRequested = parseFloat((subtotal * (1 + gstPercentage / 100)).toFixed(2));
+  const gstPercentage = 0;
+  const amountRequested = parseFloat(subtotal.toFixed(2));
 
   if (!customerId || isNaN(amountRequested)) {
     throw new Error("Missing required fields");

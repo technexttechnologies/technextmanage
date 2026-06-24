@@ -115,10 +115,6 @@ export default async function DynamicQuotationRequestPage({ params }: { params: 
               <span>Subtotal</span>
               <span>₹{Number(data.subtotal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
             </div>
-            <div className={styles.totalRow}>
-              <span>GST ({data.gstPercentage || 18}%)</span>
-              <span>₹{(Number(data.totalAmount || 0) - Number(data.subtotal || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-            </div>
             <div className={`${styles.totalRow} ${styles.grand}`}>
               <span>Total Amount</span>
               <span>₹{Number(data.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
