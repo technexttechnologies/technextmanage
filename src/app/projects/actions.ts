@@ -216,8 +216,37 @@ export async function updateProjectWarranty(projectId: string, formData: FormDat
   revalidatePath(`/projects/${projectId}`);
 }
 
+export async function updateProject(formData: FormData) {
+  const projectId = formData.get("projectId") as string;
+  const name = formData.get("name") as string;
+  const description = formData.get("description") as string;
+  const type = formData.get("type") as string;
+  const customerId = formData.get("customerId") as string;
+  const startDateStr = formData.get("startDate") as string;
+  const endDateStr = formData.get("endDate") as string;
+
+  let startDate = new Date();
+  if (startDateStr) startDate = new Date(startDateStr);
+  let endDate = null;
+  if (endDateStr) endDate = new Date(endDateStr);
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: {
+      name,
+      description,
+      type,
+      startDate,
+      endDate,
+      customerId: customerId || null
+    }
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+  redirect(`/projects/${projectId}`);
+}
+
 export async function deleteProject(projectId: string) {
-  // Relying on Prisma Cascade deletes for notes, milestones, etc.
   await prisma.project.delete({
     where: { id: projectId }
   });
