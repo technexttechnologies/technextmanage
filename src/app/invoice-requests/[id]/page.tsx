@@ -142,6 +142,18 @@ export default async function InvoiceRequestDetails({ params }: { params: Promis
               <h3 style={{ fontSize: '14px', marginBottom: '8px' }}>Upload Invoice PDF</h3>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Generate the Invoice in Aronium and upload it here.</p>
               <InvoicePdfUploader requestId={request.id} />
+              
+              <hr style={{ margin: '24px 0', borderTop: '1px solid var(--surface-border)' }} />
+              <form action={async (formData) => {
+                "use server";
+                const { deleteInvoiceRequest } = await import('../actions');
+                await deleteInvoiceRequest(formData);
+              }}>
+                <input type="hidden" name="requestId" value={request.id} />
+                <button type="submit" className="btn-secondary" style={{ width: '100%', color: '#DC2626', borderColor: '#FCA5A5', background: '#FEF2F2' }}>
+                  Delete Invoice Request
+                </button>
+              </form>
             </div>
           )}
         </div>
