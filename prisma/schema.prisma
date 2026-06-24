@@ -407,6 +407,7 @@ model AMC {
   startDate   DateTime
   endDate     DateTime
   status      String   @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED
+  amcType     String   @default("GENERAL") // GENERAL, SOFTWARE_RESELLING, CUSTOM_DEVELOPMENT
   notes       String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

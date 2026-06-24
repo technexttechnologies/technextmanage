@@ -54,9 +54,14 @@ export default async function AMCPage() {
                   </div>
                 </div>
                 <div className={styles.headerRight}>
-                  <span className={`${styles.statusBadge} ${styles[amc.status.toLowerCase()]}`}>
-                    {amc.status}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
+                    <span className={`${styles.statusBadge} ${styles[amc.status.toLowerCase()]}`}>
+                      {amc.status}
+                    </span>
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', background: '#F1F5F9', padding: '2px 6px', borderRadius: '4px', color: '#475569' }}>
+                      {amc.amcType === 'SOFTWARE_RESELLING' ? 'SOFTWARE RESELLING' : amc.amcType === 'CUSTOM_DEVELOPMENT' ? 'CUSTOM DEV' : 'GENERAL'}
+                    </span>
+                  </div>
                   <div className={styles.amount}>
                     <IndianRupee size={20} style={{ display: 'inline', verticalAlign: 'text-bottom' }} />
                     {amc.amount.toFixed(2)}

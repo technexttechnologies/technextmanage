@@ -14,6 +14,7 @@ export async function createAMC(formData: FormData) {
   const endDate = new Date(formData.get("endDate") as string);
   const notes = formData.get("notes") as string;
   const status = formData.get("status") as string || "ACTIVE";
+  const amcType = formData.get("amcType") as string || "GENERAL";
 
   await prisma.aMC.create({
     data: {
@@ -24,6 +25,7 @@ export async function createAMC(formData: FormData) {
       startDate,
       endDate,
       status,
+      amcType,
       notes: notes || null,
     },
   });

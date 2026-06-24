@@ -57,10 +57,19 @@ export default async function NewAMCPage() {
               </select>
             </div>
           </div>
-          
-          <div className={styles.inputGroup}>
-            <label htmlFor="amount">Amount *</label>
-            <input type="number" id="amount" name="amount" required step="0.01" min="0" placeholder="0.00" />
+          <div className={styles.grid2}>
+            <div className={styles.inputGroup}>
+              <label htmlFor="amcType">AMC Type</label>
+              <select id="amcType" name="amcType">
+                <option value="GENERAL">General</option>
+                <option value="SOFTWARE_RESELLING">Software Reselling</option>
+                <option value="CUSTOM_DEVELOPMENT">Custom Development</option>
+              </select>
+            </div>
+            <div className={styles.inputGroup}>
+              <label htmlFor="amount">Amount *</label>
+              <input type="number" id="amount" name="amount" required step="0.01" min="0" placeholder="0.00" />
+            </div>
           </div>
           
           <div className={styles.inputGroup}>
