@@ -33,7 +33,8 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
       quotationRequests: { orderBy: { createdAt: 'desc' } },
       quotations: { orderBy: { date: 'desc' } },
       invoiceRequests: { orderBy: { createdAt: 'desc' } },
-      supportTickets: { orderBy: { createdAt: 'desc' } }
+      supportTickets: { orderBy: { createdAt: 'desc' } },
+      amcs: { orderBy: { startDate: 'desc' } }
     }
   });
 
@@ -176,6 +177,42 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                       {pkg.notes && (
                         <div style={{ padding: '8px 12px', backgroundColor: 'var(--surface-background)', borderRadius: '6px', fontSize: '13px', border: '1px solid var(--surface-border)' }}>
                           <p style={{ margin: 0, color: 'var(--text-primary)' }}><strong>Notes:</strong> {pkg.notes}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* AMCs (Annual Maintenance Contracts) */}
+          <div style={{ backgroundColor: 'var(--surface-card)', padding: '24px', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', color: 'var(--brand-primary)' }}>
+              <CheckCircle2 size={24} />
+              <h2 style={{ fontSize: '20px', margin: 0 }}>Maintenance (AMC)</h2>
+            </div>
+            {customer.amcs.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)' }}>No maintenance contracts found.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {customer.amcs.map(amc => (
+                  <div key={amc.id} style={{ border: '1px solid var(--surface-border)', padding: '16px', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '16px' }}>{amc.title}</strong>
+                      {getStatusBadge(amc.endDate)}
+                    </div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', marginBottom: amc.notes ? '12px' : '0' }}>
+                        <div>
+                          <p style={{ margin: '4px 0' }}><strong>Ref:</strong> AMC-{new Date(amc.createdAt).getFullYear()}-{amc.amcNumber}</p>
+                          <p style={{ margin: '4px 0' }}><strong>Type:</strong> {amc.amcType.replace(/_/g, ' ')}</p>
+                          <p style={{ margin: '4px 0' }}><strong>Valid Until:</strong> {format(new Date(amc.endDate), 'MMM dd, yyyy')}</p>
+                        </div>
+                      </div>
+                      {amc.notes && (
+                        <div style={{ padding: '8px 12px', backgroundColor: 'var(--surface-background)', borderRadius: '6px', fontSize: '13px', border: '1px solid var(--surface-border)' }}>
+                          <p style={{ margin: 0, color: 'var(--text-primary)' }}><strong>Notes:</strong> {amc.notes}</p>
                         </div>
                       )}
                     </div>
