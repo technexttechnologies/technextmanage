@@ -206,7 +206,6 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', marginBottom: amc.notes ? '12px' : '0' }}>
                         <div>
                           <p style={{ margin: '4px 0' }}><strong>Ref:</strong> AMC-{new Date(amc.createdAt).getFullYear()}-{amc.amcNumber}</p>
-                          <p style={{ margin: '4px 0' }}><strong>Type:</strong> {amc.amcType.replace(/_/g, ' ')}</p>
                           <p style={{ margin: '4px 0' }}><strong>Valid Until:</strong> {format(new Date(amc.endDate), 'MMM dd, yyyy')}</p>
                         </div>
                       </div>
