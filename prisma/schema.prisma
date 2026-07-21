@@ -314,6 +314,16 @@ model EmailLog {
   createdAt DateTime @default(now())
 }
 
+model Campaign {
+  id          String   @id @default(cuid())
+  subject     String
+  body        String   @db.Text
+  audience    String   // ALL_CUSTOMERS, ACTIVE_AMCS, LEADS
+  sentCount   Int      @default(0)
+  sentAt      DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
 model MessageTemplate {
   id        String   @id @default(cuid())
   name      String
