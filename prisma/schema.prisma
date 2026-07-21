@@ -381,6 +381,7 @@ model InvoiceRequest {
   requestedBy      User     @relation("RequestedInvoices", fields: [requestedById], references: [id])
   assignedAdminId  String?
   assignedAdmin    User?    @relation("AssignedInvoices", fields: [assignedAdminId], references: [id])
+  lastReminderSentAt DateTime?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -398,6 +399,7 @@ model ActivityLog {
 
 model AMC {
   id          String   @id @default(cuid())
+  amcNumber   Int      @default(autoincrement()) @unique
   title       String
   customerId  String
   customer    Customer @relation(fields: [customerId], references: [id])
@@ -408,7 +410,9 @@ model AMC {
   endDate     DateTime
   status      String   @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED
   amcType     String   @default("GENERAL") // GENERAL, SOFTWARE_RESELLING, CUSTOM_DEVELOPMENT
+  paymentStatus String @default("PENDING") // PENDING, PAID
   notes       String?  @db.Text
+  lastReminderSentAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

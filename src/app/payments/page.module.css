@@ -1,0 +1,151 @@
+.container {
+  padding: var(--spacing-6);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.title {
+  font-size: 28px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-6);
+}
+
+.card {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--spacing-5);
+  font-size: 18px;
+  color: var(--text-primary);
+  padding-bottom: var(--spacing-4);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--surface-border);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.table td {
+  padding: var(--spacing-4);
+  border-bottom: 1px solid var(--surface-border);
+  font-size: 14px;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.emptyState {
+  padding: var(--spacing-8);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.tagDanger {
+  background: #FEE2E2;
+  color: #B91C1C;
+}
+
+.tagWarning {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+.actionLink {
+  color: var(--brand-primary);
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.actionLink:hover {
+  text-decoration: underline;
+}
+
+.reminderBtn {
+  background: #E0F2FE;
+  color: #0284C7;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reminderBtn:hover {
+  background: #BAE6FD;
+}
+
+.whatsappBtn {
+  background: #DCFCE7;
+  color: #16A34A;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+}
+
+.whatsappBtn:hover {
+  background: #BBF7D0;
+}

@@ -108,3 +108,59 @@ export async function deleteAMC(id: string) {
     revalidatePath(`/customers/${amc.customerId}`);
   }
 }
+
+export async function updateAMCPaymentStatus(id: string, paymentStatus: string) {
+  const amc = await prisma.aMC.update({
+    where: { id },
+    data: { paymentStatus },
+  });
+  revalidatePath("/amc");
+  revalidatePath(`/customers/${amc.customerId}`);
+}
+
+export async function sendAMCPaymentReminder(id: string) {
+  const amc = await prisma.aMC.findUnique({
+    where: { id },
+    include: { customer: true }
+  });
+
+  if (!amc || !amc.customer.email) return;
+
+  const emailSubject = `Payment Reminder: AMC for ${amc.title}`;
+  const amcNumber = `AMC-${new Date(amc.createdAt).getFullYear()}-${amc.amcNumber}`;
+  
+  let emailBody = `
+    <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Payment Reminder</h2>
+    <p style="font-size: 16px; color: #334155; line-height: 1.6;">Hello ${amc.customer.name},</p>
+    <p style="font-size: 16px; color: #334155; line-height: 1.6;">This is a friendly reminder that the payment for your Annual Maintenance Contract is currently pending.</p>
+    
+    <div style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 30px 0;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-size: 15px; width: 40%;">AMC Reference</td>
+          <td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">${amcNumber}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-size: 15px; width: 40%;">Description</td>
+          <td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">${amc.title}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-size: 15px; width: 40%;">Amount Due</td>
+          <td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">₹${amc.amount.toFixed(2)}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <p style="font-size: 16px; color: #334155; line-height: 1.6;">Please clear the outstanding amount at your earliest convenience to ensure uninterrupted support.</p>
+    <p style="font-size: 16px; color: #334155; margin-top: 30px;">Best regards,<br/><strong>technext</strong></p>
+  `;
+
+  await sendEmail(amc.customer.email, emailSubject, generateTechnextEmailHtml(emailSubject, emailBody));
+
+  await prisma.aMC.update({
+    where: { id },
+    data: { lastReminderSentAt: new Date() }
+  });
+
+  revalidatePath("/amc");
+}

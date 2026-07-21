@@ -138,6 +138,25 @@ export default async function InvoiceRequestDetails({ params }: { params: Promis
                 </a>
               </div>
 
+              {request.status !== "PAID" && request.status !== "DRAFT" && request.status !== "CANCELLED" && (
+                <div style={{ marginTop: '12px' }}>
+                  <form action={async () => {
+                    "use server";
+                    const { sendInvoiceReminder } = await import('../actions');
+                    await sendInvoiceReminder(request.id);
+                  }}>
+                    <button type="submit" className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px', background: '#0284C7', color: 'white', border: 'none' }}>
+                      <MessageCircle size={16} /> Send Payment Reminder Email
+                    </button>
+                  </form>
+                  {request.lastReminderSentAt && (
+                    <div style={{ fontSize: '11px', textAlign: 'center', marginTop: '4px', color: 'var(--text-muted)' }}>
+                      Last reminder sent: {new Date(request.lastReminderSentAt).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <hr style={{ margin: '24px 0', borderTop: '1px solid var(--surface-border)' }} />
               <h3 style={{ fontSize: '14px', marginBottom: '8px' }}>Upload Invoice PDF</h3>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Generate the Invoice in Aronium and upload it here.</p>

@@ -368,12 +368,20 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
                 {customer.amcs.map(amc => (
                   <div key={amc.id} className={styles.sideItem}>
                     <div className={styles.fuHeader}>
-                      <span className={styles.fuType} style={{ color: amc.status === 'ACTIVE' ? '#16A34A' : undefined }}>{amc.title}</span>
+                      <span className={styles.fuType} style={{ color: amc.status === 'ACTIVE' ? '#16A34A' : undefined }}>
+                        <span style={{ color: '#64748B', marginRight: '4px', fontSize: '11px' }}>
+                          AMC-{new Date(amc.createdAt).getFullYear()}-{amc.amcNumber}
+                        </span>
+                        {amc.title}
+                      </span>
                       <span className={styles.fuDate}>{new Date(amc.endDate).toLocaleDateString()}</span>
                     </div>
                     <div style={{ marginTop: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', background: '#F1F5F9', padding: '2px 6px', borderRadius: '4px', color: '#475569' }}>
                         {amc.amcType === 'SOFTWARE_RESELLING' ? 'SOFTWARE RESELLING' : amc.amcType === 'CUSTOM_DEVELOPMENT' ? 'CUSTOM DEV' : 'GENERAL'}
+                      </span>
+                      <span style={{ fontSize: '11px', fontWeight: 'bold', background: amc.paymentStatus === 'PAID' ? '#DCFCE7' : '#FEE2E2', padding: '2px 6px', borderRadius: '4px', color: amc.paymentStatus === 'PAID' ? '#16A34A' : '#EF4444' }}>
+                        {amc.paymentStatus}
                       </span>
                       {amc.status !== 'ACTIVE' && <span style={{ fontSize: '11px', color: '#EF4444', fontWeight: 'bold' }}>{amc.status}</span>}
                     </div>

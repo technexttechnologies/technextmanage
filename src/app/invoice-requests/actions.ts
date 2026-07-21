@@ -227,3 +227,53 @@ export async function deleteInvoiceRequest(formData: FormData) {
   revalidatePath("/invoice-requests");
   redirect("/invoice-requests");
 }
+
+export async function sendInvoiceReminder(id: string) {
+  const invoice = await prisma.invoiceRequest.findUnique({
+    where: { id },
+    include: { customer: true }
+  });
+
+  if (!invoice || !invoice.customer.email) return;
+
+  const emailSubject = `Payment Reminder: Invoice #${invoice.aroniumInvoiceNo || invoice.id.substring(0, 8)}`;
+  const { templates } = await import("@/lib/email-templates");
+  const { generateTechnextEmailHtml, sendEmail } = await import("@/lib/mailer");
+  
+  let emailBody = `
+    <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Payment Reminder</h2>
+    <p style="font-size: 16px; color: #334155; line-height: 1.6;">Hello ${invoice.customer.name},</p>
+    <p style="font-size: 16px; color: #334155; line-height: 1.6;">This is a friendly reminder that we are still awaiting payment for your recent invoice.</p>
+    
+    <div style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 30px 0;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-size: 15px; width: 40%;">Invoice Number</td>
+          <td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">${invoice.aroniumInvoiceNo || `INV-${invoice.id.substring(0, 8)}`}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-size: 15px; width: 40%;">Amount Due</td>
+          <td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">₹${invoice.amountRequested.toFixed(2)}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <p style="font-size: 16px; color: #334155; line-height: 1.6;">You can view your invoice and arrange for payment using the link below.</p>
+  `;
+
+  const emailHtml = generateTechnextEmailHtml(
+    emailSubject, 
+    emailBody,
+    { text: "View and Pay Invoice", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/track/${invoice.id}` }
+  );
+
+  await sendEmail(invoice.customer.email, emailSubject, emailHtml);
+
+  await prisma.invoiceRequest.update({
+    where: { id },
+    data: { lastReminderSentAt: new Date() }
+  });
+
+  revalidatePath(`/invoice-requests/${id}`);
+  revalidatePath("/payments");
+}

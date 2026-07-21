@@ -46,7 +46,12 @@ export default async function AMCPage() {
                     <ShieldCheck size={24} />
                   </div>
                   <div>
-                    <h3 className={styles.amcTitle}>{amc.title}</h3>
+                    <h3 className={styles.amcTitle}>
+                      <span style={{ color: '#64748B', marginRight: '6px', fontSize: '14px' }}>
+                        AMC-{new Date(amc.createdAt).getFullYear()}-{amc.amcNumber}
+                      </span>
+                      {amc.title}
+                    </h3>
                     <div className={styles.amcDates}>
                       <Calendar size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: 'text-bottom' }} />
                       {new Date(amc.startDate).toLocaleDateString()} - {new Date(amc.endDate).toLocaleDateString()}
@@ -55,9 +60,14 @@ export default async function AMCPage() {
                 </div>
                 <div className={styles.headerRight}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
-                    <span className={`${styles.statusBadge} ${styles[amc.status.toLowerCase()]}`}>
-                      {amc.status}
-                    </span>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <span className={`${styles.statusBadge} ${styles[amc.status.toLowerCase()]}`}>
+                        {amc.status}
+                      </span>
+                      <span className={`${styles.statusBadge} ${amc.paymentStatus === 'PAID' ? styles.active : styles.expired}`}>
+                        {amc.paymentStatus}
+                      </span>
+                    </div>
                     <span style={{ fontSize: '11px', fontWeight: 'bold', background: '#F1F5F9', padding: '2px 6px', borderRadius: '4px', color: '#475569' }}>
                       {amc.amcType === 'SOFTWARE_RESELLING' ? 'SOFTWARE RESELLING' : amc.amcType === 'CUSTOM_DEVELOPMENT' ? 'CUSTOM DEV' : 'GENERAL'}
                     </span>
@@ -75,7 +85,31 @@ export default async function AMCPage() {
                 {amc.notes && <p className={styles.notes}>{amc.notes}</p>}
               </div>
 
-              <div className={styles.cardActions}>
+              <div className={styles.cardActions} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {amc.paymentStatus === 'PENDING' && (
+                  <form action={async () => {
+                    "use server";
+                    const { updateAMCPaymentStatus } = await import("./actions");
+                    await updateAMCPaymentStatus(amc.id, "PAID");
+                  }}>
+                    <button type="submit" className={styles.actionBtn} style={{ color: '#16A34A', background: '#DCFCE7' }}>
+                      Mark as Paid
+                    </button>
+                  </form>
+                )}
+                
+                {amc.paymentStatus === 'PENDING' && (
+                  <form action={async () => {
+                    "use server";
+                    const { sendAMCPaymentReminder } = await import("./actions");
+                    await sendAMCPaymentReminder(amc.id);
+                  }}>
+                    <button type="submit" className={styles.actionBtn} style={{ color: '#0284C7', background: '#E0F2FE' }}>
+                      Send Reminder
+                    </button>
+                  </form>
+                )}
+
                 <form action={async () => {
                   "use server";
                   await updateAMCStatus(amc.id, amc.status === 'ACTIVE' ? 'EXPIRED' : 'ACTIVE');
@@ -84,6 +118,7 @@ export default async function AMCPage() {
                     Mark as {amc.status === 'ACTIVE' ? 'Expired' : 'Active'}
                   </button>
                 </form>
+
                 <form action={async () => {
                   "use server";
                   await deleteAMC(amc.id);
