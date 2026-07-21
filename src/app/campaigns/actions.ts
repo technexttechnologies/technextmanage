@@ -17,7 +17,7 @@ export async function generateCampaignContent(prompt: string) {
   const htmlContent = await draftEmailWithAI(
     `You are writing a professional company newsletter/email broadcast. 
     Use HTML formatting (like <p>, <b>, <ul>, <br>) so it looks beautiful in an email client. 
-    Do NOT include a Subject line in the body. Do NOT include ```html markdown blocks.
+    Do NOT include a Subject line in the body. Do NOT include any markdown code blocks.
     Here is what it should be about: ${prompt}`,
     "professional and engaging"
   );
