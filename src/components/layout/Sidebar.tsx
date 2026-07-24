@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon, Calendar, MonitorPlay, IndianRupee, Megaphone } from "lucide-react";
+import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon, Calendar, MonitorPlay, IndianRupee, Megaphone, LayoutDashboard, CreditCard, Monitor, Repeat, Folder, PieChart } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
 import NotificationBell from "./NotificationBell";
@@ -12,6 +12,7 @@ import NotificationBell from "./NotificationBell";
 export default function Sidebar({ user }: { user: any }) {
   const pathname = usePathname() || "";
   const isAdmin = user?.role === "SUPER_ADMIN" || user?.role === "ADMIN";
+  const isErpAccess = isAdmin || ["ACCOUNTS", "OPERATIONS", "HR"].includes(user?.role);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -130,6 +131,39 @@ export default function Sidebar({ user }: { user: any }) {
             <a href="https://technextcatlog.vercel.app/admin.html" target="_blank" rel="noopener noreferrer" className={styles.navItem}>
               <ExternalLink size={20} /> Catalog Admin ↗
             </a>
+          </div>
+        )}
+
+        {isErpAccess && (
+          <div className={styles.navSection}>
+            <p className={styles.navSectionTitle} style={{ color: '#8B5CF6' }}>Business Operations</p>
+            <Link href="/erp/dashboard" className={`${styles.navItem} ${pathname === '/erp/dashboard' ? styles.active : ''}`}>
+              <LayoutDashboard size={20} /> Dashboard
+            </Link>
+            <Link href="/erp/finance" className={`${styles.navItem} ${pathname.startsWith('/erp/finance') ? styles.active : ''}`}>
+              <IndianRupee size={20} /> Finance & Accounts
+            </Link>
+            <Link href="/erp/vendors" className={`${styles.navItem} ${pathname.startsWith('/erp/vendors') ? styles.active : ''}`}>
+              <Users size={20} /> Vendor Management
+            </Link>
+            <Link href="/erp/assets" className={`${styles.navItem} ${pathname.startsWith('/erp/assets') ? styles.active : ''}`}>
+              <Monitor size={20} /> Company Assets
+            </Link>
+            <Link href="/erp/subscriptions" className={`${styles.navItem} ${pathname.startsWith('/erp/subscriptions') ? styles.active : ''}`}>
+              <Repeat size={20} /> Subscriptions
+            </Link>
+            <Link href="/erp/mail" className={`${styles.navItem} ${pathname.startsWith('/erp/mail') ? styles.active : ''}`}>
+              <Mail size={20} /> Company Mail
+            </Link>
+            <Link href="/erp/calendar" className={`${styles.navItem} ${pathname.startsWith('/erp/calendar') ? styles.active : ''}`}>
+              <Calendar size={20} /> Company Calendar
+            </Link>
+            <Link href="/erp/documents" className={`${styles.navItem} ${pathname.startsWith('/erp/documents') ? styles.active : ''}`}>
+              <Folder size={20} /> Company Documents
+            </Link>
+            <Link href="/erp/reports" className={`${styles.navItem} ${pathname.startsWith('/erp/reports') ? styles.active : ''}`}>
+              <PieChart size={20} /> Reports
+            </Link>
           </div>
         )}
 

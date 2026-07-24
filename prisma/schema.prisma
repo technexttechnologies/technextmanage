@@ -38,6 +38,15 @@ model User {
   leaveRequests     LeaveRequest[]
   notifications     InAppNotification[]
   resetTokens       PasswordResetToken[]
+
+  // ERP Relations
+  erpIncomesRecorded ErpIncome[]  @relation("ErpIncomeRecordedBy")
+  erpExpensesRecorded ErpExpense[] @relation("ErpExpenseRecordedBy")
+  erpExpensesApproved ErpExpense[] @relation("ErpExpenseApprovedBy")
+  erpAssetsAssigned  ErpAsset[]   @relation("ErpAssetAssigned")
+  erpMailsSent       ErpMail[]    @relation("ErpMailSent")
+  erpEventsCreated   ErpEvent[]   @relation("ErpEventCreated")
+  erpDocsUploaded    ErpDocument[] @relation("ErpDocumentUploaded")
 }
 
 model Customer {
@@ -611,3 +620,135 @@ model Appointment {
   updatedAt      DateTime @updatedAt
 }
 
+// ==========================================
+// BUSINESS OPERATIONS (ERP) MODULE
+// Completely isolated from Customer CRM
+// ==========================================
+
+model ErpIncome {
+  id            String   @id @default(cuid())
+  incomeId      String   @unique @default(cuid()) // Human readable generated later
+  customerName  String?
+  service       String
+  category      String
+  amount        Float
+  gst           Float    @default(0)
+  paymentMethod String
+  paymentDate   DateTime
+  invoiceRef    String?
+  notes         String?  @db.Text
+  attachments   String?  @db.Text // JSON string of urls
+  recordedById  String
+  recordedBy    User     @relation("ErpIncomeRecordedBy", fields: [recordedById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ErpExpense {
+  id            String   @id @default(cuid())
+  title         String
+  category      String
+  vendor        String?
+  amount        Float
+  gst           Float    @default(0)
+  paymentMethod String
+  paymentDate   DateTime
+  receiptUrl    String?  @db.Text
+  notes         String?  @db.Text
+  status        String   @default("PENDING") // PENDING, APPROVED, PAID
+  approvedById  String?
+  approvedBy    User?    @relation("ErpExpenseApprovedBy", fields: [approvedById], references: [id])
+  recordedById  String
+  recordedBy    User     @relation("ErpExpenseRecordedBy", fields: [recordedById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ErpVendor {
+  id             String   @id @default(cuid())
+  companyName    String
+  contactPerson  String?
+  email          String?
+  phone          String?
+  gstNumber      String?
+  address        String?  @db.Text
+  services       String?  @db.Text
+  paymentTerms   String?
+  outstandingBal Float    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ErpAsset {
+  id                 String   @id @default(cuid())
+  assetId            String   @unique
+  name               String
+  category           String   // Laptop, Server, Printer, etc.
+  purchaseDate       DateTime
+  purchaseCost       Float
+  warrantyEnd        DateTime?
+  assignedToId       String?
+  assignedTo         User?    @relation("ErpAssetAssigned", fields: [assignedToId], references: [id])
+  status             String   @default("ACTIVE") // ACTIVE, MAINTENANCE, RETIRED
+  maintenanceHistory String?  @db.Text
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model ErpSubscription {
+  id              String   @id @default(cuid())
+  name            String
+  provider        String
+  cost            Float
+  billingCycle    String   // MONTHLY, YEARLY
+  nextBillingDate DateTime
+  reminderSent    Boolean  @default(false)
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ErpMail {
+  id           String   @id @default(cuid())
+  subject      String
+  body         String   @db.Text
+  senderId     String
+  sender       User     @relation("ErpMailSent", fields: [senderId], references: [id])
+  recipient    String
+  cc           String?
+  bcc          String?
+  isInternal   Boolean  @default(true)
+  status       String   @default("SENT") // DRAFT, SCHEDULED, SENT, TRASH
+  attachments  String?  @db.Text // JSON string
+  scheduledAt  DateTime?
+  createdAt    DateTime @default(now())
+}
+
+model ErpEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  type        String   // MEETING, HOLIDAY, HR, EVENT
+  date        DateTime
+  startTime   String?
+  endTime     String?
+  location    String?
+  meetLink    String?
+  isRecurring Boolean  @default(false)
+  createdById String
+  createdBy   User     @relation("ErpEventCreated", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ErpDocument {
+  id           String   @id @default(cuid())
+  name         String
+  folder       String   @default("General")
+  fileUrl      String   @db.Text
+  version      Int      @default(1)
+  uploadedById String
+  uploadedBy   User     @relation("ErpDocumentUploaded", fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
