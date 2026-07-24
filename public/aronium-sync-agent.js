@@ -197,6 +197,32 @@ const runSync = async () => {
             console.log('[INFO] No sales to sync.');
         }
 
+        // 4. Fetch & Sync Purchases
+        console.log('[INFO] Fetching Purchases...');
+        const purchasesRaw = await queryDB(`
+            SELECT 
+                Id as aroniumId, 
+                Number as orderNumber, 
+                Date as date, 
+                Total as totalAmount, 
+                CustomerId as vendorId
+            FROM Document
+            WHERE DocumentTypeId = 5 -- Assumes DocumentTypeId 5 is for Purchases/Receipts
+            ORDER BY Date DESC
+            LIMIT 500
+        `);
+        
+        const purchasesPayload = purchasesRaw.map(p => ({
+            ...p,
+            status: 'PAID'
+        }));
+        
+        if (purchasesPayload.length > 0) {
+            await syncToCloud('PURCHASES', purchasesPayload);
+        } else {
+            console.log('[INFO] No purchases to sync.');
+        }
+
         console.log('[INFO] Sync process completed successfully.');
     } catch (error) {
         console.error('[FATAL] Sync process aborted due to error.', error.message);

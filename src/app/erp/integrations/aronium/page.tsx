@@ -13,12 +13,13 @@ export default async function AroniumDashboardPage() {
   }
 
   // Fetch widgets data
-  const [totalSales, totalProducts, lowStockItems, products, sales] = await Promise.all([
+  const [totalSales, totalProducts, lowStockItems, products, sales, purchases] = await Promise.all([
     prisma.erpSale.count(),
     prisma.erpProduct.count(),
     prisma.erpProduct.count({ where: { isLowStock: true } }),
     prisma.erpProduct.findMany({ orderBy: { name: 'asc' } }),
-    prisma.erpSale.findMany({ orderBy: { date: 'desc' } })
+    prisma.erpSale.findMany({ orderBy: { date: 'desc' } }),
+    prisma.erpPurchase.findMany({ orderBy: { date: 'desc' } })
   ]);
 
   const totalCustomers = config.totalCustomers;
@@ -32,6 +33,7 @@ export default async function AroniumDashboardPage() {
       totalCustomers={totalCustomers}
       products={products}
       sales={sales}
+      purchases={purchases}
     />
   );
 }

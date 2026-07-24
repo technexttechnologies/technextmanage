@@ -76,3 +76,14 @@ export async function updateErpSale(id: string, data: any) {
   });
   revalidatePath("/erp/integrations/aronium");
 }
+
+export async function updateErpPurchase(id: string, data: any) {
+  await prisma.erpPurchase.update({
+    where: { id },
+    data: {
+      totalAmount: parseFloat(data.totalAmount) || 0,
+      status: data.status,
+    },
+  });
+  revalidatePath("/erp/integrations/aronium");
+}

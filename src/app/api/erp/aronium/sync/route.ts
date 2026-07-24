@@ -117,6 +117,45 @@ export async function POST(req: Request) {
           });
         }
       }
+    } else if (type === 'PURCHASES') {
+      for (const purchase of data) {
+        const totalAmount = parseFloat(purchase.totalAmount) || 0;
+        const existingPurchase = await prisma.erpPurchase.findUnique({
+          where: { aroniumId: String(purchase.aroniumId) }
+        });
+
+        await prisma.erpPurchase.upsert({
+          where: { aroniumId: String(purchase.aroniumId) },
+          update: {
+            orderNumber: purchase.orderNumber,
+            date: new Date(purchase.date),
+            totalAmount,
+            status: 'PAID'
+          },
+          create: {
+            aroniumId: String(purchase.aroniumId),
+            orderNumber: purchase.orderNumber,
+            date: new Date(purchase.date),
+            totalAmount,
+            status: 'PAID'
+          }
+        });
+
+        if (!existingPurchase) {
+          await prisma.erpExpense.create({
+            data: {
+              title: `Aronium Purchase: ${purchase.orderNumber}`,
+              category: "Aronium Purchases",
+              amount: totalAmount,
+              paymentMethod: "Aronium Sync",
+              paymentDate: new Date(purchase.date),
+              status: "PAID",
+              recordedById: defaultUser.id,
+              notes: `Auto-generated from Aronium Purchase`
+            }
+          });
+        }
+      }
     } else if (type === 'CUSTOMERS') {
       for (const customer of data) {
         // Try to match by aroniumId first

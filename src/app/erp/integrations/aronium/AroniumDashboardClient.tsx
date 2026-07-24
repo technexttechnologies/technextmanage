@@ -5,6 +5,7 @@ import styles from './page.module.css';
 import Link from 'next/link';
 import EditProductModal from '@/components/erp/aronium/EditProductModal';
 import EditSaleModal from '@/components/erp/aronium/EditSaleModal';
+import EditPurchaseModal from '@/components/erp/aronium/EditPurchaseModal';
 
 interface AroniumDashboardClientProps {
   config: any;
@@ -14,6 +15,7 @@ interface AroniumDashboardClientProps {
   totalCustomers: number;
   products: any[];
   sales: any[];
+  purchases: any[];
 }
 
 export default function AroniumDashboardClient({
@@ -23,12 +25,14 @@ export default function AroniumDashboardClient({
   lowStockItems,
   totalCustomers,
   products,
-  sales
+  sales,
+  purchases
 }: AroniumDashboardClientProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'sales'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'sales' | 'purchases'>('overview');
   
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [editingSale, setEditingSale] = useState<any | null>(null);
+  const [editingPurchase, setEditingPurchase] = useState<any | null>(null);
 
   const tableStyles = {
     width: '100%',
@@ -106,6 +110,12 @@ export default function AroniumDashboardClient({
           style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', fontSize: '1rem', fontWeight: activeTab === 'sales' ? 600 : 400, color: activeTab === 'sales' ? 'var(--primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'sales' ? '2px solid var(--primary)' : 'none' }}
         >
           Sales
+        </button>
+        <button 
+          onClick={() => setActiveTab('purchases')}
+          style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', fontSize: '1rem', fontWeight: activeTab === 'purchases' ? 600 : 400, color: activeTab === 'purchases' ? 'var(--primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'purchases' ? '2px solid var(--primary)' : 'none' }}
+        >
+          Purchases
         </button>
       </div>
 
@@ -248,6 +258,48 @@ export default function AroniumDashboardClient({
         </div>
       )}
 
+      {activeTab === 'purchases' && (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={tableStyles}>
+            <thead>
+              <tr>
+                <th style={thStyles}>Order No</th>
+                <th style={thStyles}>Date</th>
+                <th style={thStyles}>Total Amount</th>
+                <th style={thStyles}>Status</th>
+                <th style={thStyles}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {purchases.map(purchase => (
+                <tr key={purchase.id}>
+                  <td style={tdStyles}>{purchase.orderNumber}</td>
+                  <td style={tdStyles}>{new Date(purchase.date).toLocaleDateString()}</td>
+                  <td style={tdStyles}>₹{purchase.totalAmount}</td>
+                  <td style={tdStyles}>
+                    <span style={{ 
+                      padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600,
+                      backgroundColor: purchase.status === 'PAID' ? 'rgba(34, 197, 94, 0.2)' : purchase.status === 'PARTIAL' ? 'rgba(234, 179, 8, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                      color: purchase.status === 'PAID' ? '#22c55e' : purchase.status === 'PARTIAL' ? '#eab308' : '#ef4444'
+                    }}>
+                      {purchase.status}
+                    </span>
+                  </td>
+                  <td style={tdStyles}>
+                    <button style={actionBtnStyles} onClick={() => setEditingPurchase(purchase)}>Edit</button>
+                  </td>
+                </tr>
+              ))}
+              {purchases.length === 0 && (
+                <tr>
+                  <td colSpan={5} style={{ ...tdStyles, textAlign: 'center', padding: '24px' }}>No purchases found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {editingProduct && (
         <EditProductModal 
           product={editingProduct} 
@@ -259,6 +311,13 @@ export default function AroniumDashboardClient({
         <EditSaleModal 
           sale={editingSale} 
           onClose={() => setEditingSale(null)} 
+        />
+      )}
+
+      {editingPurchase && (
+        <EditPurchaseModal 
+          purchase={editingPurchase} 
+          onClose={() => setEditingPurchase(null)} 
         />
       )}
     </div>
