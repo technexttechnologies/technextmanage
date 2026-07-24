@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 
 interface ReportOptions {
@@ -95,7 +95,7 @@ export async function generateFinancialPDF(options: ReportOptions): Promise<Blob
   }
 
   // Data Table
-  (doc as any).autoTable({
+  autoTable(doc, {
     startY: currentY,
     head: [options.columns],
     body: options.data,
