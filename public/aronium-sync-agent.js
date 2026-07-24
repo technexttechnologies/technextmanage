@@ -179,7 +179,7 @@ const runSync = async () => {
                 Discount as discount, 
                 CustomerId as customerId
             FROM Document
-            WHERE DocumentTypeId = 1 -- Assumes DocumentTypeId 1 is for Sales
+            WHERE DocumentTypeId = 2 -- DocumentTypeId 2 is for Sales
             ORDER BY Date DESC
             LIMIT 500
         `);
@@ -207,7 +207,7 @@ const runSync = async () => {
                 Total as totalAmount, 
                 CustomerId as vendorId
             FROM Document
-            WHERE DocumentTypeId = 5 -- Assumes DocumentTypeId 5 is for Purchases/Receipts
+            WHERE DocumentTypeId = 1 -- DocumentTypeId 1 is for Purchases
             ORDER BY Date DESC
             LIMIT 500
         `);
