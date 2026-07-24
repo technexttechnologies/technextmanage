@@ -32,12 +32,20 @@ export default async function ComposeMailPage() {
         <form action={sendInternalMail} className={styles.form}>
           <div className={styles.formGroup}>
             <label htmlFor="to">To</label>
-            <select id="to" name="to" required className={styles.input}>
-              <option value="">Select Recipient</option>
+            <input 
+              type="email" 
+              id="to" 
+              name="to" 
+              required 
+              className={styles.input} 
+              placeholder="Enter email address or select from list"
+              list="user-emails" 
+            />
+            <datalist id="user-emails">
               {users.map(u => (
-                <option key={u.id} value={u.email}>{u.name} ({u.email})</option>
+                <option key={u.id} value={u.email}>{u.name}</option>
               ))}
-            </select>
+            </datalist>
           </div>
 
           <div className={styles.formRow}>
