@@ -7,6 +7,7 @@ import Link from "next/link";
 import styles from "../page.module.css";
 import StatusDropdown from "./StatusDropdown";
 import ReportExportHeader from "@/components/erp/ReportExportHeader";
+import DeleteButton from "../DeleteButton";
 
 export default async function ExpensePage() {
   const session = await getSession();
@@ -70,6 +71,7 @@ export default async function ExpensePage() {
                 <th>Amount</th>
                 <th>Recorded By</th>
                 <th>Status</th>
+                {isAdmin && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -84,6 +86,11 @@ export default async function ExpensePage() {
                   <td>
                     <StatusDropdown id={exp.id} currentStatus={exp.status} isAdmin={isAdmin} />
                   </td>
+                  {isAdmin && (
+                    <td>
+                      <DeleteButton id={exp.id} type="expense" />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

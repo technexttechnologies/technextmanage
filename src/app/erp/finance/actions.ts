@@ -120,3 +120,23 @@ export async function sendReportEmail(data: {
 
   return { success: true };
 }
+
+export async function deleteIncome(id: string) {
+  const session = await getSession();
+  if (!session || !["SUPER_ADMIN", "ADMIN"].includes(session.role as string)) {
+    throw new Error("Unauthorized: Only Admins can delete records.");
+  }
+  await prisma.erpIncome.delete({ where: { id } });
+  revalidatePath("/erp/finance/income");
+  revalidatePath("/erp/finance");
+}
+
+export async function deleteExpense(id: string) {
+  const session = await getSession();
+  if (!session || !["SUPER_ADMIN", "ADMIN"].includes(session.role as string)) {
+    throw new Error("Unauthorized: Only Admins can delete records.");
+  }
+  await prisma.erpExpense.delete({ where: { id } });
+  revalidatePath("/erp/finance/expense");
+  revalidatePath("/erp/finance");
+}

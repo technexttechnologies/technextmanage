@@ -6,12 +6,14 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import styles from "../page.module.css";
 import ReportExportHeader from "@/components/erp/ReportExportHeader";
+import DeleteButton from "../DeleteButton";
 
 export default async function IncomePage() {
   const session = await getSession();
   if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS"].includes(session.role as string)) {
     redirect("/");
   }
+  const isAdmin = ["SUPER_ADMIN", "ADMIN"].includes(session.role as string);
 
   const incomes = await prisma.erpIncome.findMany({
     orderBy: { date: "desc" },
@@ -66,6 +68,7 @@ export default async function IncomePage() {
                 <th>Amount</th>
                 <th>Recorded By</th>
                 <th>Sync ID</th>
+                {isAdmin && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -78,6 +81,11 @@ export default async function IncomePage() {
                   <td className={styles.income}>₹{inc.amount.toLocaleString()}</td>
                   <td>{inc.recordedBy?.name || "-"}</td>
                   <td>{inc.aroniumId || "-"}</td>
+                  {isAdmin && (
+                    <td>
+                      <DeleteButton id={inc.id} type="income" />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
