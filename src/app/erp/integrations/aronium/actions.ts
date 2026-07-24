@@ -2,6 +2,10 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 export async function saveAroniumConfig(formData: FormData) {
   const companyName = formData.get("companyName")?.toString() || "";
@@ -100,4 +104,15 @@ export async function deleteErpPurchase(id: string) {
     where: { id },
   });
   revalidatePath("/erp/integrations/aronium");
+}
+
+export async function triggerLocalSync() {
+  try {
+    // Run the sync agent directly on the local machine
+    await execAsync("node public/aronium-sync-agent.js", { cwd: process.cwd() });
+    revalidatePath("/erp/integrations/aronium");
+    return { success: true };
+  } catch (error: any) {
+    throw new Error("Failed to run local sync: " + error.message);
+  }
 }

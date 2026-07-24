@@ -6,7 +6,7 @@ import Link from 'next/link';
 import EditProductModal from '@/components/erp/aronium/EditProductModal';
 import EditSaleModal from '@/components/erp/aronium/EditSaleModal';
 import EditPurchaseModal from '@/components/erp/aronium/EditPurchaseModal';
-import { deleteErpSale, deleteErpPurchase } from './actions';
+import { deleteErpSale, deleteErpPurchase, triggerLocalSync } from './actions';
 
 interface AroniumDashboardClientProps {
   config: any;
@@ -34,6 +34,18 @@ export default function AroniumDashboardClient({
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [editingSale, setEditingSale] = useState<any | null>(null);
   const [editingPurchase, setEditingPurchase] = useState<any | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncNow = async () => {
+    setIsSyncing(true);
+    try {
+      await triggerLocalSync();
+      alert("Sync completed successfully! Sales, Purchases, and Products have been updated.");
+    } catch (e: any) {
+      alert(e.message || "An error occurred during sync.");
+    }
+    setIsSyncing(false);
+  };
 
   const handleDeleteSale = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this sale?')) {
@@ -100,9 +112,27 @@ export default function AroniumDashboardClient({
             Last Sync: {config.lastSyncAt ? new Date(config.lastSyncAt).toLocaleString() : 'Never'}
           </p>
         </div>
-        <Link href="/erp/integrations/aronium/setup" className={styles.downloadButton} style={{ background: 'var(--surface-border)', color: 'var(--text-primary)' }}>
-          Settings
-        </Link>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button 
+            onClick={handleSyncNow} 
+            disabled={isSyncing}
+            style={{ 
+              background: 'var(--primary)', 
+              color: '#fff', 
+              border: 'none', 
+              padding: '8px 16px', 
+              borderRadius: '6px',
+              fontWeight: 600,
+              cursor: isSyncing ? 'not-allowed' : 'pointer',
+              opacity: isSyncing ? 0.7 : 1
+            }}
+          >
+            {isSyncing ? 'Syncing...' : 'Sync Now'}
+          </button>
+          <Link href="/erp/integrations/aronium/setup" className={styles.downloadButton} style={{ background: 'var(--surface-border)', color: 'var(--text-primary)' }}>
+            Settings
+          </Link>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', borderBottom: '1px solid var(--surface-border)', paddingBottom: '12px' }}>
