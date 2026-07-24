@@ -50,3 +50,29 @@ export async function saveAroniumConfig(formData: FormData) {
 
   revalidatePath("/erp/integrations/aronium");
 }
+
+export async function updateErpProduct(id: string, data: any) {
+  await prisma.erpProduct.update({
+    where: { id },
+    data: {
+      sellingPrice: parseFloat(data.sellingPrice) || 0,
+      purchasePrice: parseFloat(data.purchasePrice) || 0,
+      currentStock: parseFloat(data.currentStock) || 0,
+      reorderLevel: parseFloat(data.reorderLevel) || 0,
+    },
+  });
+  revalidatePath("/erp/integrations/aronium");
+}
+
+export async function updateErpSale(id: string, data: any) {
+  await prisma.erpSale.update({
+    where: { id },
+    data: {
+      totalAmount: parseFloat(data.totalAmount) || 0,
+      discount: parseFloat(data.discount) || 0,
+      paymentMethod: data.paymentMethod,
+      paymentStatus: data.paymentStatus,
+    },
+  });
+  revalidatePath("/erp/integrations/aronium");
+}

@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   
   // Allow public routes, public tracking links, customer portal, and API sync endpoints
-  if (publicRoutes.includes(path) || path.startsWith('/track/') || path.startsWith('/portal/') || path.startsWith('/api/sync')) {
+  if (publicRoutes.includes(path) || path.startsWith('/track/') || path.startsWith('/portal/') || path.startsWith('/api/sync') || path.startsWith('/api/erp/aronium/sync')) {
     return NextResponse.next();
   }
 

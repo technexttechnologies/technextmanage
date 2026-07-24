@@ -23,12 +23,12 @@ const http = require('http'); // Fallback if API_URL is HTTP
 // ==========================================
 
 // Replace these with your actual cloud CRM details
-const API_URL = 'YOUR_CLOUD_URL/api/erp/aronium/sync'; 
-const SYNC_TOKEN = 'YOUR_TOKEN'; 
+const API_URL = 'http://localhost:3000/api/erp/aronium/sync'; // Change to your Vercel URL if hosted externally
+const SYNC_TOKEN = 'cmryxkiut00011bl7266snr40'; 
 
 // Provide the correct path to your aronium.db file
 // Default path on Windows is often: 'C:\\ProgramData\\Aronium\\Data\\aronium.db'
-const DB_PATH = 'C:\\ProgramData\\Aronium\\Data\\aronium.db'; 
+const DB_PATH = 'C:\\Users\\LENOVO\\AppData\\Local\\Aronium\\Data\\pos.db'; 
 
 // ==========================================
 
@@ -130,10 +130,8 @@ const runSync = async () => {
                 Id as aroniumId, 
                 Name as name, 
                 Code as sku, 
-                Barcode as barcode, 
                 Price as sellingPrice, 
-                Cost as purchasePrice, 
-                StockQuantity as currentStock 
+                Cost as purchasePrice
             FROM Product
             LIMIT 1000
         `);
