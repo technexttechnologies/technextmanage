@@ -87,3 +87,17 @@ export async function updateErpPurchase(id: string, data: any) {
   });
   revalidatePath("/erp/integrations/aronium");
 }
+
+export async function deleteErpSale(id: string) {
+  await prisma.erpSale.delete({
+    where: { id },
+  });
+  revalidatePath("/erp/integrations/aronium");
+}
+
+export async function deleteErpPurchase(id: string) {
+  await prisma.erpPurchase.delete({
+    where: { id },
+  });
+  revalidatePath("/erp/integrations/aronium");
+}

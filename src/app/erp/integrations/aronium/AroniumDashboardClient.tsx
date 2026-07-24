@@ -6,6 +6,7 @@ import Link from 'next/link';
 import EditProductModal from '@/components/erp/aronium/EditProductModal';
 import EditSaleModal from '@/components/erp/aronium/EditSaleModal';
 import EditPurchaseModal from '@/components/erp/aronium/EditPurchaseModal';
+import { deleteErpSale, deleteErpPurchase } from './actions';
 
 interface AroniumDashboardClientProps {
   config: any;
@@ -33,6 +34,18 @@ export default function AroniumDashboardClient({
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [editingSale, setEditingSale] = useState<any | null>(null);
   const [editingPurchase, setEditingPurchase] = useState<any | null>(null);
+
+  const handleDeleteSale = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this sale?')) {
+      await deleteErpSale(id);
+    }
+  };
+
+  const handleDeletePurchase = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this purchase?')) {
+      await deleteErpPurchase(id);
+    }
+  };
 
   const tableStyles = {
     width: '100%',
@@ -243,8 +256,9 @@ export default function AroniumDashboardClient({
                       {sale.paymentStatus}
                     </span>
                   </td>
-                  <td style={tdStyles}>
+                  <td style={{ ...tdStyles, display: 'flex', gap: '8px' }}>
                     <button style={actionBtnStyles} onClick={() => setEditingSale(sale)}>Edit</button>
+                    <button style={{ ...actionBtnStyles, color: '#ef4444', borderColor: '#ef4444' }} onClick={() => handleDeleteSale(sale.id)}>Delete</button>
                   </td>
                 </tr>
               ))}
@@ -285,8 +299,9 @@ export default function AroniumDashboardClient({
                       {purchase.status}
                     </span>
                   </td>
-                  <td style={tdStyles}>
+                  <td style={{ ...tdStyles, display: 'flex', gap: '8px' }}>
                     <button style={actionBtnStyles} onClick={() => setEditingPurchase(purchase)}>Edit</button>
+                    <button style={{ ...actionBtnStyles, color: '#ef4444', borderColor: '#ef4444' }} onClick={() => handleDeletePurchase(purchase.id)}>Delete</button>
                   </td>
                 </tr>
               ))}
