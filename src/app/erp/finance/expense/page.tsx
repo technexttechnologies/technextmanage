@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import styles from "../page.module.css";
 import StatusDropdown from "./StatusDropdown";
+import ReportExportHeader from "@/components/erp/ReportExportHeader";
 
 export default async function ExpensePage() {
   const session = await getSession();
@@ -23,6 +24,17 @@ export default async function ExpensePage() {
     }
   });
 
+  const exportColumns = ["Date", "Title", "Category", "Vendor", "Amount", "Recorded By", "Status"];
+  const exportData = expenses.map(exp => [
+    exp.paymentDate.toLocaleDateString(),
+    exp.title,
+    exp.category,
+    exp.vendor || "-",
+    exp.amount.toString(),
+    exp.recordedBy?.name || "-",
+    exp.status
+  ]);
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -36,6 +48,13 @@ export default async function ExpensePage() {
           </Link>
         </div>
       </header>
+
+      <ReportExportHeader 
+        title="Expense Report"
+        subtitle="Business expense records"
+        columns={exportColumns}
+        data={exportData}
+      />
 
       <div className={styles.tableContainer}>
         {expenses.length === 0 ? (

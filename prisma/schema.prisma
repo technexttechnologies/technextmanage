@@ -93,6 +93,9 @@ model Customer {
   hostingAccounts   HostingAccount[]
   appointments      Appointment[]
   portalToken       String?            @unique
+  
+  // ERP Relations
+  erpMails          ErpMail[]
 }
 
 model Lead {
@@ -106,6 +109,7 @@ model Lead {
   phone        String?
   email        String?
   company      String?
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -628,16 +632,12 @@ model Appointment {
 model ErpIncome {
   id            String   @id @default(cuid())
   incomeId      String   @unique @default(cuid()) // Human readable generated later
-  customerName  String?
-  service       String
-  category      String
+  date          DateTime @default(now()) // Date of the daily ledger
   amount        Float
-  gst           Float    @default(0)
-  paymentMethod String
-  paymentDate   DateTime
-  invoiceRef    String?
+  category      String   @default("Daily Sales") // Sales, Services, etc.
+  paymentMethod String   @default("Cash/Card")
   notes         String?  @db.Text
-  attachments   String?  @db.Text // JSON string of urls
+  aroniumId     String?  // If synced from Aronium
   recordedById  String
   recordedBy    User     @relation("ErpIncomeRecordedBy", fields: [recordedById], references: [id])
   createdAt     DateTime @default(now())
@@ -675,6 +675,7 @@ model ErpVendor {
   services       String?  @db.Text
   paymentTerms   String?
   outstandingBal Float    @default(0)
+  aroniumId      String?  // Sync ID from Aronium POS
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -708,6 +709,17 @@ model ErpSubscription {
   updatedAt       DateTime @updatedAt
 }
 
+model ErpSmtpAccount {
+  id        String    @id @default(cuid())
+  name      String    @default("Company Mail")
+  email     String
+  password  String
+  host      String    @default("smtp.gmail.com")
+  port      Int       @default(465)
+  isDefault Boolean   @default(false)
+  mails     ErpMail[]
+}
+
 model ErpMail {
   id           String   @id @default(cuid())
   subject      String
@@ -718,9 +730,16 @@ model ErpMail {
   cc           String?
   bcc          String?
   isInternal   Boolean  @default(true)
-  status       String   @default("SENT") // DRAFT, SCHEDULED, SENT, TRASH
+  status       String   @default("SENT") // DRAFT, SCHEDULED, SENT, TRASH, FAILED
   attachments  String?  @db.Text // JSON string
   scheduledAt  DateTime?
+  deliveredAt  DateTime?
+  openedAt     DateTime?
+  retryCount   Int      @default(0)
+  smtpAccountId String?
+  smtpAccount  ErpSmtpAccount? @relation(fields: [smtpAccountId], references: [id])
+  customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id])
   createdAt    DateTime @default(now())
 }
 

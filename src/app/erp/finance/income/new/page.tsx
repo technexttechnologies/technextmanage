@@ -26,24 +26,13 @@ export default async function NewIncomePage() {
       <div className={styles.formContainer}>
         <form action={createIncome}>
           <div className={styles.formGroup}>
-            <label htmlFor="customerName">Customer / Client Name (Optional)</label>
-            <input type="text" id="customerName" name="customerName" className={styles.input} placeholder="e.g. Acme Corp" />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="service">Service / Product Name *</label>
-            <input type="text" id="service" name="service" className={styles.input} required placeholder="e.g. Website Development" />
-          </div>
-
-          <div className={styles.formGroup}>
             <label htmlFor="category">Category *</label>
             <select id="category" name="category" className={styles.select} required>
               <option value="">Select Category...</option>
-              <option value="SALES">Sales</option>
-              <option value="SERVICES">Services</option>
-              <option value="CONSULTING">Consulting</option>
-              <option value="MAINTENANCE">Maintenance / AMC</option>
-              <option value="OTHER">Other</option>
+              <option value="Daily Sales">Daily Sales</option>
+              <option value="Services">Services</option>
+              <option value="Consulting">Consulting</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 
@@ -53,30 +42,26 @@ export default async function NewIncomePage() {
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="gst">GST Amount (₹) (Optional)</label>
-            <input type="number" id="gst" name="gst" step="0.01" className={styles.input} placeholder="0.00" />
-          </div>
-
-          <div className={styles.formGroup}>
             <label htmlFor="paymentMethod">Payment Method *</label>
             <select id="paymentMethod" name="paymentMethod" className={styles.select} required>
               <option value="">Select Method...</option>
-              <option value="CASH">Cash</option>
-              <option value="BANK_TRANSFER">Bank Transfer (NEFT/RTGS/IMPS)</option>
+              <option value="Cash/Card">Cash/Card</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank Transfer">Bank Transfer</option>
               <option value="UPI">UPI</option>
-              <option value="CHEQUE">Cheque</option>
-              <option value="CREDIT_CARD">Credit Card</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Credit Card">Credit Card</option>
             </select>
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="paymentDate">Payment Date *</label>
-            <input type="date" id="paymentDate" name="paymentDate" className={styles.input} required defaultValue={new Date().toISOString().split('T')[0]} />
+            <label htmlFor="date">Date *</label>
+            <input type="date" id="date" name="date" className={styles.input} required defaultValue={new Date().toISOString().split('T')[0]} />
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="invoiceRef">Invoice Reference (Optional)</label>
-            <input type="text" id="invoiceRef" name="invoiceRef" className={styles.input} placeholder="e.g. INV-2026-001" />
+            <label htmlFor="aroniumId">Aronium ID (Optional)</label>
+            <input type="text" id="aroniumId" name="aroniumId" className={styles.input} placeholder="e.g. Sync ID" />
           </div>
 
           <div className={styles.formGroup}>

@@ -11,27 +11,21 @@ export async function createIncome(formData: FormData) {
     throw new Error("Unauthorized");
   }
 
-  const customerName = formData.get("customerName") as string;
-  const service = formData.get("service") as string;
   const category = formData.get("category") as string;
   const amount = parseFloat(formData.get("amount") as string);
-  const gst = parseFloat(formData.get("gst") as string) || 0;
   const paymentMethod = formData.get("paymentMethod") as string;
-  const paymentDate = formData.get("paymentDate") as string;
-  const invoiceRef = formData.get("invoiceRef") as string;
+  const date = formData.get("date") as string;
   const notes = formData.get("notes") as string;
+  const aroniumId = formData.get("aroniumId") as string || undefined;
 
   await prisma.erpIncome.create({
     data: {
-      customerName,
-      service,
       category,
       amount,
-      gst,
       paymentMethod,
-      paymentDate: new Date(paymentDate),
-      invoiceRef,
+      date: new Date(date),
       notes,
+      aroniumId,
       recordedById: session.userId as string,
     },
   });
@@ -91,4 +85,38 @@ export async function updateExpenseStatus(id: string, status: string) {
 
   revalidatePath("/erp/finance/expense");
   revalidatePath("/erp/finance");
+}
+
+export async function sendReportEmail(data: {
+  to: string;
+  cc?: string;
+  bcc?: string;
+  subject: string;
+  body: string;
+  attachments: { filename: string; content: string; contentType: string }[];
+}) {
+  const session = await getSession();
+  if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS"].includes(session.role as string)) {
+    throw new Error("Unauthorized");
+  }
+
+  // Create ErpMail record
+  const mail = await prisma.erpMail.create({
+    data: {
+      recipient: data.to,
+      cc: data.cc || null,
+      bcc: data.bcc || null,
+      subject: data.subject,
+      body: data.body,
+      attachments: JSON.stringify(data.attachments),
+      status: "PENDING",
+      senderId: session.userId as string,
+    }
+  });
+
+  // Call sendErpEmail
+  const { sendErpEmail } = await import("@/lib/erp/mailer");
+  await sendErpEmail(mail.id);
+
+  return { success: true };
 }

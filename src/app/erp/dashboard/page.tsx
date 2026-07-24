@@ -19,9 +19,9 @@ export default async function ErpDashboardPage() {
 
   // Income
   const totalIncomeObj = await prisma.erpIncome.aggregate({ _sum: { amount: true } });
-  const annualIncomeObj = await prisma.erpIncome.aggregate({ where: { paymentDate: { gte: startOfYear } }, _sum: { amount: true } });
-  const monthlyIncomeObj = await prisma.erpIncome.aggregate({ where: { paymentDate: { gte: startOfMonth } }, _sum: { amount: true } });
-  const todayIncomeObj = await prisma.erpIncome.aggregate({ where: { paymentDate: { gte: startOfToday } }, _sum: { amount: true } });
+  const annualIncomeObj = await prisma.erpIncome.aggregate({ where: { date: { gte: startOfYear } }, _sum: { amount: true } });
+  const monthlyIncomeObj = await prisma.erpIncome.aggregate({ where: { date: { gte: startOfMonth } }, _sum: { amount: true } });
+  const todayIncomeObj = await prisma.erpIncome.aggregate({ where: { date: { gte: startOfToday } }, _sum: { amount: true } });
 
   // Expenses
   const totalExpenseObj = await prisma.erpExpense.aggregate({ _sum: { amount: true }, where: { status: "PAID" } });
@@ -48,8 +48,8 @@ export default async function ErpDashboardPage() {
   // For Charts: We need the last 6 months of data
   // Since Prisma group by date is complex across SQLite/Postgres without raw, we can fetch all for the year and map in JS.
   const allYearIncome = await prisma.erpIncome.findMany({
-    where: { paymentDate: { gte: startOfYear } },
-    select: { paymentDate: true, amount: true, category: true }
+    where: { date: { gte: startOfYear } },
+    select: { date: true, amount: true, category: true }
   });
   
   const allYearExpense = await prisma.erpExpense.findMany({
@@ -62,7 +62,7 @@ export default async function ErpDashboardPage() {
     if (index > now.getMonth()) return null; // Only show up to current month
     
     const incomeForMonth = allYearIncome
-      .filter(i => new Date(i.paymentDate).getMonth() === index)
+      .filter(i => new Date(i.date).getMonth() === index)
       .reduce((sum, i) => sum + i.amount, 0);
       
     const expenseForMonth = allYearExpense

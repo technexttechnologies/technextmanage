@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus, Building2, Mail, Phone, MapPin, Receipt, IndianRupee } from "lucide-react";
 import styles from "./page.module.css";
+import ReportExportHeader from "@/components/erp/ReportExportHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,17 @@ export default async function VendorsPage() {
     orderBy: { createdAt: "desc" }
   });
 
+  const exportColumns = ["Company Name", "Contact Person", "Email", "Phone", "GST Number", "Address", "Outstanding Balance"];
+  const exportData = vendors.map(vendor => [
+    vendor.companyName,
+    vendor.contactPerson || "-",
+    vendor.email || "-",
+    vendor.phone || "-",
+    vendor.gstNumber || "-",
+    vendor.address || "-",
+    vendor.outstandingBal.toString()
+  ]);
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -28,6 +40,15 @@ export default async function VendorsPage() {
         <Link href="/erp/vendors/new" className={styles.primaryBtn}>
           <Plus size={20} /> Add Vendor
         </Link>
+      </div>
+
+      <div style={{ marginBottom: "20px" }}>
+        <ReportExportHeader 
+          title="Vendors Report"
+          subtitle="List of ERP vendors and balances"
+          columns={exportColumns}
+          data={exportData}
+        />
       </div>
 
       <div className={styles.grid}>

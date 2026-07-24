@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import styles from "./page.module.css";
+import ReportExportHeader from "@/components/erp/ReportExportHeader";
 
 export default async function FinanceDashboard() {
   const session = await getSession();
@@ -78,9 +79,16 @@ export default async function FinanceDashboard() {
       </div>
 
       <div className={styles.tableContainer}>
-        <div className={styles.tableHeader}>
-          <h2>Recent Income</h2>
-        </div>
+        <ReportExportHeader 
+          title="Recent Income" 
+          columns={["Date", "Category", "Amount", "Method"]}
+          data={incomes.map((inc) => [
+            inc.date.toLocaleDateString(),
+            inc.category,
+            `₹${inc.amount.toLocaleString()}`,
+            inc.paymentMethod
+          ])}
+        />
         {incomes.length === 0 ? (
           <div className={styles.emptyState}>No income records found.</div>
         ) : (
@@ -89,7 +97,6 @@ export default async function FinanceDashboard() {
               <tr>
                 <th>Date</th>
                 <th>Category</th>
-                <th>Service/Source</th>
                 <th>Amount</th>
                 <th>Method</th>
               </tr>
@@ -97,9 +104,8 @@ export default async function FinanceDashboard() {
             <tbody>
               {incomes.map((inc) => (
                 <tr key={inc.id}>
-                  <td>{inc.paymentDate.toLocaleDateString()}</td>
+                  <td>{inc.date.toLocaleDateString()}</td>
                   <td>{inc.category}</td>
-                  <td>{inc.service}</td>
                   <td className={styles.income}>₹{inc.amount.toLocaleString()}</td>
                   <td>{inc.paymentMethod}</td>
                 </tr>
@@ -110,9 +116,17 @@ export default async function FinanceDashboard() {
       </div>
 
       <div className={styles.tableContainer}>
-        <div className={styles.tableHeader}>
-          <h2>Recent Expenses</h2>
-        </div>
+        <ReportExportHeader 
+          title="Recent Expenses" 
+          columns={["Date", "Category", "Title", "Amount", "Status"]}
+          data={expenses.map((exp) => [
+            exp.paymentDate.toLocaleDateString(),
+            exp.category,
+            exp.title,
+            `₹${exp.amount.toLocaleString()}`,
+            exp.status
+          ])}
+        />
         {expenses.length === 0 ? (
           <div className={styles.emptyState}>No expense records found.</div>
         ) : (
