@@ -164,6 +164,13 @@ export default function Sidebar({ user }: { user: any }) {
             <Link href="/erp/reports" className={`${styles.navItem} ${pathname.startsWith('/erp/reports') ? styles.active : ''}`}>
               <PieChart size={20} /> Reports
             </Link>
+            
+            <div style={{ margin: '16px 0 8px 0', fontSize: '11px', fontWeight: 600, color: '#A78BFA', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              ERP Integrations
+            </div>
+            <Link href="/erp/integrations/aronium" className={`${styles.navItem} ${pathname.startsWith('/erp/integrations/aronium') ? styles.active : ''}`}>
+              <ShoppingCart size={20} /> Aronium POS
+            </Link>
           </div>
         )}
 
