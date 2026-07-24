@@ -4,10 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import styles from "../page.module.css";
 import StatusDropdown from "./StatusDropdown";
 import ReportExportHeader from "@/components/erp/ReportExportHeader";
 import DeleteButton from "../DeleteButton";
+import SyncAroniumButton from "../SyncAroniumButton";
 
 export default async function ExpensePage() {
   const session = await getSession();
@@ -39,13 +41,14 @@ export default async function ExpensePage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>Expense Records</h1>
-        <div className={styles.actions}>
-          <Link href="/erp/finance" className={styles.secondaryButton}>
-            Back to Dashboard
-          </Link>
+        <div>
+          <h1 className={styles.title}>Expense Ledger</h1>
+          <p className={styles.subtitle}>Track all outgoing payments and purchases</p>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <SyncAroniumButton />
           <Link href="/erp/finance/expense/new" className={styles.primaryButton}>
-            + Add Expense
+            <Plus size={18} /> Record Expense
           </Link>
         </div>
       </header>

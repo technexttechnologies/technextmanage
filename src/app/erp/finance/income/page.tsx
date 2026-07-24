@@ -4,9 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import styles from "../page.module.css";
 import ReportExportHeader from "@/components/erp/ReportExportHeader";
 import DeleteButton from "../DeleteButton";
+import SyncAroniumButton from "../SyncAroniumButton";
 
 export default async function IncomePage() {
   const session = await getSession();
@@ -36,14 +38,17 @@ export default async function IncomePage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>Income Records</h1>
-        <div className={styles.actions}>
-          <Link href="/erp/finance" className={styles.secondaryButton}>
-            Back to Dashboard
-          </Link>
-          <Link href="/erp/finance/income/new" className={styles.primaryButton}>
-            + Add Income
-          </Link>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <div>
+            <h1 className={styles.title}>Income Ledger</h1>
+            <p className={styles.subtitle}>Track all incoming payments and sales</p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <SyncAroniumButton />
+            <Link href="/erp/finance/income/new" className={styles.btnPrimary}>
+              <Plus size={18} /> Record Income
+            </Link>
+          </div>
         </div>
       </header>
 
