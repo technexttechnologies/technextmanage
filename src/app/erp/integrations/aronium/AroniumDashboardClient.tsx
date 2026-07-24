@@ -39,8 +39,12 @@ export default function AroniumDashboardClient({
   const handleSyncNow = async () => {
     setIsSyncing(true);
     try {
-      await triggerLocalSync();
-      alert("Sync completed successfully! Sales, Purchases, and Products have been updated.");
+      const res = await triggerLocalSync();
+      if (!res.success) {
+        alert("Sync failed: " + res.error);
+      } else {
+        alert("Sync completed successfully! Sales, Purchases, and Products have been updated.");
+      }
     } catch (e: any) {
       alert(e.message || "An error occurred during sync.");
     }

@@ -10,8 +10,12 @@ export default function SyncAroniumButton() {
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      await triggerLocalSync();
-      alert("Aronium Sync completed! Page will now update.");
+      const res = await triggerLocalSync();
+      if (!res.success) {
+        alert("Sync failed: " + res.error);
+      } else {
+        alert("Aronium Sync completed! Page will now update.");
+      }
     } catch (e: any) {
       alert("Sync failed: " + e.message);
     }

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { exec } from "child_process";
 import { promisify } from "util";
+import path from "path";
 
 const execAsync = promisify(exec);
 
@@ -108,11 +109,12 @@ export async function deleteErpPurchase(id: string) {
 
 export async function triggerLocalSync() {
   try {
-    // Run the sync agent directly on the local machine
-    await execAsync("node public/aronium-sync-agent.js", { cwd: process.cwd() });
+    const scriptPath = path.join(process.cwd(), "public", "aronium-sync-agent.js");
+    await execAsync(`node "${scriptPath}"`, { cwd: process.cwd() });
     revalidatePath("/erp/integrations/aronium");
     return { success: true };
   } catch (error: any) {
-    throw new Error("Failed to run local sync: " + error.message);
+    console.error("Local sync error:", error);
+    return { success: false, error: error.message || String(error) };
   }
 }
