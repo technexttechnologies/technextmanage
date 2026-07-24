@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { prisma } from './prisma';
+import { sendErpEmail } from './erp/mailer';
 
 export function generateTechnextEmailHtml(title: string, bodyContent: string, ctaButton?: { text: string, url: string }) {
   const whatsappNumber = "+919446540984"; 
@@ -117,28 +118,15 @@ export function generateTechnextEmailHtml(title: string, bodyContent: string, ct
 
 
 
-export async function getTransporter() {
-  const settings = await prisma.systemSettings.findFirst();
-  if (!settings || !settings.smtpEmail || !settings.smtpPassword) {
-    throw new Error('Email not configured. Go to Settings and add Gmail credentials.');
-  }
-
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: settings.smtpEmail,
-      pass: settings.smtpPassword,
-    },
-  });
-}
-
 export async function sendEmail(to: string, subject: string, html: string, attachments?: any[]) {
   const settings = await prisma.systemSettings.findFirst();
   if (!settings?.smtpEmail || !settings?.smtpPassword) {
-    await prisma.emailLog.create({
-      data: { to, subject, body: html, status: 'FAILED', error: 'SMTP not configured' }
-    });
-    return { success: false, error: 'SMTP not configured' };
+    // If we have an ERP smtp account configured, it will fallback to that if we don't have system settings
+    // But let's check if there are any ERP SMTP accounts
+    const erpSmtp = await prisma.erpSmtpAccount.findFirst();
+    if (!erpSmtp) {
+      return { success: false, error: 'SMTP not configured in System Settings or ERP.' };
+    }
   }
 
   let finalHtml = html;
@@ -146,24 +134,24 @@ export async function sendEmail(to: string, subject: string, html: string, attac
     finalHtml = generateTechnextEmailHtml(subject, html);
   }
 
-  try {
-    const transporter = await getTransporter();
-    await transporter.sendMail({
-      from: `"TECHNEXT TECHNOLOGIES" <${settings.smtpEmail}>`,
-      to,
-      subject,
-      html: finalHtml,
-      attachments,
-    });
+  const adminUser = await prisma.user.findFirst({ where: { role: 'SUPER_ADMIN' } });
+  
+  // Create unified ErpMail record
+  const erpMail = await prisma.erpMail.create({
+    data: {
+      senderId: adminUser?.id || "", // Assuming we have an admin
+      recipient: to,
+      subject: subject,
+      body: finalHtml,
+      status: "DRAFT",
+      attachments: attachments ? JSON.stringify(attachments) : null,
+    }
+  });
 
-    await prisma.emailLog.create({
-      data: { to, subject, body: finalHtml, status: 'SENT' }
-    });
+  try {
+    await sendErpEmail(erpMail.id);
     return { success: true };
   } catch (error: any) {
-    await prisma.emailLog.create({
-      data: { to, subject, body: finalHtml, status: 'FAILED', error: error.message }
-    });
     return { success: false, error: error.message };
   }
 }

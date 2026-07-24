@@ -61,7 +61,7 @@ export async function sendErpEmail(mailId: string) {
       cc: mail.cc || undefined,
       bcc: mail.bcc || undefined,
       subject: mail.subject,
-      text: mail.body,
+      html: mail.body,
       attachments: attachments.map(att => ({
         filename: att.filename,
         content: att.content,
