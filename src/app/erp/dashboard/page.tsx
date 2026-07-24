@@ -7,7 +7,7 @@ import DashboardCharts from "./Charts";
 
 export default async function ErpDashboardPage() {
   const session = await getSession();
-  if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS", "OPERATIONS", "HR"].includes(session.role)) {
+  if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS", "OPERATIONS", "HR"].includes(session.role as string)) {
     redirect("/");
   }
 

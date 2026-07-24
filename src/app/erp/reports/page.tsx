@@ -6,7 +6,7 @@ import styles from "../dashboard/page.module.css";
 
 export default async function ReportsPage() {
   const session = await getSession();
-  if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS"].includes(session.role)) {
+  if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS"].includes(session.role as string)) {
     redirect("/");
   }
 
@@ -32,7 +32,7 @@ export default async function ReportsPage() {
                 <h3 style={{ fontSize: '15px', marginBottom: '4px' }}>Income Statement</h3>
                 <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Detailed breakdown of all revenue sources.</p>
               </div>
-              <button className="btn-secondary" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }} onClick="window.print()">
+              <button className="btn-secondary" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Download size={14} /> Export CSV
               </button>
             </div>
@@ -42,7 +42,7 @@ export default async function ReportsPage() {
                 <h3 style={{ fontSize: '15px', marginBottom: '4px' }}>Expense Report</h3>
                 <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Categorized company expenditures.</p>
               </div>
-              <button className="btn-secondary" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }} onClick="window.print()">
+              <button className="btn-secondary" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Download size={14} /> Export CSV
               </button>
             </div>
@@ -52,7 +52,7 @@ export default async function ReportsPage() {
                 <h3 style={{ fontSize: '15px', marginBottom: '4px' }}>Profit & Loss (P&L)</h3>
                 <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Monthly and Annual P&L statement.</p>
               </div>
-              <button className="btn-secondary" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }} onClick="window.print()">
+              <button className="btn-secondary" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Download size={14} /> Export PDF
               </button>
             </div>

@@ -8,7 +8,7 @@ import { uploadToCloudinary, deleteFromCloudinary } from '@/lib/cloudinaryStorag
 export async function uploadErpDocument(formData: FormData) {
   try {
     const session = await getSession();
-    if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS", "OPERATIONS", "HR"].includes(session.role)) {
+    if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS", "OPERATIONS", "HR"].includes(session.role as string)) {
       return { success: false, error: "Unauthorized" };
     }
 
@@ -50,7 +50,7 @@ export async function uploadErpDocument(formData: FormData) {
 export async function deleteErpDocument(formData: FormData) {
   try {
     const session = await getSession();
-    if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS", "OPERATIONS", "HR"].includes(session.role)) return;
+    if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS", "OPERATIONS", "HR"].includes(session.role as string)) return;
 
     const documentId = formData.get('documentId') as string;
     const doc = await prisma.erpDocument.findUnique({ where: { id: documentId } });

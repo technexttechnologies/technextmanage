@@ -13,7 +13,6 @@ export default async function ComposeMailPage() {
   }
 
   const users = await prisma.user.findMany({
-    where: { status: "ACTIVE" },
     select: { id: true, name: true, email: true },
     orderBy: { name: "asc" }
   });
