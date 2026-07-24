@@ -771,3 +771,107 @@ model ErpDocument {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+// ==========================================
+// ARONIUM ENTERPRISE INTEGRATION MODULE
+// ==========================================
+
+model AroniumConfig {
+  id              String   @id @default(cuid())
+  syncToken       String   @unique @default(cuid()) // Used to authenticate the local sync agent
+  companyName     String   @default("TechNext HQ")
+  branchName      String   @default("Main Branch")
+  dbType          String   @default("SQLITE") // SQLITE, SQLSERVER, FIREBIRD
+  dbPathOrHost    String   @default("C:\\ProgramData\\Aronium\\Data\\aronium.db")
+  port            Int?
+  username        String?
+  password        String?
+  lastSyncAt      DateTime?
+  status          String   @default("OFFLINE") // ONLINE, OFFLINE, ERROR
+  totalSales      Int      @default(0)
+  totalProducts   Int      @default(0)
+  totalCustomers  Int      @default(0)
+  autoSync        Boolean  @default(true)
+  syncIntervalMin Int      @default(15)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ErpProduct {
+  id            String   @id @default(cuid())
+  aroniumId     String   @unique
+  name          String
+  sku           String?
+  barcode       String?
+  category      String?
+  brand         String?
+  purchasePrice Float    @default(0)
+  sellingPrice  Float    @default(0)
+  currentStock  Float    @default(0)
+  reorderLevel  Float    @default(0)
+  isLowStock    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ErpSale {
+  id            String         @id @default(cuid())
+  aroniumId     String         @unique
+  invoiceNumber String
+  date          DateTime
+  customerId    String?
+  totalAmount   Float
+  discount      Float          @default(0)
+  gst           Float          @default(0)
+  paymentMethod String         @default("CASH")
+  paymentStatus String         @default("PAID")
+  salesperson   String?
+  branch        String?
+  items         ErpSaleItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model ErpSaleItem {
+  id         String     @id @default(cuid())
+  saleId     String
+  sale       ErpSale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId  String?
+  quantity   Float      @default(1)
+  unitPrice  Float
+  total      Float
+}
+
+model ErpPurchase {
+  id            String             @id @default(cuid())
+  aroniumId     String             @unique
+  orderNumber   String
+  date          DateTime
+  vendorId      String?
+  totalAmount   Float
+  status        String             @default("PAID")
+  items         ErpPurchaseItem[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model ErpPurchaseItem {
+  id         String      @id @default(cuid())
+  purchaseId String
+  purchase   ErpPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId  String?
+  quantity   Float       @default(1)
+  unitPrice  Float
+  total      Float
+}
+
+model ErpPayment {
+  id            String   @id @default(cuid())
+  aroniumId     String   @unique
+  date          DateTime
+  amount        Float
+  method        String
+  referenceType String?  // Sale, Purchase
+  referenceId   String?  // Aronium ID of the sale/purchase
+  createdAt     DateTime @default(now())
+}
