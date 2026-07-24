@@ -7,6 +7,7 @@ import { Mail, Settings, Send, MessageSquare, Sparkles, Phone } from "lucide-rea
 export default function ComposeForm({ customers, isConfigured, templates }: any) {
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [toEmail, setToEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
@@ -92,18 +93,26 @@ export default function ComposeForm({ customers, isConfigured, templates }: any)
       }}>
         <div style={{display: 'grid', gap: '16px'}}>
           <div>
-            <label style={{display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase'}}>To *</label>
-            <select name="customerId" required value={selectedCustomerId} onChange={(e) => {
-              setSelectedCustomerId(e.target.value);
+            <label style={{display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase'}}>Load Customer Data (Optional)</label>
+            <select name="customerId" value={selectedCustomerId} onChange={(e) => {
+              const custId = e.target.value;
+              setSelectedCustomerId(custId);
+              const cust = customers.find((c: any) => c.id === custId);
+              if (cust && cust.email) setToEmail(cust.email);
               // Trigger template reload to replace variables with new customer name
               if (selectedTemplateId) handleTemplateChange({ target: { value: selectedTemplateId }});
             }} style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--surface-border)', fontSize: '14px', fontFamily: 'var(--font-sans)'}}>
-              <option value="">-- Select Customer --</option>
+              <option value="">-- Select Customer to Autofill --</option>
               {customers.map((c: any) => (
                 <option key={c.id} value={c.id}>{c.name} ({c.email || c.phone})</option>
               ))}
             </select>
-            <input type="hidden" name="toEmail" value={customer?.email || ""} />
+          </div>
+
+          <div>
+            <label style={{display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase'}}>Recipient Email ID *</label>
+            <input type="email" name="toEmail" required value={toEmail} onChange={e => setToEmail(e.target.value)} placeholder="recipient@example.com"
+              style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--surface-border)', fontSize: '14px'}} />
           </div>
 
           <div>
