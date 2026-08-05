@@ -148,29 +148,37 @@ export async function triggerLocalSync() {
     const customersRaw = await queryDB(`SELECT Id, Name, Code, PhoneNumber, Email, Address FROM Customer WHERE IsCustomer = 1`);
     for (const c of customersRaw) {
       if (!c.Name) continue;
-      await prisma.customer.upsert({
-        where: { aroniumId: c.Id.toString() },
-        update: {
-          name: c.Name,
-          phone: c.PhoneNumber || "0000000000",
-          email: c.Email || null,
-          address: c.Address || null,
-          lastSyncDate: new Date(),
-          syncStatus: "SYNCED"
-        },
-        create: {
-          name: c.Name,
-          phone: c.PhoneNumber || "0000000000",
-          email: c.Email || null,
-          address: c.Address || null,
-          aroniumId: c.Id.toString(),
-          aroniumCode: c.Code,
-          assignedToId: adminId,
-          lastSyncDate: new Date(),
-          syncStatus: "SYNCED",
-          portalToken: crypto.randomBytes(16).toString("hex")
-        }
-      });
+      const aroniumIdStr = c.Id.toString();
+      const existingCustomer = await prisma.customer.findFirst({ where: { aroniumId: aroniumIdStr } });
+      
+      if (existingCustomer) {
+        await prisma.customer.update({
+          where: { id: existingCustomer.id },
+          data: {
+            name: c.Name,
+            phone: c.PhoneNumber || "0000000000",
+            email: c.Email || null,
+            address: c.Address || null,
+            lastSyncDate: new Date(),
+            syncStatus: "SYNCED"
+          }
+        });
+      } else {
+        await prisma.customer.create({
+          data: {
+            name: c.Name,
+            phone: c.PhoneNumber || "0000000000",
+            email: c.Email || null,
+            address: c.Address || null,
+            aroniumId: aroniumIdStr,
+            aroniumCode: c.Code,
+            assignedToId: adminId,
+            lastSyncDate: new Date(),
+            syncStatus: "SYNCED",
+            portalToken: crypto.randomBytes(16).toString("hex")
+          }
+        });
+      }
       customersCount++;
     }
 
