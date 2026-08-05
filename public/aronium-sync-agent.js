@@ -23,7 +23,7 @@ const http = require('http'); // Fallback if API_URL is HTTP
 // ==========================================
 
 // Replace these with your actual cloud CRM details
-const API_URL = 'http://localhost:3000/api/erp/aronium/sync'; // Change to your Vercel URL if hosted externally
+const API_URL = 'http://127.0.0.1:3000/api/erp/aronium/sync'; // Change to your Vercel URL if hosted externally
 const SYNC_TOKEN = 'cmryxkiut00011bl7266snr40'; 
 
 // Provide the correct path to your aronium.db file
