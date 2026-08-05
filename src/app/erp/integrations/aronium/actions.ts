@@ -255,7 +255,7 @@ export async function triggerLocalSync() {
           data: {
             amount: s.Total,
             date: dt,
-            title: `Aronium Sale #${s.Number}`
+            notes: `Aronium Sale #${s.Number}`
           }
         });
       } else {
@@ -266,7 +266,7 @@ export async function triggerLocalSync() {
             amount: s.Total,
             category: "Sales",
             paymentMethod: "CASH",
-            title: `Aronium Sale #${s.Number}`,
+            notes: `Aronium Sale #${s.Number}`,
             aroniumId: sid,
             recordedById: adminId
           }
