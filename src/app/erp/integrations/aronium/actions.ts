@@ -247,18 +247,18 @@ export async function triggerLocalSync() {
           data: {
             amount: s.Total,
             date: dt,
-            title: \`Aronium Sale #\${s.Number}\`
+            title: `Aronium Sale #${s.Number}`
           }
         });
       } else {
         await prisma.erpIncome.create({
           data: {
-            incomeId: \`INC-\${s.Number}\`,
+            incomeId: `INC-${s.Number}`,
             date: dt,
             amount: s.Total,
             category: "Sales",
             paymentMethod: "CASH",
-            title: \`Aronium Sale #\${s.Number}\`,
+            title: `Aronium Sale #${s.Number}`,
             aroniumId: sid,
             recordedById: adminId
           }
@@ -288,14 +288,14 @@ export async function triggerLocalSync() {
           data: {
             amount: p.Total,
             paymentDate: dt,
-            title: \`Aronium Purchase #\${p.Number}\`,
+            title: `Aronium Purchase #${p.Number}`,
             vendor: vendorName
           }
         });
       } else {
         await prisma.erpExpense.create({
           data: {
-            title: \`Aronium Purchase #\${p.Number}\`,
+            title: `Aronium Purchase #${p.Number}`,
             category: "Inventory Purchase",
             vendor: vendorName,
             amount: p.Total,
@@ -320,7 +320,7 @@ export async function triggerLocalSync() {
         type: "NATIVE_FULL_SYNC",
         status: "SUCCESS",
         recordsAdded: salesCount + purchasesCount + customersCount + vendorsCount + productsCount,
-        details: \`Native Sync via Server Action. Customers: \${customersCount}, Vendors: \${vendorsCount}, Products: \${productsCount}, Sales: \${salesCount}, Purchases: \${purchasesCount}.\`
+        details: `Native Sync via Server Action. Customers: ${customersCount}, Vendors: ${vendorsCount}, Products: ${productsCount}, Sales: ${salesCount}, Purchases: ${purchasesCount}.`
       }
     });
 
