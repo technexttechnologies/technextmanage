@@ -1,0 +1,12 @@
+{
+  "name": "technext-aronium-cloud-agent",
+  "version": "1.0.0",
+  "description": "Local agent to push Aronium data to Vercel Cloud",
+  "main": "sync-to-cloud.js",
+  "scripts": {
+    "start": "node sync-to-cloud.js"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}
