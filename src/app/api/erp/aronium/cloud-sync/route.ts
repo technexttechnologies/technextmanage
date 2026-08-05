@@ -135,18 +135,18 @@ export async function POST(req: Request) {
             data: {
               amount: s.Total,
               date: dt,
-              notes: \`Aronium Sale #\${s.Number}\`
+              notes: `Aronium Sale #${s.Number}`
             }
           });
         } else {
           await prisma.erpIncome.create({
             data: {
-              incomeId: \`INC-\${s.Number}\`,
+              incomeId: `INC-${s.Number}`,
               date: dt,
               amount: s.Total,
               category: "Sales",
               paymentMethod: "CASH",
-              notes: \`Aronium Sale #\${s.Number}\`,
+              notes: `Aronium Sale #${s.Number}`,
               aroniumId: sid,
               recordedById: adminId
             }
@@ -176,14 +176,14 @@ export async function POST(req: Request) {
             data: {
               amount: p.Total,
               paymentDate: dt,
-              title: \`Aronium Purchase #\${p.Number}\`,
+              title: `Aronium Purchase #${p.Number}`,
               vendor: vendorName
             }
           });
         } else {
           await prisma.erpExpense.create({
             data: {
-              title: \`Aronium Purchase #\${p.Number}\`,
+              title: `Aronium Purchase #${p.Number}`,
               category: "Inventory Purchase",
               vendor: vendorName,
               amount: p.Total,
@@ -206,7 +206,7 @@ export async function POST(req: Request) {
         type: "CLOUD_SYNC_WEBHOOK",
         status: "SUCCESS",
         recordsAdded: salesCount + purchasesCount + customersCount + vendorsCount + productsCount,
-        details: \`Cloud Sync Received. Customers: \${customersCount}, Vendors: \${vendorsCount}, Products: \${productsCount}, Sales: \${salesCount}, Purchases: \${purchasesCount}.\`
+        details: `Cloud Sync Received. Customers: ${customersCount}, Vendors: ${vendorsCount}, Products: ${productsCount}, Sales: ${salesCount}, Purchases: ${purchasesCount}.`
       }
     });
 
