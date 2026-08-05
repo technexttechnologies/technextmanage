@@ -655,6 +655,7 @@ model ErpExpense {
   paymentDate   DateTime
   receiptUrl    String?  @db.Text
   notes         String?  @db.Text
+  aroniumId     String?
   status        String   @default("PENDING") // PENDING, APPROVED, PAID
   approvedById  String?
   approvedBy    User?    @relation("ErpExpenseApprovedBy", fields: [approvedById], references: [id])
