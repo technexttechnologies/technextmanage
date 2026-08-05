@@ -4,7 +4,7 @@ const sqlite3 = require('sqlite3').verbose();
 // ==========================================
 // CONFIGURATION - CHANGE THESE SETTINGS
 // ==========================================
-const ARONIUM_DB_PATH = 'C:\\ProgramData\\Aronium\\Data\\pos.db'; // Exact path to pos.db
+const ARONIUM_DB_PATH = 'C:\\Users\\LENOVO\\AppData\\Local\\Aronium\\Data\\pos.db'; 
 const VERCEL_APP_URL = 'https://technextmanage.vercel.app'; // Your Vercel URL
 const SYNC_SECRET = 'technext-sync-2026';
 const SYNC_INTERVAL_MINUTES = 30; // Runs every 30 minutes
