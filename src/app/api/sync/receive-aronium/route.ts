@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { findExistingCustomer } from "@/lib/customerDedup";
 
 export async function POST(req: Request) {
   try {
@@ -29,13 +30,11 @@ export async function POST(req: Request) {
       const name = row.Name;
       if (!name) continue;
 
-      const existingCustomer = await prisma.customer.findFirst({
-        where: {
-          OR: [
-            { aroniumId: aroniumId },
-            { name: name }
-          ]
-        }
+      let existingCustomer = await findExistingCustomer({
+        aroniumId: aroniumId,
+        phone: row.PhoneNumber,
+        email: row.Email,
+        name: name
       });
 
       if (existingCustomer) {

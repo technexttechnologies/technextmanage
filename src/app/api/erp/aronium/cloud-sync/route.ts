@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
+import { findExistingCustomer } from "@/lib/customerDedup";
 
 export async function POST(req: Request) {
   try {
@@ -28,33 +29,34 @@ export async function POST(req: Request) {
         const aroniumIdStr = c.Id ? c.Id.toString() : null;
         if (!aroniumIdStr) continue;
 
-        let existingCustomer = await prisma.customer.findFirst({ where: { aroniumId: aroniumIdStr } });
-        if (!existingCustomer && c.PhoneNumber && c.PhoneNumber !== '0000000000') {
-          existingCustomer = await prisma.customer.findFirst({ where: { phone: c.PhoneNumber } });
-        }
-        if (!existingCustomer && c.Name) {
-          existingCustomer = await prisma.customer.findFirst({ where: { name: c.Name } });
-        }
+        let existingCustomer = await findExistingCustomer({
+          aroniumId: aroniumIdStr,
+          phone: c.PhoneNumber,
+          email: c.Email,
+          name: c.Name
+        });
         
         if (existingCustomer) {
+          const cleanPhone = c.PhoneNumber ? c.PhoneNumber.replace(/\s+/g, '') : '';
+          const shouldUpdateAroniumId = !existingCustomer.aroniumId || existingCustomer.aroniumId === aroniumIdStr;
+
           await prisma.customer.update({
             where: { id: existingCustomer.id },
             data: {
-              name: c.Name,
-              phone: (c.PhoneNumber && c.PhoneNumber !== '0000000000') ? c.PhoneNumber : existingCustomer.phone,
-              email: c.Email || existingCustomer.email,
-              address: c.Address || existingCustomer.address,
-              aroniumId: aroniumIdStr,
-              aroniumCode: c.Code || existingCustomer.aroniumCode,
+              ...(shouldUpdateAroniumId ? { aroniumId: aroniumIdStr, aroniumCode: c.Code || existingCustomer.aroniumCode } : {}),
+              phone: (cleanPhone && cleanPhone !== '0000000000') ? cleanPhone : existingCustomer.phone,
+              email: existingCustomer.email || c.Email,
+              address: existingCustomer.address || c.Address,
               lastSyncDate: new Date(),
               syncStatus: "SYNCED"
             }
           });
         } else {
+          const cleanPhone = c.PhoneNumber ? c.PhoneNumber.replace(/\s+/g, '') : "0000000000";
           await prisma.customer.create({
             data: {
               name: c.Name,
-              phone: c.PhoneNumber || "0000000000",
+              phone: cleanPhone || "0000000000",
               email: c.Email || null,
               address: c.Address || null,
               aroniumId: aroniumIdStr,
@@ -78,8 +80,20 @@ export async function POST(req: Request) {
         if (!vendorId) continue;
 
         let existingVendor = await prisma.erpVendor.findFirst({ where: { aroniumId: vendorId } });
+        const cleanVendorPhone = v.PhoneNumber ? v.PhoneNumber.replace(/\D/g, '') : '';
+        if (!existingVendor && cleanVendorPhone.length >= 8 && cleanVendorPhone !== '0000000000') {
+          existingVendor = await prisma.erpVendor.findFirst({
+            where: {
+              phone: { contains: cleanVendorPhone.slice(-10) }
+            }
+          });
+        }
         if (!existingVendor && v.Name) {
-          existingVendor = await prisma.erpVendor.findFirst({ where: { companyName: v.Name } });
+          existingVendor = await prisma.erpVendor.findFirst({
+            where: {
+              companyName: { equals: v.Name.trim(), mode: 'insensitive' }
+            }
+          });
         }
 
         if (existingVendor) {

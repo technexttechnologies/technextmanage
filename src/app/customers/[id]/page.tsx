@@ -11,8 +11,15 @@ import { DomainActionButtons } from "@/app/domains/DomainActionButtons";
 import { HostingActionButtons } from "@/app/hosting/HostingActionButtons";
 import { redirect } from "next/navigation";
 
-export default async function CustomerDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CustomerDetailsPage({ 
+  params,
+  searchParams 
+}: { 
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ existing?: string }>;
+}) {
   const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   const customer = await prisma.customer.findUnique({
     where: { id: resolvedParams.id },
     include: {
@@ -78,8 +85,27 @@ export default async function CustomerDetailsPage({ params }: { params: Promise<
           <CustomerActionButtons customerId={customer.id} variant="full" />
         </div>
       </header>
-
-      <div className={styles.grid}>
+      {resolvedSearchParams.existing === "1" && (
+        <div style={{
+          backgroundColor: "#eff6ff",
+          border: "1px solid #bfdbfe",
+          color: "#1e40af",
+          padding: "12px 18px",
+          borderRadius: "8px",
+          marginBottom: "18px",
+          fontSize: "14px",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+        }}>
+          <ShieldCheck size={20} color="#2563eb" />
+          <div>
+            <strong>Existing Customer Profile:</strong> A customer with matching phone number or email was already found in the system. Any newly submitted details have been merged into this existing record.
+          </div>
+        </div>
+      )}
+       <div className={styles.grid}>
         <div className={styles.mainCol}>
           {/* Profile Card */}
           <section className={styles.profileCard}>

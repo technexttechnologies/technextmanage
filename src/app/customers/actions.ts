@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
+import { findExistingCustomer } from "@/lib/customerDedup";
 
 export async function createCustomer(formData: FormData) {
   // Hardcode assignment for now until auth is added
@@ -36,6 +37,35 @@ export async function createCustomer(formData: FormData) {
   const teamviewerId = formData.get("teamviewerId") as string;
   const pcLoginDetails = formData.get("pcLoginDetails") as string;
 
+  const cleanPhone = phone ? phone.replace(/\s+/g, "") : "";
+
+  // Prevent customer duplication
+  const existingCustomer = await findExistingCustomer({
+    phone: cleanPhone,
+    email: email,
+    name: name
+  });
+
+  if (existingCustomer) {
+    await prisma.customer.update({
+      where: { id: existingCustomer.id },
+      data: {
+        company: existingCustomer.company || company || undefined,
+        email: existingCustomer.email || email || undefined,
+        address: existingCustomer.address || address || undefined,
+        gstNumber: existingCustomer.gstNumber || gstNumber || undefined,
+        notes: notes ? (existingCustomer.notes ? `${existingCustomer.notes}\n${notes}` : notes) : undefined,
+        anydeskId: existingCustomer.anydeskId || anydeskId || undefined,
+        teamviewerId: existingCustomer.teamviewerId || teamviewerId || undefined,
+        pcLoginDetails: existingCustomer.pcLoginDetails || pcLoginDetails || undefined,
+      }
+    });
+
+    revalidatePath("/customers");
+    revalidatePath(`/customers/${existingCustomer.id}`);
+    redirect(`/customers/${existingCustomer.id}?existing=1`);
+  }
+
   const crypto = require("crypto");
   const portalToken = crypto.randomBytes(16).toString("hex");
 
@@ -43,7 +73,7 @@ export async function createCustomer(formData: FormData) {
     data: {
       name,
       company,
-      phone,
+      phone: cleanPhone,
       email,
       status,
       address,
@@ -100,11 +130,11 @@ export async function updateCustomer(formData: FormData) {
   const notes = formData.get("notes") as string;
   const anydeskId = formData.get("anydeskId") as string;
   const teamviewerId = formData.get("teamviewerId") as string;
-  const pcLoginDetails = formData.get("pcLoginDetails") as string;
+  const cleanPhone = phone ? phone.replace(/\s+/g, "") : phone;
 
   await prisma.customer.update({
     where: { id },
-    data: { name, company, phone, email, status, address, gstNumber, notes, anydeskId, teamviewerId, pcLoginDetails }
+    data: { name, company, phone: cleanPhone, email, status, address, gstNumber, notes, anydeskId, teamviewerId, pcLoginDetails }
   });
 
   revalidatePath("/customers");
