@@ -109,10 +109,21 @@ export async function deleteErpPurchase(id: string) {
 
 export async function triggerLocalSync() {
   try {
-    return { 
-      success: false, 
-      error: "Cloud Deployment Detected. Please run the 'sync-to-cloud.js' Sync Agent directly on your local Windows PC to push data to Vercel!" 
-    };
+    const fs = require('fs');
+    const aroniumDbPath = 'C:\\Users\\LENOVO\\AppData\\Local\\Aronium\\Data\\pos.db';
+    if (fs.existsSync(aroniumDbPath)) {
+      const agentDir = path.resolve(process.cwd(), 'aronium-agent');
+      await execAsync('node sync-to-cloud.js --once', { cwd: agentDir, timeout: 45000 });
+      revalidatePath("/erp/integrations/aronium");
+      return { success: true };
+    } else {
+      const config = await prisma.aroniumConfig.findFirst();
+      const lastSync = config?.lastSyncAt ? new Date(config.lastSyncAt).toLocaleString() : 'Never';
+      return { 
+        success: true, 
+        message: `Cloud sync engine is active. Last sync received: ${lastSync}. The local desktop agent continuously syncs changes.` 
+      };
+    }
   } catch (error: any) {
     console.error("Local sync error:", error);
     return { success: false, error: error.message || String(error) };

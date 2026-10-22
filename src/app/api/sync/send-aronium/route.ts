@@ -12,18 +12,13 @@ export async function GET(req: Request) {
     }
 
     // Find all customers created in CRM that don't have an aroniumId yet,
-    // OR customers whose updatedAt is greater than their lastSyncDate
+    // OR customers whose syncStatus is PENDING
     const pendingCustomers = await prisma.customer.findMany({
       where: {
         name: { not: "" },
         OR: [
           { aroniumId: null },
-          {
-            AND: [
-              { lastSyncDate: { not: null } },
-              { updatedAt: { gt: prisma.customer.fields.lastSyncDate } }
-            ]
-          }
+          { syncStatus: "PENDING" }
         ]
       },
       select: {
@@ -31,6 +26,7 @@ export async function GET(req: Request) {
         name: true,
         phone: true,
         email: true,
+        address: true,
         aroniumId: true,
         customerNumber: true,
       }

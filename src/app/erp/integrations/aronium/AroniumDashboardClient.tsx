@@ -43,7 +43,7 @@ export default function AroniumDashboardClient({
       if (!res.success) {
         alert("Sync failed: " + res.error);
       } else {
-        alert("Sync completed successfully! Sales, Purchases, and Products have been updated.");
+        alert(res.message || "Sync completed successfully! Sales, Purchases, Products, and Customers have been updated.");
       }
     } catch (e: any) {
       alert(e.message || "An error occurred during sync.");

@@ -22,7 +22,7 @@ export const templates = {
       <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">Next Steps</h3>
       <p style="margin: 0; color: #475569; font-size: 15px; line-height: 1.6;">One of our technical experts will review your request and get back to you within <strong>24 business hours</strong>.</p>
     </div>
-    <p style="font-size: 16px; color: #334155; line-height: 1.7;">In the meantime, feel free to explore our <a href="https://technexttechnologies.com/portfolio" style="color: #4f46e5; font-weight: 600;">portfolio</a> or reply to this email with any additional details.</p>
+    <p style="font-size: 16px; color: #334155; line-height: 1.7;">In the meantime, feel free to explore our <a href="https://technexttechnologies.in/portfolio" style="color: #4f46e5; font-weight: 600;">portfolio</a> or reply to this email with any additional details.</p>
   `,
 
   // 3. Quotation Email
