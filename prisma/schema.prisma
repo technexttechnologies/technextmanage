@@ -52,6 +52,8 @@ model User {
   leavesReviewed    LeaveRequest[]     @relation("LeavesReviewed")
   notifications     InAppNotification[]
   resetTokens       PasswordResetToken[]
+  clientAccessRequests ClientAccessRequest[] @relation("RequestedClientAccess")
+  clientAccessReviewed ClientAccessRequest[] @relation("ReviewedClientAccess")
 
   // ERP Relations
   erpIncomesRecorded ErpIncome[]  @relation("ErpIncomeRecordedBy")
@@ -107,6 +109,7 @@ model Customer {
   hostingAccounts   HostingAccount[]
   appointments      Appointment[]
   portalToken       String?            @unique
+  accessRequests    ClientAccessRequest[]
   
   // ERP Relations
   erpMails          ErpMail[]
@@ -435,6 +438,23 @@ model ActivityLog {
   userId     String
   user       User     @relation(fields: [userId], references: [id])
   createdAt  DateTime @default(now())
+}
+
+model ClientAccessRequest {
+  id             String    @id @default(cuid())
+  customerId     String
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  requestedById  String
+  requestedBy    User      @relation("RequestedClientAccess", fields: [requestedById], references: [id], onDelete: Cascade)
+  reason         String    @db.Text
+  status         String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  reviewedById   String?
+  reviewedBy     User?     @relation("ReviewedClientAccess", fields: [reviewedById], references: [id])
+  adminRemarks   String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([customerId, requestedById])
 }
 
 model AMC {

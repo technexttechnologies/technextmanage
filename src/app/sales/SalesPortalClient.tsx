@@ -7,7 +7,8 @@ import {
   Settings as SettingsIcon, Plus, Search, Filter, 
   CheckCircle2, Clock, AlertCircle, X, ExternalLink,
   Building, User, IndianRupee, Calendar, ArrowRight,
-  ShieldCheck, RefreshCw, Send, Layers, HelpCircle
+  ShieldCheck, RefreshCw, Send, Layers, HelpCircle,
+  Lock, KeyRound, Shield, Check, UserCheck
 } from "lucide-react";
 import styles from "./sales.module.css";
 import { 
@@ -15,12 +16,15 @@ import {
   requestInvoice, 
   requestProject, 
   requestService, 
-  quickCreateCustomer 
+  quickCreateCustomer,
+  requestClientAccess,
+  reviewClientAccess
 } from "./actions";
 
 interface SalesPortalProps {
   currentUser: any;
   customers: any[];
+  accessRequests: any[];
   quotationRequests: any[];
   invoiceRequests: any[];
   projects: any[];
@@ -31,13 +35,15 @@ interface SalesPortalProps {
 export default function SalesPortalClient({
   currentUser,
   customers,
+  accessRequests,
   quotationRequests,
   invoiceRequests,
   projects,
   services,
   isAdmin,
 }: SalesPortalProps) {
-  const [activeTab, setActiveTab] = useState<"overview" | "quotations" | "invoices" | "projects" | "services" | "clients">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "quotations" | "invoices" | "projects" | "services" | "clients" | "access-requests">("overview");
+  const [clientSubTab, setClientSubTab] = useState<"my-clients" | "other-clients">("my-clients");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
@@ -47,6 +53,12 @@ export default function SalesPortalClient({
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+
+  // Client Access Modals
+  const [requestingAccessCustomer, setRequestingAccessCustomer] = useState<any | null>(null);
+  const [reviewingRequest, setReviewingRequest] = useState<any | null>(null);
+  const [adminRemarks, setAdminRemarks] = useState("");
+  const [reassignClient, setReassignClient] = useState(false);
 
   // Pre-selected customer for quick actions from Clients tab
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -73,12 +85,20 @@ export default function SalesPortalClient({
   const totalServices = services.length;
   const activeServices = services.filter(s => s.status === "ACTIVE").length;
 
+  const pendingAccessRequestsCount = accessRequests.filter(r => r.status === "PENDING").length;
+
+  // Separate clients into My Approved Clients vs Other Company Clients
+  const myClients = customers.filter(c => c.hasAccess);
+  const otherClients = customers.filter(c => !c.hasAccess);
+
   const closeAllModals = () => {
     setIsQuoteModalOpen(false);
     setIsInvoiceModalOpen(false);
     setIsProjectModalOpen(false);
     setIsServiceModalOpen(false);
     setIsCustomerModalOpen(false);
+    setRequestingAccessCustomer(null);
+    setReviewingRequest(null);
     setSelectedCustomerId("");
     setFormError(null);
     setFormSuccess(null);
@@ -177,6 +197,41 @@ export default function SalesPortalClient({
     });
   };
 
+  // 6. Submit Access Request Handler
+  const handleAccessRequestSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormError(null);
+    setFormSuccess(null);
+    const formData = new FormData(e.currentTarget);
+
+    startTransition(async () => {
+      try {
+        await requestClientAccess(formData);
+        setFormSuccess("Access request submitted to Admin successfully!");
+        setTimeout(() => closeAllModals(), 1200);
+      } catch (err: any) {
+        setFormError(err.message || "Failed to request access");
+      }
+    });
+  };
+
+  // 7. Admin Review Access Request
+  const handleReviewAccess = (status: "APPROVED" | "REJECTED") => {
+    if (!reviewingRequest) return;
+    setFormError(null);
+    setFormSuccess(null);
+
+    startTransition(async () => {
+      try {
+        await reviewClientAccess(reviewingRequest.id, status, adminRemarks, reassignClient);
+        setFormSuccess(`Access request ${status.toLowerCase()} successfully!`);
+        setTimeout(() => closeAllModals(), 1000);
+      } catch (err: any) {
+        setFormError(err.message || "Failed to review request");
+      }
+    });
+  };
+
   // Filtered lists
   const filteredQuotes = quotationRequests.filter(q => {
     const matchesSearch = 
@@ -214,7 +269,7 @@ export default function SalesPortalClient({
     return matchesSearch && matchesStatus;
   });
 
-  const filteredCustomers = customers.filter(c => 
+  const displayedClients = (clientSubTab === "my-clients" ? myClients : otherClients).filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (c.phone && c.phone.includes(searchTerm)) ||
@@ -235,12 +290,15 @@ export default function SalesPortalClient({
             <h1>
               Sales Operations Hub
               <span className={styles.repBadge}>
-                <ShieldCheck size={14} /> {currentUser.role}
+                <ShieldCheck size={14} /> {currentUser.role === "SALES" ? "Sales Executive" : currentUser.role}
               </span>
             </h1>
             <p>
-              Welcome back, <strong>{currentUser.name}</strong> ({currentUser.employeeId || "Sales Executive"}). 
-              Manage client deals, request official quotations, bill invoices, and handover signed projects.
+              Welcome back, <strong>{currentUser.name}</strong> ({currentUser.employeeId || "Sales Staff"}). 
+              {currentUser.role === "SALES" 
+                ? " You have access to your assigned clients and approved deal pipelines."
+                : " Super Admin Console — Full company-wide pipeline visibility and client access approval control."
+              }
             </p>
           </div>
         </div>
@@ -275,7 +333,7 @@ export default function SalesPortalClient({
           </div>
           <div>
             <h3 className={styles.actionTitle}>Request Quotation</h3>
-            <p className={styles.actionDesc}>Submit proposal specs for admin pricing, scope review, and PDF proposal generation.</p>
+            <p className={styles.actionDesc}>Submit proposal specs for your clients to admin for pricing & PDF generation.</p>
           </div>
         </div>
 
@@ -381,11 +439,11 @@ export default function SalesPortalClient({
 
         <div className={styles.statCard}>
           <div className={styles.statIconWrapper} style={{ background: "rgba(245, 158, 11, 0.1)", color: "#f59e0b" }}>
-            <RefreshCw size={24} />
+            <UserCheck size={24} />
           </div>
           <div className={styles.statContent}>
-            <span className={styles.statValue}>{activeServices}</span>
-            <span className={styles.statLabel}>Active Services Sold ({totalServices} total)</span>
+            <span className={styles.statValue}>{myClients.length}</span>
+            <span className={styles.statLabel}>My Approved Clients ({otherClients.length} locked)</span>
           </div>
         </div>
       </section>
@@ -443,7 +501,20 @@ export default function SalesPortalClient({
             onClick={() => { setActiveTab("clients"); setStatusFilter("ALL"); }}
           >
             <User size={16} /> Client Directory
-            <span className={styles.tabBadge}>{customers.length}</span>
+            <span className={styles.tabBadge}>{myClients.length}</span>
+          </button>
+
+          <button 
+            type="button" 
+            className={`${styles.tabBtn} ${activeTab === "access-requests" ? styles.tabBtnActive : ""}`}
+            onClick={() => { setActiveTab("access-requests"); setStatusFilter("ALL"); }}
+          >
+            <Shield size={16} /> Client Access Approvals
+            {pendingAccessRequestsCount > 0 && (
+              <span className={styles.tabBadge} style={{ background: "#fef3c7", color: "#b45309" }}>
+                {pendingAccessRequestsCount} pending
+              </span>
+            )}
           </button>
         </div>
 
@@ -459,7 +530,7 @@ export default function SalesPortalClient({
             />
           </div>
 
-          {activeTab !== "overview" && activeTab !== "clients" && (
+          {activeTab !== "overview" && activeTab !== "clients" && activeTab !== "access-requests" && (
             <select 
               className={styles.filterSelect}
               value={statusFilter}
@@ -471,7 +542,6 @@ export default function SalesPortalClient({
                   <option value="SUBMITTED">Submitted</option>
                   <option value="UNDER_REVIEW">Under Review</option>
                   <option value="QUOTATION_GENERATED">Quotation Generated</option>
-                  <option value="SENT_TO_CUSTOMER">Sent to Customer</option>
                   <option value="ACCEPTED">Accepted</option>
                   <option value="REJECTED">Rejected</option>
                 </>
@@ -985,9 +1055,28 @@ export default function SalesPortalClient({
         </div>
       )}
 
-      {/* 6. CLIENT DIRECTORY & SHORTCUTS */}
+      {/* 6. CLIENT DIRECTORY & PERMISSION VIEW */}
       {activeTab === "clients" && (
         <div className={styles.contentCard}>
+          {/* Sub-Tabs: My Approved Clients vs Other Company Clients */}
+          <div className={styles.subTabsBar}>
+            <button 
+              type="button" 
+              className={`${styles.subTabBtn} ${clientSubTab === "my-clients" ? styles.subTabBtnActive : ""}`}
+              onClick={() => setClientSubTab("my-clients")}
+            >
+              <UserCheck size={15} /> My Approved Clients ({myClients.length})
+            </button>
+
+            <button 
+              type="button" 
+              className={`${styles.subTabBtn} ${clientSubTab === "other-clients" ? styles.subTabBtnActive : ""}`}
+              onClick={() => setClientSubTab("other-clients")}
+            >
+              <Lock size={14} /> Other Company Clients ({otherClients.length})
+            </button>
+          </div>
+
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead>
@@ -996,70 +1085,245 @@ export default function SalesPortalClient({
                   <th>Company</th>
                   <th>Phone</th>
                   <th>Email</th>
-                  <th>GST Number</th>
-                  <th>Quick Deal Actions</th>
+                  <th>Assigned Rep</th>
+                  <th>Access / Deal Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredCustomers.map((c) => (
+                {displayedClients.map((c) => (
                   <tr key={c.id}>
                     <td>
                       <strong>{c.name}</strong>
+                      {!c.hasAccess && (
+                        <span className={styles.lockedPill} style={{ marginLeft: "8px" }}>
+                          <Lock size={10} /> Locked
+                        </span>
+                      )}
                     </td>
                     <td>{c.company || "—"}</td>
-                    <td>{c.phone || "—"}</td>
-                    <td>{c.email || "—"}</td>
-                    <td><code>{c.gstNumber || "Unregistered"}</code></td>
                     <td>
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <button 
-                          type="button" 
-                          className="btn-secondary" 
-                          style={{ fontSize: "11px", padding: "4px 8px" }}
-                          onClick={() => {
-                            setSelectedCustomerId(c.id);
-                            setIsQuoteModalOpen(true);
-                          }}
-                        >
-                          + Quote
-                        </button>
-                        <button 
-                          type="button" 
-                          className="btn-secondary" 
-                          style={{ fontSize: "11px", padding: "4px 8px" }}
-                          onClick={() => {
-                            setSelectedCustomerId(c.id);
-                            setIsInvoiceModalOpen(true);
-                          }}
-                        >
-                          + Invoice
-                        </button>
-                        <button 
-                          type="button" 
-                          className="btn-secondary" 
-                          style={{ fontSize: "11px", padding: "4px 8px" }}
-                          onClick={() => {
-                            setSelectedCustomerId(c.id);
-                            setIsProjectModalOpen(true);
-                          }}
-                        >
-                          + Project
-                        </button>
-                        <button 
-                          type="button" 
-                          className="btn-secondary" 
-                          style={{ fontSize: "11px", padding: "4px 8px" }}
-                          onClick={() => {
-                            setSelectedCustomerId(c.id);
-                            setIsServiceModalOpen(true);
-                          }}
-                        >
-                          + Service
-                        </button>
-                      </div>
+                      {c.hasAccess ? (
+                        <span>{c.phone}</span>
+                      ) : (
+                        <span style={{ color: "var(--text-muted)", fontFamily: "monospace" }}>{c.phone}</span>
+                      )}
+                    </td>
+                    <td>
+                      {c.hasAccess ? (
+                        <span>{c.email || "—"}</span>
+                      ) : (
+                        <span style={{ color: "var(--text-muted)", fontFamily: "monospace" }}>{c.email}</span>
+                      )}
+                    </td>
+                    <td>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{c.assignedToName}</span>
+                    </td>
+                    <td>
+                      {c.hasAccess ? (
+                        <div style={{ display: "flex", gap: "6px" }}>
+                          <button 
+                            type="button" 
+                            className="btn-secondary" 
+                            style={{ fontSize: "11px", padding: "4px 8px" }}
+                            onClick={() => {
+                              setSelectedCustomerId(c.id);
+                              setIsQuoteModalOpen(true);
+                            }}
+                          >
+                            + Quote
+                          </button>
+                          <button 
+                            type="button" 
+                            className="btn-secondary" 
+                            style={{ fontSize: "11px", padding: "4px 8px" }}
+                            onClick={() => {
+                              setSelectedCustomerId(c.id);
+                              setIsInvoiceModalOpen(true);
+                            }}
+                          >
+                            + Invoice
+                          </button>
+                          <button 
+                            type="button" 
+                            className="btn-secondary" 
+                            style={{ fontSize: "11px", padding: "4px 8px" }}
+                            onClick={() => {
+                              setSelectedCustomerId(c.id);
+                              setIsProjectModalOpen(true);
+                            }}
+                          >
+                            + Project
+                          </button>
+                          <button 
+                            type="button" 
+                            className="btn-secondary" 
+                            style={{ fontSize: "11px", padding: "4px 8px" }}
+                            onClick={() => {
+                              setSelectedCustomerId(c.id);
+                              setIsServiceModalOpen(true);
+                            }}
+                          >
+                            + Service
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          {c.accessStatus === "PENDING" ? (
+                            <span className={styles.statusPill} style={{ background: "#fef3c7", color: "#b45309" }}>
+                              <Clock size={12} /> Pending Admin Review
+                            </span>
+                          ) : c.accessStatus === "REJECTED" ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span className={styles.statusPill} style={{ background: "#fee2e2", color: "#b91c1c" }} title={c.adminRemarks || "Denied by Admin"}>
+                                ❌ Denied
+                              </span>
+                              <button 
+                                type="button" 
+                                className={styles.requestAccessBtn} 
+                                style={{ fontSize: "11px", padding: "2px 6px" }}
+                                onClick={() => setRequestingAccessCustomer(c)}
+                              >
+                                Re-Apply
+                              </button>
+                            </div>
+                          ) : (
+                            <button 
+                              type="button" 
+                              className={styles.requestAccessBtn}
+                              onClick={() => setRequestingAccessCustomer(c)}
+                            >
+                              <Lock size={12} /> Request Admin Approval
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
+
+                {displayedClients.length === 0 && (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className={styles.emptyState}>
+                        <User size={36} color="var(--brand-primary)" />
+                        <h3>No Clients Found</h3>
+                        <p>
+                          {clientSubTab === "my-clients" 
+                            ? "You don't have any assigned clients matching this search. Check 'Other Company Clients' to request access."
+                            : "No other clients match your search filter."
+                          }
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 7. CLIENT ACCESS APPROVALS TAB */}
+      {activeTab === "access-requests" && (
+        <div className={styles.contentCard}>
+          <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "16px", fontWeight: 700 }}>Client Access Requests & Approvals</h3>
+              <p style={{ margin: 0, fontSize: "13px", color: "var(--text-muted)" }}>
+                {isAdmin 
+                  ? "Review and approve/reject sales staff requests to access protected client data."
+                  : "Track the status of your client access requests submitted to management."
+                }
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Requested Client</th>
+                  <th>Sales Representative</th>
+                  <th>Reason / Scope of Work</th>
+                  <th>Status</th>
+                  <th>Admin Remarks</th>
+                  <th>Submitted Date</th>
+                  {isAdmin && <th>Admin Action</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {accessRequests.map((req) => (
+                  <tr key={req.id}>
+                    <td>
+                      <strong>{req.customer?.name}</strong>
+                      {req.customer?.company && (
+                        <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{req.customer.company}</div>
+                      )}
+                    </td>
+                    <td>
+                      <strong>{req.requestedBy?.name}</strong>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{req.requestedBy?.employeeId || req.requestedBy?.email}</div>
+                    </td>
+                    <td style={{ maxWidth: "260px" }}>
+                      <div style={{ fontSize: "12.5px", lineHeight: "1.4" }}>{req.reason}</div>
+                    </td>
+                    <td>
+                      <span className={`${styles.statusPill} ${
+                        req.status === "APPROVED" 
+                          ? styles.statusApproved 
+                          : req.status === "REJECTED" 
+                            ? styles.statusRejected 
+                            : styles.statusPending
+                      }`}>
+                        {req.status === "APPROVED" && <CheckCircle2 size={12} />}
+                        {req.status === "PENDING" && <Clock size={12} />}
+                        {req.status === "REJECTED" && <AlertCircle size={12} />}
+                        {req.status}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                        {req.adminRemarks || (req.status === "PENDING" ? "Awaiting review" : "—")}
+                      </span>
+                    </td>
+                    <td>{new Date(req.createdAt).toLocaleDateString()}</td>
+                    {isAdmin && (
+                      <td>
+                        {req.status === "PENDING" ? (
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            <button 
+                              type="button" 
+                              className="btn-primary" 
+                              style={{ fontSize: "11px", padding: "4px 8px", background: "#10b981", borderColor: "#10b981" }}
+                              onClick={() => {
+                                setReviewingRequest(req);
+                                setAdminRemarks("Approved for client deal pitch.");
+                              }}
+                            >
+                              Review & Decide
+                            </button>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                            Reviewed by {req.reviewedBy?.name || "Admin"}
+                          </span>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+
+                {accessRequests.length === 0 && (
+                  <tr>
+                    <td colSpan={isAdmin ? 7 : 6}>
+                      <div className={styles.emptyState}>
+                        <Shield size={36} color="var(--brand-primary)" />
+                        <h3>No Access Requests</h3>
+                        <p>There are no client profile access requests currently recorded.</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -1067,6 +1331,136 @@ export default function SalesPortalClient({
       )}
 
       {/* ================= MODALS ================= */}
+
+      {/* MODAL: REQUEST CLIENT ACCESS (FOR SALES REP) */}
+      {requestingAccessCustomer && (
+        <div className={styles.modalOverlay} onClick={closeAllModals}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>
+                <Lock size={20} color="var(--brand-primary)" />
+                Request Admin Approval for Client Access
+              </h2>
+              <button type="button" className={styles.closeBtn} onClick={closeAllModals}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAccessRequestSubmit}>
+              <div className={styles.modalBody}>
+                {formError && <div className={styles.errorBanner}>{formError}</div>}
+                {formSuccess && <div className={styles.successBanner}>{formSuccess}</div>}
+
+                <input type="hidden" name="customerId" value={requestingAccessCustomer.id} />
+
+                <div style={{ background: "rgba(99, 91, 255, 0.06)", border: "1px solid rgba(99, 91, 255, 0.15)", padding: "14px", borderRadius: "10px" }}>
+                  <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>Client to Access:</div>
+                  <strong style={{ fontSize: "16px", color: "var(--text-main)" }}>
+                    {requestingAccessCustomer.name} {requestingAccessCustomer.company ? `(${requestingAccessCustomer.company})` : ""}
+                  </strong>
+                  <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>
+                    Currently Assigned To: <strong>{requestingAccessCustomer.assignedToName}</strong>
+                  </div>
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label htmlFor="accessReason">Reason for Requesting Client Access *</label>
+                  <textarea 
+                    id="accessReason" 
+                    name="reason" 
+                    required 
+                    rows={4}
+                    placeholder="Explain why you need access (e.g. Client called our sales desk requesting a quotation for software development / AMC renewal)..."
+                  />
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                    This request will be sent directly to the Super Admin for review and approval.
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.modalFooter}>
+                <button type="button" className="btn-secondary" onClick={closeAllModals}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" disabled={isPending}>
+                  {isPending ? "Submitting..." : "Send Request to Admin"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADMIN REVIEW ACCESS REQUEST */}
+      {reviewingRequest && (
+        <div className={styles.modalOverlay} onClick={closeAllModals}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>
+                <Shield size={20} color="var(--brand-primary)" />
+                Admin Client Access Decision
+              </h2>
+              <button type="button" className={styles.closeBtn} onClick={closeAllModals}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              {formError && <div className={styles.errorBanner}>{formError}</div>}
+              {formSuccess && <div className={styles.successBanner}>{formSuccess}</div>}
+
+              <div style={{ background: "rgba(0, 0, 0, 0.02)", border: "1px solid var(--border-color)", padding: "14px", borderRadius: "10px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div><strong>Sales Representative:</strong> {reviewingRequest.requestedBy?.name} ({reviewingRequest.requestedBy?.employeeId || reviewingRequest.requestedBy?.email})</div>
+                <div><strong>Client Profile:</strong> {reviewingRequest.customer?.name} {reviewingRequest.customer?.company ? `(${reviewingRequest.customer.company})` : ""}</div>
+                <div><strong>Reason Stated:</strong> <span style={{ fontStyle: "italic" }}>"{reviewingRequest.reason}"</span></div>
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label htmlFor="adminRemarks">Admin Remarks / Conditions</label>
+                <input 
+                  type="text" 
+                  id="adminRemarks" 
+                  value={adminRemarks}
+                  onChange={(e) => setAdminRemarks(e.target.value)}
+                  placeholder="e.g. Approved for quotation and agreement." 
+                />
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "13px" }}>
+                  <input 
+                    type="checkbox" 
+                    checked={reassignClient}
+                    onChange={(e) => setReassignClient(e.target.checked)}
+                  />
+                  Permanently reassign this client's ownership to {reviewingRequest.requestedBy?.name}
+                </label>
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button 
+                type="button" 
+                className="btn-secondary" 
+                onClick={() => handleReviewAccess("REJECTED")}
+                disabled={isPending}
+                style={{ color: "#b91c1c" }}
+              >
+                Deny Request
+              </button>
+              <button 
+                type="button" 
+                className="btn-primary" 
+                onClick={() => handleReviewAccess("APPROVED")}
+                disabled={isPending}
+                style={{ background: "#10b981", borderColor: "#10b981" }}
+              >
+                {isPending ? "Processing..." : "Approve Client Access"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 1. REQUEST QUOTATION MODAL */}
       {isQuoteModalOpen && (
@@ -1088,20 +1482,25 @@ export default function SalesPortalClient({
                 {formSuccess && <div className={styles.successBanner}>{formSuccess}</div>}
 
                 <div className={styles.fieldGroup}>
-                  <label htmlFor="quoteCustomer">Select Client *</label>
+                  <label htmlFor="quoteCustomer">Select Client (My Approved Clients Only) *</label>
                   <select 
                     id="quoteCustomer" 
                     name="customerId" 
                     required 
                     defaultValue={selectedCustomerId || ""}
                   >
-                    <option value="">-- Choose Client --</option>
-                    {customers.map((c) => (
+                    <option value="">-- Choose an Approved Client --</option>
+                    {myClients.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name} {c.company ? `(${c.company})` : ""} - {c.phone}
                       </option>
                     ))}
                   </select>
+                  {myClients.length === 0 && (
+                    <span style={{ fontSize: "11px", color: "#b91c1c" }}>
+                      You don't have any approved clients yet. Please onboard a new client or request access in the Client Directory.
+                    </span>
+                  )}
                 </div>
 
                 <div className={styles.formGrid}>
@@ -1153,7 +1552,7 @@ export default function SalesPortalClient({
                 <button type="button" className="btn-secondary" onClick={closeAllModals}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary" disabled={isPending}>
+                <button type="submit" className="btn-primary" disabled={isPending || myClients.length === 0}>
                   {isPending ? "Submitting..." : "Submit Quotation Request"}
                 </button>
               </div>
@@ -1182,15 +1581,15 @@ export default function SalesPortalClient({
                 {formSuccess && <div className={styles.successBanner}>{formSuccess}</div>}
 
                 <div className={styles.fieldGroup}>
-                  <label htmlFor="invCustomer">Select Client *</label>
+                  <label htmlFor="invCustomer">Select Client (My Approved Clients Only) *</label>
                   <select 
                     id="invCustomer" 
                     name="customerId" 
                     required 
                     defaultValue={selectedCustomerId || ""}
                   >
-                    <option value="">-- Choose Client --</option>
-                    {customers.map((c) => (
+                    <option value="">-- Choose an Approved Client --</option>
+                    {myClients.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name} {c.company ? `(${c.company})` : ""}
                       </option>
@@ -1271,7 +1670,7 @@ export default function SalesPortalClient({
                 <button type="button" className="btn-secondary" onClick={closeAllModals}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary" disabled={isPending}>
+                <button type="submit" className="btn-primary" disabled={isPending || myClients.length === 0}>
                   {isPending ? "Submitting..." : "Submit Invoice Request"}
                 </button>
               </div>
@@ -1312,15 +1711,15 @@ export default function SalesPortalClient({
 
                 <div className={styles.formGrid}>
                   <div className={styles.fieldGroup}>
-                    <label htmlFor="projCustomer">Client *</label>
+                    <label htmlFor="projCustomer">Client (My Approved Clients Only) *</label>
                     <select 
                       id="projCustomer" 
                       name="customerId" 
                       required 
                       defaultValue={selectedCustomerId || ""}
                     >
-                      <option value="">-- Choose Client --</option>
-                      {customers.map((c) => (
+                      <option value="">-- Choose an Approved Client --</option>
+                      {myClients.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name} {c.company ? `(${c.company})` : ""}
                         </option>
@@ -1396,7 +1795,7 @@ export default function SalesPortalClient({
                 <button type="button" className="btn-secondary" onClick={closeAllModals}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary" disabled={isPending}>
+                <button type="submit" className="btn-primary" disabled={isPending || myClients.length === 0}>
                   {isPending ? "Creating Project..." : "Handover Project"}
                 </button>
               </div>
@@ -1425,15 +1824,15 @@ export default function SalesPortalClient({
                 {formSuccess && <div className={styles.successBanner}>{formSuccess}</div>}
 
                 <div className={styles.fieldGroup}>
-                  <label htmlFor="srvCustomer">Select Client *</label>
+                  <label htmlFor="srvCustomer">Select Client (My Approved Clients Only) *</label>
                   <select 
                     id="srvCustomer" 
                     name="customerId" 
                     required 
                     defaultValue={selectedCustomerId || ""}
                   >
-                    <option value="">-- Choose Client --</option>
-                    {customers.map((c) => (
+                    <option value="">-- Choose an Approved Client --</option>
+                    {myClients.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name} {c.company ? `(${c.company})` : ""}
                       </option>
@@ -1525,7 +1924,7 @@ export default function SalesPortalClient({
                 <button type="button" className="btn-secondary" onClick={closeAllModals}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary" disabled={isPending}>
+                <button type="submit" className="btn-primary" disabled={isPending || myClients.length === 0}>
                   {isPending ? "Provisioning..." : "Provision Service Package"}
                 </button>
               </div>

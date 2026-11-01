@@ -377,3 +377,161 @@ export async function quickCreateCustomer(formData: FormData) {
   revalidatePath("/customers");
   return { success: true, customer: newCustomer, existing: false };
 }
+
+// 6. Request Admin Approval to View / Manage Another Client
+export async function requestClientAccess(formData: FormData) {
+  const session = await getSession();
+  if (!session?.userId) {
+    throw new Error("Unauthorized: Please log in to request client access.");
+  }
+
+  const customerId = formData.get("customerId") as string;
+  const reason = formData.get("reason") as string;
+
+  if (!customerId || !reason || reason.trim().length < 5) {
+    throw new Error("Please specify the client and provide a clear reason for requesting access.");
+  }
+
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    include: { assignedTo: true },
+  });
+
+  if (!customer) {
+    throw new Error("Client record not found.");
+  }
+
+  // Upsert ClientAccessRequest
+  const request = await prisma.clientAccessRequest.upsert({
+    where: {
+      customerId_requestedById: {
+        customerId,
+        requestedById: session.userId,
+      },
+    },
+    update: {
+      reason: reason.trim(),
+      status: "PENDING",
+      adminRemarks: null,
+      reviewedById: null,
+    },
+    create: {
+      customerId,
+      requestedById: session.userId,
+      reason: reason.trim(),
+      status: "PENDING",
+    },
+    include: {
+      requestedBy: true,
+      customer: true,
+    },
+  });
+
+  try {
+    await prisma.activityLog.create({
+      data: {
+        action: "CLIENT_ACCESS_REQUESTED",
+        entityType: "CUSTOMER",
+        entityId: customerId,
+        userId: session.userId,
+        details: `Sales rep ${request.requestedBy.name} requested admin approval to access client "${customer.name}". Reason: ${reason}`,
+      },
+    });
+
+    const adminHtml = `
+      <h2>Client Profile Access Request</h2>
+      <p><strong>Sales Representative:</strong> ${request.requestedBy.name} (${request.requestedBy.email})</p>
+      <p><strong>Target Client:</strong> ${customer.name} ${customer.company ? `(${customer.company})` : ""}</p>
+      <p><strong>Currently Assigned To:</strong> ${customer.assignedTo?.name || "General Pool"}</p>
+      <p><strong>Reason Provided:</strong></p>
+      <p style="background:#f4f4f5;padding:12px;border-radius:6px;white-space:pre-wrap;">${reason}</p>
+      <br/>
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/sales?tab=access-requests" style="display:inline-block;padding:10px 18px;background:#635bff;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
+        Review & Approve Request in Admin Console
+      </a>
+    `;
+    await sendAdminNotification(`Client Access Request: ${customer.name} by ${request.requestedBy.name}`, adminHtml);
+  } catch (err) {
+    console.error("Non-blocking notification error:", err);
+  }
+
+  revalidatePath("/sales");
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${customerId}`);
+  return { success: true, id: request.id };
+}
+
+// 7. Admin Review Client Access Request (Approve / Reject)
+export async function reviewClientAccess(
+  requestId: string, 
+  status: "APPROVED" | "REJECTED", 
+  adminRemarks?: string,
+  reassignClient: boolean = false
+) {
+  const session = await getSession();
+  const isAdmin = ["SUPER_ADMIN", "ADMIN", "HEAD"].includes(session?.role as string);
+
+  if (!session?.userId || !isAdmin) {
+    throw new Error("Unauthorized: Only Super Admin and Administrators can approve client access.");
+  }
+
+  const existingRequest = await prisma.clientAccessRequest.findUnique({
+    where: { id: requestId },
+    include: { customer: true, requestedBy: true },
+  });
+
+  if (!existingRequest) {
+    throw new Error("Access request not found.");
+  }
+
+  const updated = await prisma.clientAccessRequest.update({
+    where: { id: requestId },
+    data: {
+      status,
+      adminRemarks: adminRemarks?.trim() || (status === "APPROVED" ? "Approved by Admin" : "Denied by Admin"),
+      reviewedById: session.userId,
+    },
+  });
+
+  // If approved and reassignClient is toggled, update customer.assignedToId
+  if (status === "APPROVED" && reassignClient) {
+    await prisma.customer.update({
+      where: { id: existingRequest.customerId },
+      data: { assignedToId: existingRequest.requestedById },
+    });
+  }
+
+  try {
+    await prisma.activityLog.create({
+      data: {
+        action: `CLIENT_ACCESS_${status}`,
+        entityType: "CUSTOMER",
+        entityId: existingRequest.customerId,
+        userId: session.userId,
+        details: `Admin ${session.name} ${status.toLowerCase()} client access for ${existingRequest.requestedBy.name} on ${existingRequest.customer.name}.`,
+      },
+    });
+
+    if (existingRequest.requestedBy.email) {
+      const emailContent = `
+        <p>Dear ${existingRequest.requestedBy.name},</p>
+        <p>Your request to access client <strong>${existingRequest.customer.name}</strong> has been <strong>${status}</strong> by ${session.name}.</p>
+        ${adminRemarks ? `<p><strong>Admin Remarks:</strong> ${adminRemarks}</p>` : ""}
+        ${status === "APPROVED" ? `<p>You can now view this client's full details and submit quotations, invoices, projects, and services for them.</p>` : ""}
+      `;
+      const html = generateTechnextEmailHtml(
+        `Client Access ${status}: ${existingRequest.customer.name}`,
+        emailContent,
+        { text: "Open Sales Portal", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/sales` }
+      );
+      await sendEmail(existingRequest.requestedBy.email, `TechNext: Client Access ${status} - ${existingRequest.customer.name}`, html);
+    }
+  } catch (err) {
+    console.error("Non-blocking notification error:", err);
+  }
+
+  revalidatePath("/sales");
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${existingRequest.customerId}`);
+  return { success: true };
+}
