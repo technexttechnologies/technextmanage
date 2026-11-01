@@ -139,7 +139,7 @@ export default function AroniumDashboardClient({
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', borderBottom: '1px solid var(--surface-border)', paddingBottom: '12px' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--surface-border)', paddingBottom: '12px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', whiteSpace: 'nowrap', scrollbarWidth: 'none' }}>
         <button 
           onClick={() => setActiveTab('overview')}
           style={{ background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer', fontSize: '1rem', fontWeight: activeTab === 'overview' ? 600 : 400, color: activeTab === 'overview' ? 'var(--primary)' : 'var(--text-secondary)', borderBottom: activeTab === 'overview' ? '2px solid var(--primary)' : 'none' }}

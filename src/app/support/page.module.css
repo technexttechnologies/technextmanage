@@ -107,3 +107,19 @@
   color: var(--text-secondary);
   margin-bottom: var(--spacing-6);
 }
+
+@media (max-width: 640px) {
+  .publicHeader {
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+  .formWrapper {
+    padding: var(--spacing-4) var(--spacing-3);
+  }
+  .formCard {
+    padding: var(--spacing-5) var(--spacing-4);
+    border-radius: var(--radius-md);
+  }
+  .formTitle {
+    font-size: 20px;
+  }
+}

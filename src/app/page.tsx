@@ -80,7 +80,7 @@ export default async function Dashboard() {
     <div className={styles.dashboardContainer}>
       <header className={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-          <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{ width: '140px', height: 'auto' }} />
+          <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TechNext Technologies" style={{ height: '36px', width: 'auto', maxWidth: '180px', objectFit: 'contain' }} />
         </div>
         <div>
           <h1 className={styles.greeting}>Welcome back, Admin 👋</h1>

@@ -9,6 +9,35 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-6);
+  flex-wrap: wrap;
+  gap: var(--spacing-4);
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .headerActions > * {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
 }
 
 .backBtn {
@@ -378,3 +407,39 @@
 
 .rType { font-weight: 600; color: var(--text-secondary); }
 .rNum { font-family: monospace; color: var(--text-primary); }
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-4);
+  }
+
+  .profileCard,
+  .section,
+  .sideSection {
+    padding: 16px;
+  }
+
+  .avatarLarge {
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
+  }
+
+  .name {
+    font-size: 20px;
+  }
+
+  .contactGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .projectGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .billingNotesGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

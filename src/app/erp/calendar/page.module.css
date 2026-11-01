@@ -201,3 +201,31 @@
   border: 1px dashed #d1d5db;
   color: #6b7280;
 }
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .btnPrimary {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .eventsGrid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+}

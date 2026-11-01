@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { sendCalendarInvite } from "@/lib/calendarSync";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import styles from "../page.module.css";
 
 async function createAppointment(formData: FormData) {
   "use server";
@@ -53,17 +54,17 @@ export default async function NewAppointmentPage() {
   });
 
   return (
-    <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
+    <div className={styles.container} style={{ maxWidth: '800px' }}>
       <header style={{ marginBottom: '32px' }}>
-        <Link href="/appointments" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', textDecoration: 'none', marginBottom: '16px' }}>
+        <Link href="/appointments" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#64748b', textDecoration: 'none', marginBottom: '16px' }}>
           <ArrowLeft size={16} /> Back to Appointments
         </Link>
         <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Schedule Appointment</h1>
       </header>
 
-      <form action={createAppointment} style={{ backgroundColor: 'white', padding: '32px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <form action={createAppointment} className={styles.formCard}>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div className={styles.formGrid2}>
           <div>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px' }}>Customer</label>
             <select name="customerId" className="form-input" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
@@ -79,7 +80,7 @@ export default async function NewAppointmentPage() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div className={styles.formGrid2}>
           <div>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px' }}>Date *</label>
             <input type="date" name="date" required className="form-input" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
@@ -90,7 +91,7 @@ export default async function NewAppointmentPage() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div className={styles.formGrid2}>
           <div>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px' }}>Meeting Type *</label>
             <select name="meetingType" required className="form-input" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
@@ -110,7 +111,7 @@ export default async function NewAppointmentPage() {
           <textarea name="notes" rows={4} className="form-input" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }} placeholder="Agenda or special instructions..."></textarea>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+        <div className={styles.formActions}>
           <Link href="/appointments" className="btn-secondary" style={{ padding: '10px 20px', borderRadius: '6px', border: '1px solid #cbd5e1', textDecoration: 'none', color: '#475569' }}>
             Cancel
           </Link>

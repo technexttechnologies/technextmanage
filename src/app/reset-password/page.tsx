@@ -91,8 +91,8 @@ export default function ResetPasswordPage() {
     <div className={styles.wrapper}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <div className={styles.logoIcon} style={{ background: 'transparent', boxShadow: 'none', marginBottom: '16px' }}>
-            <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TECHNEXT Logo" style={{ width: '200px', height: 'auto' }} />
+          <div className={styles.logoIcon} style={{ background: 'transparent', boxShadow: 'none', marginBottom: '16px', width: 'auto', height: 'auto' }}>
+            <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TECHNEXT Technologies" style={{ maxWidth: '220px', height: 'auto', objectFit: 'contain' }} />
           </div>
           <h1 style={{ display: 'none' }}>TECHNEXT CRM</h1>
           <p>Create a new secure password</p>

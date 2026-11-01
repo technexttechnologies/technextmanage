@@ -259,6 +259,69 @@
   }
   
   .greeting {
-    font-size: 24px;
+    font-size: 22px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  .metricsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    gap: 12px;
+    margin-bottom: var(--spacing-6);
+  }
+
+  .metricCard {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .iconWrapper {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  .metricInfo h3 {
+    font-size: 12px;
+  }
+
+  .metricValue {
+    font-size: 20px;
+  }
+
+  .alertsGrid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+    margin-bottom: var(--spacing-6);
+  }
+
+  .alertCard {
+    padding: 16px;
+  }
+
+  .analyticsGrid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+    margin-bottom: var(--spacing-6);
+  }
+
+  .chartCard {
+    padding: 16px;
+  }
+
+  .barChart {
+    height: 160px;
+    gap: 8px;
+  }
+
+  .pipelineRow {
+    gap: 10px;
+  }
+
+  .pipelineLabel {
+    width: 70px;
+    font-size: 12px;
   }
 }

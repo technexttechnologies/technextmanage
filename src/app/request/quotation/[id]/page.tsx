@@ -37,7 +37,7 @@ export default async function DynamicQuotationRequestPage({ params }: { params: 
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.logo}>
-            <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TechNext Technologies" />
+            <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TechNext Technologies" />
             <div className={styles.companyInfo}>
               <p><strong>{crmCompanyInfo.name}</strong></p>
               <p>{crmCompanyInfo.address}</p>

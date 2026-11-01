@@ -188,6 +188,12 @@
   }
   .card {
     padding: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .detailGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
   .actions {
     flex-direction: column-reverse;

@@ -98,7 +98,8 @@
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-bottom: 32px;
 }
 
@@ -221,6 +222,64 @@
   justify-content: flex-end;
   gap: 12px;
   margin-top: 32px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    text-align: center;
+    padding: 12px 16px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .statCard {
+    padding: 16px;
+  }
+
+  .statValue {
+    font-size: 26px;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .formContainer {
+    padding: 20px 16px;
+  }
+
+  .formActions {
+    flex-direction: column-reverse;
+  }
+
+  .formActions > * {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 /* Dark mode overrides if needed, assuming css vars handle this */

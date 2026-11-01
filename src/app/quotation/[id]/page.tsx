@@ -38,8 +38,7 @@ export default async function DynamicQuotationPage({ params }: { params: Promise
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.logo}>
-            {/* Replace with actual high-res logo if needed */}
-            <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1776917252/Untitled-2_gx7mta.png" alt="TechNext Technologies" />
+            <img src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" alt="TechNext Technologies" style={{ height: '48px', width: 'auto', objectFit: 'contain' }} />
             <div className={styles.companyInfo}>
               <p><strong>{crmCompanyInfo.name}</strong></p>
               <p>{crmCompanyInfo.address}</p>

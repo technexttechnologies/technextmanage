@@ -142,3 +142,29 @@
 .btnSubmit:hover {
   background-color: #1d4ed8;
 }
+
+@media (max-width: 640px) {
+  .container {
+    padding: 16px;
+  }
+
+  .formCard {
+    padding: 16px;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .btnCancel,
+  .btnSubmit {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, Search, Calendar as CalendarIcon, Clock, Video, User } from "lucide-react";
 import { AppointmentActionButtons } from "./AppointmentActionButtons";
+import styles from "./page.module.css";
 
 export default async function AppointmentsPage() {
   const appointments = await prisma.appointment.findMany({
@@ -11,13 +12,13 @@ export default async function AppointmentsPage() {
   });
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div className={styles.container}>
+      <header className={styles.header}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 8px 0' }}>Appointments</h1>
-          <p style={{ color: '#64748b', margin: 0 }}>Manage customer meetings and calendar.</p>
+          <h1 className={styles.headerTitle}>Appointments</h1>
+          <p className={styles.headerSubtitle}>Manage customer meetings and calendar.</p>
         </div>
-        <Link href="/appointments/new" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Link href="/appointments/new" className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
           <Plus size={20} />
           <span>New Appointment</span>
         </Link>
@@ -33,9 +34,9 @@ export default async function AppointmentsPage() {
           </Link>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+        <div className={styles.cardGrid}>
           {appointments.map(apt => (
-            <div key={apt.id} style={{ backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+            <div key={apt.id} className={styles.appointmentCard}>
               <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600' }}>{apt.meetingPurpose}</h3>

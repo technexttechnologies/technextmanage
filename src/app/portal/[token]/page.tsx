@@ -65,23 +65,23 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--surface-background)', padding: '40px 20px', fontFamily: 'var(--font-sans)' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--surface-background)', padding: '24px 16px', fontFamily: 'var(--font-sans)' }}>
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
         
         {/* Header */}
         <PortalHeader customer={customer} token={token} />
 
         {/* Quick Actions */}
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '30px', flexWrap: 'wrap' }}>
-          <Link href={`/portal/${token}/updates/new`} style={{ flex: '1', minWidth: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', backgroundColor: '#8B5CF6', color: 'white', padding: '16px', borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '16px', boxShadow: 'var(--shadow-sm)', transition: 'transform 0.2s' }}>
-            <Globe size={20} /> Request Project Update
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+          <Link href={`/portal/${token}/updates/new`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', backgroundColor: '#8B5CF6', color: 'white', padding: '14px 16px', borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '15px', boxShadow: 'var(--shadow-sm)', transition: 'transform 0.2s' }}>
+            <Globe size={18} /> Request Project Update
           </Link>
-          <Link href={`/portal/${token}/tickets/new`} style={{ flex: '1', minWidth: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', backgroundColor: 'var(--brand-primary)', color: 'white', padding: '16px', borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '16px', boxShadow: 'var(--shadow-sm)', transition: 'transform 0.2s' }}>
-            <LifeBuoy size={20} /> Open Support Ticket
+          <Link href={`/portal/${token}/tickets/new`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', backgroundColor: 'var(--brand-primary)', color: 'white', padding: '14px 16px', borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '15px', boxShadow: 'var(--shadow-sm)', transition: 'transform 0.2s' }}>
+            <LifeBuoy size={18} /> Open Support Ticket
           </Link>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
           
           {/* Domains */}
           <div style={{ backgroundColor: 'var(--surface-card)', padding: '24px', borderRadius: '16px', boxShadow: 'var(--shadow-sm)' }}>

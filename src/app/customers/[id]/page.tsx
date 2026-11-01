@@ -48,7 +48,7 @@ export default async function CustomerDetailsPage({
           <ArrowLeft size={20} />
           <span>Back to Customers</span>
         </Link>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className={styles.headerActions}>
           <a 
             href={`https://wa.me/${customer.phone.replace(/\D/g, '')}?text=Hi%20${encodeURIComponent(customer.name)}`} 
             target="_blank" 

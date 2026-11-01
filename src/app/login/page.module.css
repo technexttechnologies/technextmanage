@@ -131,3 +131,16 @@
   cursor: not-allowed;
   transform: none;
 }
+
+@media (max-width: 480px) {
+  .wrapper {
+    padding: 12px;
+  }
+  .card {
+    padding: 28px 18px;
+    border-radius: 16px;
+  }
+  .header {
+    margin-bottom: 24px;
+  }
+}

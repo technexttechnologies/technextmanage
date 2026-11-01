@@ -50,7 +50,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
             </span>
           )}
         </div>
-        <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
+        <div className={styles.headerRight}>
           <div style={{display: 'flex', alignItems: 'center', gap: '8px', background: '#FEE2E2', color: '#B91C1C', padding: '6px 12px', borderRadius: '8px', fontWeight: '500', fontSize: '14px'}}>
             <Clock size={16} /> ETA: {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'TBD'}
           </div>

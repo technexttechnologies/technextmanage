@@ -8,13 +8,13 @@
 .mainContent {
   flex: 1;
   width: 100%;
-  padding-bottom: 80px; /* Safe space for mobile bottom nav + FAB */
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 16px)); /* Safe space for mobile bottom nav + FAB */
 }
 
 @media (min-width: 1024px) {
   .mainContent {
     margin-left: 260px; /* Width of the sidebar */
     width: calc(100% - 260px);
-    padding-bottom: 0;
+    padding-bottom: 40px;
   }
 }

@@ -137,3 +137,43 @@
 .downloadButton:hover {
   opacity: 0.9;
 }
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-4);
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .title {
+    font-size: 22px;
+    flex-wrap: wrap;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
+    margin-bottom: var(--spacing-6);
+  }
+
+  .statCard {
+    padding: 14px;
+  }
+
+  .statValue {
+    font-size: 22px;
+  }
+
+  .agentSection {
+    padding: 16px;
+  }
+
+  .downloadButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
