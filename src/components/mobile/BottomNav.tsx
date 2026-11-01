@@ -8,7 +8,7 @@ import styles from "./BottomNav.module.css";
 export default function BottomNav() {
   const pathname = usePathname() || "";
 
-  const isHome = pathname === "/";
+  const isHome = pathname === "/" || pathname.startsWith("/sales");
   const isCustomers = pathname.startsWith("/customers");
   const isLeads = pathname.startsWith("/leads");
   const isProjects = pathname.startsWith("/projects");

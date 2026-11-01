@@ -26,7 +26,7 @@ export default function InvoicePdfUploader({ requestId }: { requestId: string })
       setParsedData(data);
     } catch (err: any) {
       console.error(err);
-      alert(`AI Extraction failed: ${err.message}. You can try again or upload manually.`);
+      alert(`Document extraction failed: ${err.message}. You can try again or upload manually.`);
       setFile(null);
     } finally {
       setIsParsing(false);
@@ -43,7 +43,7 @@ export default function InvoicePdfUploader({ requestId }: { requestId: string })
       formData.append("structuredData", JSON.stringify(parsedData));
       
       await uploadInvoicePdf(formData);
-      alert("Invoice PDF and AI Data uploaded successfully!");
+      alert("Invoice PDF and extracted invoice data saved successfully!");
       setParsedData(null);
       setFile(null);
     } catch (err: any) {
@@ -72,7 +72,7 @@ export default function InvoicePdfUploader({ requestId }: { requestId: string })
     return (
       <div style={{ marginTop: '16px', padding: '32px', background: 'var(--surface-background)', border: '1px dashed var(--brand-primary)', borderRadius: 'var(--radius-md)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
         <Loader2 size={32} className="animate-spin" color="var(--brand-primary)" />
-        <span style={{ fontWeight: 600, color: 'var(--brand-primary)' }}>AI is reading the document...</span>
+        <span style={{ fontWeight: 600, color: 'var(--brand-primary)' }}>Analyzing and extracting document line items...</span>
       </div>
     );
   }
@@ -84,7 +84,7 @@ export default function InvoicePdfUploader({ requestId }: { requestId: string })
 
     return (
       <div style={{ marginTop: '16px', padding: '16px', background: 'white', border: '1px solid var(--surface-border)', borderRadius: 'var(--radius-md)', textAlign: 'left' }}>
-        <h4 style={{ fontSize: '15px', color: 'var(--brand-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><Edit3 size={16} /> Verify AI Extraction</h4>
+        <h4 style={{ fontSize: '15px', color: 'var(--brand-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><Edit3 size={16} /> Review Extracted Line Items</h4>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
           {(parsedData.items || []).map((item: any, index: number) => (

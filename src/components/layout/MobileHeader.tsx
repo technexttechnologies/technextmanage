@@ -20,7 +20,7 @@ export default function MobileHeader({ user }: { user?: any }) {
         >
           <Menu size={22} />
         </button>
-        <Link href="/" className={styles.logoContainer}>
+        <Link href={user?.role === "SALES" ? "/sales" : "/"} className={styles.logoContainer}>
           <img 
             src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" 
             alt="TechNext Technologies" 

@@ -9,16 +9,20 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-6);
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .title {
-  font-size: 28px;
-  margin-bottom: var(--spacing-1);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
 }
 
 .subtitle {
   color: var(--text-muted);
-  font-size: 16px;
+  font-size: 14.5px;
 }
 
 @media (max-width: 768px) {
@@ -28,12 +32,16 @@
   .hideMobile {
     display: none;
   }
+  .title {
+    font-size: 22px;
+  }
 }
 
 .searchBar {
   position: relative;
   margin-bottom: var(--spacing-6);
   max-width: 600px;
+  width: 100%;
 }
 
 .searchIcon {
@@ -46,19 +54,20 @@
 
 .searchInput {
   width: 100%;
-  padding: 14px 16px 14px 48px;
-  border-radius: var(--radius-lg);
+  padding: 12px 16px 12px 48px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--surface-border);
-  font-size: 16px;
+  font-size: 14.5px;
   background-color: var(--surface-card);
   transition: all 0.2s ease;
   font-family: var(--font-sans);
+  color: var(--text-primary);
 }
 
 .searchInput:focus {
   outline: none;
   border-color: var(--brand-accent);
-  box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 .emptyState {
@@ -92,13 +101,19 @@
   gap: var(--spacing-5);
 }
 
+.cardHeaderLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
 .customerCard {
   background-color: var(--surface-card);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-5);
+  padding: 20px;
   border: 1px solid var(--surface-border);
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
 }
@@ -106,28 +121,29 @@
 .customerCard:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
-  border-color: var(--brand-accent);
+  border-color: rgba(79, 70, 229, 0.35);
 }
 
 .cardHeader {
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-4);
-  margin-bottom: var(--spacing-5);
+  margin-bottom: 16px;
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-full);
-  background-color: var(--brand-light);
-  color: var(--brand-primary);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+  color: var(--brand-accent);
   font-weight: 700;
-  font-size: 20px;
+  font-size: 18px;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
+  border: 1px solid rgba(79, 70, 229, 0.2);
 }
 
 .cardInfo {
@@ -136,11 +152,14 @@
 }
 
 .cardInfo h3 {
-  font-size: 16px;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 15.5px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .company {
@@ -149,30 +168,54 @@
   gap: 4px;
   font-size: 13px;
   color: var(--text-secondary);
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .statusBadge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
   border-radius: var(--radius-full);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   background-color: var(--surface-background);
   color: var(--text-muted);
+  border: 1px solid var(--surface-border);
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .statusBadge.active {
   background-color: var(--color-success-bg);
-  color: var(--color-success);
+  color: #15803d;
+  border-color: #bbf7d0;
 }
 
 .statusBadge.lead {
   background-color: var(--color-info-bg);
-  color: var(--color-info);
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.statusBadge.prospect {
+  background-color: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.statusBadge.project_running {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+.statusBadge.support_required {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-color: #fecaca;
 }
 
 .cardActions {
@@ -180,7 +223,7 @@
   gap: var(--spacing-3);
   margin-top: auto;
   border-top: 1px solid var(--surface-border);
-  padding-top: var(--spacing-4);
+  padding-top: 14px;
 }
 
 .actionBtn {
@@ -188,24 +231,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px;
+  gap: 6px;
+  padding: 8px 12px;
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
   background-color: var(--surface-background);
-  transition: all 0.2s ease;
+  border: 1px solid var(--surface-border);
+  transition: all 0.15s ease;
+  text-decoration: none;
 }
 
 .actionBtn:hover {
-  background-color: var(--brand-light);
-  color: var(--brand-primary);
+  background-color: #FFFFFF;
+  border-color: #CBD5E1;
+  color: var(--text-primary);
 }
 
-.cardHeaderLink {
-  text-decoration: none;
-  color: inherit;
-  display: block;
-  outline: none;
+@media (max-width: 640px) {
+  .customerList {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .customerCard {
+    padding: 16px;
+  }
+  .avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
 }

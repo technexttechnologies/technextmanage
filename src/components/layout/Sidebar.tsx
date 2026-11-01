@@ -11,7 +11,7 @@ import {
   Receipt, HeadphonesIcon, Calendar, MonitorPlay, IndianRupee, 
   Megaphone, LayoutDashboard, CreditCard, Monitor, Repeat, 
   Folder, PieChart, X, UserCheck, Clock, CalendarCheck, 
-  Shield, TrendingUp, UserPlus 
+  Shield, TrendingUp, UserPlus, ShieldCheck 
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
@@ -45,11 +45,13 @@ export default function Sidebar({ user }: { user: any }) {
       <aside className={`${styles.sidebar} ${isMobileOpen ? styles.mobileOpen : ''}`}>
         <div className={styles.logoContainer} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-            <img 
-              src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" 
-              alt="TechNext Technologies" 
-              className={styles.logo} 
-            />
+            <Link href={isSalesStaff ? "/sales" : "/"} style={{ display: 'inline-flex' }}>
+              <img 
+                src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" 
+                alt="TechNext Technologies" 
+                className={styles.logo} 
+              />
+            </Link>
             <button 
               type="button" 
               className={styles.closeBtn} 
@@ -60,17 +62,32 @@ export default function Sidebar({ user }: { user: any }) {
             </button>
           </div>
           <span style={{
-            fontSize: '10.5px',
+            fontSize: '11px',
             fontWeight: 700,
-            letterSpacing: '0.6px',
+            letterSpacing: '0.5px',
             textTransform: 'uppercase',
-            padding: '3px 8px',
-            borderRadius: '4px',
-            background: isSalesStaff ? 'rgba(16, 185, 129, 0.12)' : 'rgba(99, 91, 255, 0.12)',
-            color: isSalesStaff ? '#10B981' : 'var(--brand-primary, #635bff)',
-            border: isSalesStaff ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(99, 91, 255, 0.25)',
+            padding: '4px 10px',
+            borderRadius: '6px',
+            background: isSalesStaff ? 'rgba(16, 185, 129, 0.1)' : 'rgba(79, 70, 229, 0.08)',
+            color: isSalesStaff ? '#059669' : '#4338ca',
+            border: isSalesStaff ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(79, 70, 229, 0.2)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px'
           }}>
-            {isSalesStaff ? '💼 Sales Staff Portal' : isSuperAdmin ? '👑 Super Admin Console' : '🛡️ Admin Panel'}
+            {isSalesStaff ? (
+              <>
+                <TrendingUp size={12} /> Sales Operations Portal
+              </>
+            ) : isSuperAdmin ? (
+              <>
+                <Shield size={12} /> Super Admin Console
+              </>
+            ) : (
+              <>
+                <ShieldCheck size={12} /> Admin Panel
+              </>
+            )}
           </span>
         </div>
       

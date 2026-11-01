@@ -125,14 +125,17 @@ export default async function Dashboard() {
             borderRadius: '20px',
             background: 'rgba(99, 91, 255, 0.12)',
             color: 'var(--brand-primary, #635bff)',
-            border: '1px solid rgba(99, 91, 255, 0.25)'
+            border: '1px solid rgba(99, 91, 255, 0.25)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px'
           }}>
-            👑 {session.role === "SUPER_ADMIN" ? "Super Admin Console" : "Admin Panel"}
+            <Shield size={12} /> {session.role === "SUPER_ADMIN" ? "Super Admin Console" : "Admin Panel"}
           </span>
         </div>
         <div>
-          <h1 className={styles.greeting}>Welcome back, {session.name || "Administrator"} 👋</h1>
-          <p className={styles.subtitle}>Super Admin Panel — Enterprise Operations, Staff Administration & Client Infrastructure.</p>
+          <h1 className={styles.greeting}>Welcome back, {session.name || "Administrator"}</h1>
+          <p className={styles.subtitle}>Enterprise Operations, Staff Administration & Client Infrastructure.</p>
         </div>
       </header>
 
