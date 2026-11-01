@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon, Calendar, MonitorPlay, IndianRupee, Megaphone, LayoutDashboard, CreditCard, Monitor, Repeat, Folder, PieChart, X } from "lucide-react";
+import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon, Calendar, MonitorPlay, IndianRupee, Megaphone, LayoutDashboard, CreditCard, Monitor, Repeat, Folder, PieChart, X, GraduationCap, UserCog, CalendarCheck, FileCheck, BookOpen } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
 import NotificationBell from "./NotificationBell";
@@ -12,6 +12,7 @@ import NotificationBell from "./NotificationBell";
 export default function Sidebar({ user }: { user: any }) {
   const pathname = usePathname() || "";
   const isAdmin = user?.role === "SUPER_ADMIN" || user?.role === "ADMIN";
+  const isFacultyAccess = isAdmin || user?.role === "FACULTY" || user?.role === "HEAD";
   const isErpAccess = isAdmin || ["ACCOUNTS", "OPERATIONS", "HR"].includes(user?.role);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -80,6 +81,36 @@ export default function Sidebar({ user }: { user: any }) {
             <Target size={20} /> Marketing
           </Link>
         </div>
+
+        {isFacultyAccess && (
+          <div className={styles.navSection}>
+            <p className={styles.navSectionTitle} style={{ color: "#10B981" }}>Training & Academy</p>
+            <Link href="/faculty" className={`${styles.navItem} ${pathname === '/faculty' ? styles.active : ''}`}>
+              <GraduationCap size={20} /> Faculty Portal
+            </Link>
+            <Link href="/faculty/batches" className={`${styles.navItem} ${pathname.startsWith('/faculty/batches') ? styles.active : ''}`}>
+              <BookOpen size={20} /> Batches & Classes
+            </Link>
+            <Link href="/faculty/students" className={`${styles.navItem} ${pathname.startsWith('/faculty/students') ? styles.active : ''}`}>
+              <Users size={20} /> Students
+            </Link>
+            <Link href="/faculty/attendance" className={`${styles.navItem} ${pathname.startsWith('/faculty/attendance') ? styles.active : ''}`}>
+              <CalendarCheck size={20} /> Daily Attendance
+            </Link>
+            <Link href="/faculty/assignments" className={`${styles.navItem} ${pathname.startsWith('/faculty/assignments') ? styles.active : ''}`}>
+              <FileCheck size={20} /> Assignments
+            </Link>
+          </div>
+        )}
+
+        {isAdmin && (
+          <div className={styles.navSection}>
+            <p className={styles.navSectionTitle} style={{ color: "#3B82F6" }}>Administration</p>
+            <Link href="/users" className={`${styles.navItem} ${pathname.startsWith('/users') ? styles.active : ''}`}>
+              <UserCog size={20} /> User Management
+            </Link>
+          </div>
+        )}
 
         <div className={styles.navSection}>
           <p className={styles.navSectionTitle}>Operations</p>
