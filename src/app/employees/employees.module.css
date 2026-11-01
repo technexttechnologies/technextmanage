@@ -88,7 +88,7 @@
   color: var(--text-muted);
 }
 
-/* Filters & Search Toolbar */
+/* Toolbar & Filters */
 .toolbar {
   background: var(--surface-card);
   border: 1px solid var(--surface-border);
@@ -142,22 +142,16 @@
   color: var(--text-primary);
   font-family: inherit;
   cursor: pointer;
-  min-width: 140px;
 }
 
-.filterSelect:focus {
-  outline: none;
-  border-color: var(--brand-accent);
-}
-
-/* User Grid / Table */
-.userGrid {
+/* Employee Cards Grid */
+.employeeGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 20px;
 }
 
-.userCard {
+.employeeCard {
   background: var(--surface-card);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-lg);
@@ -167,22 +161,21 @@
   flex-direction: column;
   gap: 16px;
   transition: all 0.2s;
-  position: relative;
 }
 
-.userCard:hover {
+.employeeCard:hover {
   border-color: rgba(99, 91, 255, 0.4);
   box-shadow: var(--shadow-md);
 }
 
-.userCardHeader {
+.cardHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
 
-.userInfo {
+.employeeInfo {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -193,10 +186,10 @@
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, #4F46E5 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -216,88 +209,61 @@
   border: 2px solid white;
 }
 
-.statusActive {
-  background: #10B981;
-}
+.statusActive { background: #10B981; }
+.statusInactive { background: #94A3B8; }
 
-.statusInactive {
-  background: #94A3B8;
-}
-
-.userName {
+.employeeName {
   font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 2px 0;
 }
 
-.userDesignation {
-  font-size: 12px;
+.employeeTitle {
+  font-size: 13px;
   color: var(--text-muted);
   margin: 0;
 }
 
+.badgeStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.empIdBadge {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--surface-background);
+  border: 1px solid var(--surface-border);
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: var(--text-primary);
+}
+
 .roleBadge {
   display: inline-block;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: var(--radius-full);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 
-.roleSuperAdmin {
-  background: #1E1B4B;
-  color: #C7D2FE;
-  border: 1px solid #4338CA;
-}
+.roleSuperAdmin { background: #1E1B4B; color: #C7D2FE; border: 1px solid #4338CA; }
+.roleAdmin { background: #FFF7ED; color: #C2410C; border: 1px solid #FFEDD5; }
+.roleDeveloper { background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; }
+.roleHR { background: #FAF5FF; color: #7E22CE; border: 1px solid #E9D5FF; }
+.roleSales { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+.roleProject { background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; }
+.roleSupport { background: #F0FDFA; color: #0F766E; border: 1px solid #99F6E4; }
+.roleDefault { background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; }
 
-.roleAdmin {
-  background: #FFF7ED;
-  color: #C2410C;
-  border: 1px solid #FFEDD5;
-}
-
-.roleFaculty {
-  background: #ECFDF5;
-  color: #047857;
-  border: 1px solid #A7F3D0;
-}
-
-.roleSales {
-  background: #EFF6FF;
-  color: #1D4ED8;
-  border: 1px solid #BFDBFE;
-}
-
-.roleProject {
-  background: #FEF3C7;
-  color: #B45309;
-  border: 1px solid #FDE68A;
-}
-
-.roleSupport {
-  background: #F0FDFA;
-  color: #0F766E;
-  border: 1px solid #99F6E4;
-}
-
-.roleHead {
-  background: #FAF5FF;
-  color: #7E22CE;
-  border: 1px solid #E9D5FF;
-}
-
-.roleDefault {
-  background: #F1F5F9;
-  color: #475569;
-  border: 1px solid #E2E8F0;
-}
-
-/* User Card Body */
-.userMeta {
+/* Employee Details */
+.employeeMeta {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -308,19 +274,19 @@
   border-bottom: 1px solid var(--surface-border);
 }
 
-.metaItem {
+.metaRow {
   display: flex;
   align-items: center;
   gap: 8px;
   word-break: break-all;
 }
 
-.metaItem svg {
+.metaRow svg {
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
-/* User Card Actions */
+/* Card Actions */
 .cardActions {
   display: flex;
   align-items: center;
@@ -387,7 +353,7 @@
   background: #FEF2F2;
 }
 
-/* Modal Overlay & Card */
+/* Modals */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -407,7 +373,7 @@
   border: 1px solid var(--surface-border);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   width: 100%;
-  max-width: 520px;
+  max-width: 580px;
   max-height: 90vh;
   overflow-y: auto;
   animation: slideUp 0.25s ease-out;
@@ -440,12 +406,6 @@
   border-radius: 6px;
   display: flex;
   align-items: center;
-  justify-content: center;
-}
-
-.closeModalBtn:hover {
-  color: var(--text-primary);
-  background: var(--surface-background);
 }
 
 .modalBody {
@@ -458,6 +418,12 @@
 .formGrid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.formGrid3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
 }
 
@@ -474,7 +440,8 @@
 }
 
 .inputGroup input,
-.inputGroup select {
+.inputGroup select,
+.inputGroup textarea {
   padding: 10px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--surface-border);
@@ -485,7 +452,8 @@
 }
 
 .inputGroup input:focus,
-.inputGroup select:focus {
+.inputGroup select:focus,
+.inputGroup textarea:focus {
   outline: none;
   border-color: var(--brand-accent);
 }
@@ -521,44 +489,35 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
   .container {
     padding: 16px;
   }
-
   .header {
     flex-direction: column;
     align-items: stretch;
   }
-
   .headerActions {
     width: 100%;
   }
-
-  .headerActions button {
+  .headerActions button, .headerActions a {
     width: 100%;
     justify-content: center;
   }
-
   .statsGrid {
     grid-template-columns: 1fr 1fr;
   }
-
   .toolbar {
     flex-direction: column;
     align-items: stretch;
   }
-
   .filterSelect {
     width: 100%;
   }
-
-  .userGrid {
+  .employeeGrid {
     grid-template-columns: 1fr;
   }
-
-  .formGrid2 {
+  .formGrid2, .formGrid3 {
     grid-template-columns: 1fr;
   }
 }

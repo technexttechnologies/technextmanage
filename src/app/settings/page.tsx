@@ -31,8 +31,8 @@ export default async function SettingsPage() {
               <p style={{color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px'}}>
                 Manage system users, reset passwords, and configure role-based access.
               </p>
-              <Link href="/users" className="btn-primary" style={{display: 'flex', justifyContent: 'center', gap: '8px'}}>
-                <Users size={18} /> Manage Users & Faculty Accounts
+              <Link href="/employees" className="btn-primary" style={{display: 'flex', justifyContent: 'center', gap: '8px'}}>
+                <Users size={18} /> Manage Employees & Staff
               </Link>
             </section>
           )}

@@ -14,10 +14,18 @@ model User {
   email             String             @unique
   passwordHash      String
   name              String
-  role              String             @default("SALES") // SUPER_ADMIN, ADMIN, HEAD, SALES, PROJECT, SUPPORT, FACULTY
+  role              String             @default("SALES") // SUPER_ADMIN, ADMIN, HEAD, HR, DEVELOPER, SALES, PROJECT, SUPPORT
   phone             String?
   isActive          Boolean            @default(true)
   designation       String?
+  employeeId        String?            @unique
+  employmentType    String             @default("FULL_TIME") // FULL_TIME, PART_TIME, CONTRACT, INTERN
+  joiningDate       DateTime?
+  salary            Float?
+  shiftHours        String?            @default("09:30 AM - 06:30 PM")
+  emergencyContact  String?
+  bloodGroup        String?
+  address           String?
   customers         Customer[]
   leads             Lead[]
   tasks             Task[]
@@ -38,7 +46,8 @@ model User {
   departmentId      String?
   department        Department?        @relation(fields: [departmentId], references: [id])
   attendances       Attendance[]
-  leaveRequests     LeaveRequest[]
+  leaveRequests     LeaveRequest[]     @relation("UserLeaves")
+  leavesReviewed    LeaveRequest[]     @relation("LeavesReviewed")
   notifications     InAppNotification[]
   resetTokens       PasswordResetToken[]
 
@@ -50,12 +59,6 @@ model User {
   erpMailsSent       ErpMail[]    @relation("ErpMailSent")
   erpEventsCreated   ErpEvent[]   @relation("ErpEventCreated")
   erpDocsUploaded    ErpDocument[] @relation("ErpDocumentUploaded")
-
-  // Faculty Portal Relations
-  assignedBatches    FacultyBatch[]
-  createdAssignments FacultyAssignment[]
-  studyMaterials     FacultyMaterial[]
-  facultySessions    FacultySession[]
 }
 
 model Customer {
@@ -537,16 +540,19 @@ model Attendance {
 }
 
 model LeaveRequest {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String   // SICK, CASUAL, EARNED
-  startDate DateTime
-  endDate   DateTime
-  reason    String   @db.Text
-  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation("UserLeaves", fields: [userId], references: [id], onDelete: Cascade)
+  type         String    // SICK, CASUAL, EARNED
+  startDate    DateTime
+  endDate      DateTime
+  reason       String    @db.Text
+  status       String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminNotes   String?
+  reviewedById String?
+  reviewedBy   User?     @relation("LeavesReviewed", fields: [reviewedById], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model InAppNotification {
@@ -884,135 +890,4 @@ model ErpPayment {
   referenceType String?  // Sale, Purchase
   referenceId   String?  // Aronium ID of the sale/purchase
   createdAt     DateTime @default(now())
-}
-
-// Faculty & Training Academy Models
-
-model Course {
-  id          String         @id @default(cuid())
-  title       String
-  code        String         @unique
-  description String?        @db.Text
-  duration    String         // e.g. "6 Months", "3 Months"
-  category    String?        // Software Development, AI/ML, Design, etc.
-  syllabus    String?        @db.Text
-  batches     FacultyBatch[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-}
-
-model FacultyBatch {
-  id          String              @id @default(cuid())
-  name        String
-  batchCode   String              @unique
-  courseId    String
-  course      Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  facultyId   String?
-  faculty     User?               @relation(fields: [facultyId], references: [id])
-  startDate   DateTime
-  endDate     DateTime?
-  schedule    String?             // e.g. "Mon-Fri 09:30 AM - 12:30 PM"
-  mode        String              @default("OFFLINE") // OFFLINE, ONLINE, HYBRID
-  status      String              @default("ONGOING") // UPCOMING, ONGOING, COMPLETED
-  classroom   String?             // e.g. "Lab 2" or "Meet Link"
-  students    Student[]
-  sessions    FacultySession[]
-  assignments FacultyAssignment[]
-  materials   FacultyMaterial[]
-  attendances StudentAttendance[]
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-}
-
-model Student {
-  id            String                 @id @default(cuid())
-  rollNo        String                 @unique
-  name          String
-  email         String
-  phone         String
-  batchId       String
-  batch         FacultyBatch           @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  admissionDate DateTime               @default(now())
-  status        String                 @default("ACTIVE") // ACTIVE, COMPLETED, DROPPED
-  notes         String?                @db.Text
-  attendances   StudentAttendance[]
-  submissions   AssignmentSubmission[]
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-}
-
-model StudentAttendance {
-  id        String       @id @default(cuid())
-  studentId String
-  student   Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  batchId   String
-  batch     FacultyBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  date      DateTime     @db.Date
-  status    String       @default("PRESENT") // PRESENT, ABSENT, LATE, EXCUSED
-  remarks   String?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  @@unique([studentId, batchId, date])
-}
-
-model FacultySession {
-  id              String       @id @default(cuid())
-  batchId         String
-  batch           FacultyBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  facultyId       String
-  faculty         User         @relation(fields: [facultyId], references: [id])
-  sessionDate     DateTime     @db.Date
-  topicCovered    String
-  summary         String?      @db.Text
-  durationMinutes Int          @default(60)
-  status          String       @default("COMPLETED") // SCHEDULED, COMPLETED, CANCELLED
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-}
-
-model FacultyAssignment {
-  id            String                 @id @default(cuid())
-  title         String
-  description   String                 @db.Text
-  batchId       String
-  batch         FacultyBatch           @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  facultyId     String
-  faculty       User                   @relation(fields: [facultyId], references: [id])
-  dueDate       DateTime
-  maxMarks      Int                    @default(100)
-  attachmentUrl String?
-  submissions   AssignmentSubmission[]
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-}
-
-model AssignmentSubmission {
-  id             String            @id @default(cuid())
-  assignmentId   String
-  assignment     FacultyAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  studentId      String
-  student        Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  submissionDate DateTime          @default(now())
-  content        String?           @db.Text
-  fileUrl        String?
-  status         String            @default("PENDING") // PENDING, GRADED, RESUBMIT
-  marksObtained  Float?
-  feedback       String?           @db.Text
-  gradedAt       DateTime?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-}
-
-model FacultyMaterial {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  batchId     String
-  batch       FacultyBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  facultyId   String
-  faculty     User         @relation(fields: [facultyId], references: [id])
-  fileUrl     String
-  category    String       @default("NOTES") // NOTES, SLIDES, CODE, REFERENCE
-  createdAt   DateTime     @default(now())
 }
