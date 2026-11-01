@@ -166,6 +166,10 @@ export default function Sidebar({ user }: { user: any }) {
               {/* Workflows */}
               <div className={styles.navSection}>
                 <p className={styles.navSectionTitle}>Workflows & Requests</p>
+                <Link href="/sales?tab=access-requests" className={`${styles.navItem} ${pathname === '/sales' ? styles.active : ''}`}>
+                  <Shield size={20} />
+                  <span>Client Access Approvals</span>
+                </Link>
                 <Link href="/quotation-requests" className={`${styles.navItem} ${pathname.startsWith("/quotation-requests") ? styles.active : ""}`}>
                   <FileSignature size={20} />
                   <span>Quotation Requests</span>

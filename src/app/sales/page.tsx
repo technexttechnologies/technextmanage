@@ -29,12 +29,22 @@ function maskEmail(email?: string | null): string {
   return `${firstLetter}***@${domain}`;
 }
 
-export default async function SalesPortalPage() {
+export default async function SalesPortalPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string }>;
+}) {
   const session = await getSession();
 
   if (!session?.userId) {
     redirect("/login");
   }
+
+  const resolvedParams = searchParams ? await searchParams : undefined;
+  const validTabs = ["overview", "quotations", "invoices", "projects", "services", "clients", "access-requests"];
+  const initialTab = (resolvedParams?.tab && validTabs.includes(resolvedParams.tab))
+    ? (resolvedParams.tab as any)
+    : "overview";
 
   const currentUser = await prisma.user.findUnique({
     where: { id: session.userId },
@@ -197,6 +207,7 @@ export default async function SalesPortalPage() {
       projects={projects}
       services={services}
       isAdmin={isAdmin}
+      initialTab={initialTab}
     />
   );
 }

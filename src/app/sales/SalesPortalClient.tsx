@@ -30,6 +30,7 @@ interface SalesPortalProps {
   projects: any[];
   services: any[];
   isAdmin: boolean;
+  initialTab?: "overview" | "quotations" | "invoices" | "projects" | "services" | "clients" | "access-requests";
 }
 
 export default function SalesPortalClient({
@@ -41,8 +42,15 @@ export default function SalesPortalClient({
   projects,
   services,
   isAdmin,
+  initialTab = "overview",
 }: SalesPortalProps) {
-  const [activeTab, setActiveTab] = useState<"overview" | "quotations" | "invoices" | "projects" | "services" | "clients" | "access-requests">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "quotations" | "invoices" | "projects" | "services" | "clients" | "access-requests">(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [clientSubTab, setClientSubTab] = useState<"my-clients" | "other-clients">("my-clients");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");

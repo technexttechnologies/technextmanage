@@ -30,30 +30,33 @@ export default async function CustomersPage({ searchParams }: { searchParams: { 
   const session = await getSession();
   const isAdmin = ["SUPER_ADMIN", "ADMIN", "HEAD", "OPERATIONS"].includes(session?.role as string);
 
-  const customers = await prisma.customer.findMany({
-    orderBy: { name: 'asc' },
-    include: {
-      accessRequests: session?.userId ? {
-        where: { requestedById: session.userId },
-      } : undefined,
-      quotationRequests: session?.userId ? {
-        where: { requestedById: session.userId },
-        select: { id: true },
-      } : undefined,
-      invoiceRequests: session?.userId ? {
-        where: { requestedById: session.userId },
-        select: { id: true },
-      } : undefined,
-      projects: session?.userId ? {
-        where: { salesRepId: session.userId },
-        select: { id: true },
-      } : undefined,
-      packages: session?.userId ? {
-        where: { salesRepId: session.userId },
-        select: { id: true },
-      } : undefined,
-    },
-  });
+  const [customers, pendingAccessCount] = await Promise.all([
+    prisma.customer.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        accessRequests: session?.userId ? {
+          where: { requestedById: session.userId },
+        } : undefined,
+        quotationRequests: session?.userId ? {
+          where: { requestedById: session.userId },
+          select: { id: true },
+        } : undefined,
+        invoiceRequests: session?.userId ? {
+          where: { requestedById: session.userId },
+          select: { id: true },
+        } : undefined,
+        projects: session?.userId ? {
+          where: { salesRepId: session.userId },
+          select: { id: true },
+        } : undefined,
+        packages: session?.userId ? {
+          where: { salesRepId: session.userId },
+          select: { id: true },
+        } : undefined,
+      },
+    }),
+    isAdmin ? prisma.clientAccessRequest.count({ where: { status: "PENDING" } }) : Promise.resolve(0),
+  ]);
 
   return (
     <div className={styles.container}>
@@ -75,6 +78,42 @@ export default async function CustomersPage({ searchParams }: { searchParams: { 
           <span className={styles.hideMobile}>Add Customer</span>
         </Link>
       </header>
+
+      {isAdmin && pendingAccessCount > 0 && (
+        <div style={{
+          background: "rgba(245, 158, 11, 0.1)",
+          border: "1px solid rgba(245, 158, 11, 0.3)",
+          borderRadius: "10px",
+          padding: "12px 18px",
+          marginBottom: "16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "10px"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Lock size={18} color="#b45309" />
+            <span style={{ fontSize: "13.5px", color: "#92400e", fontWeight: 600 }}>
+              {pendingAccessCount} sales staff {pendingAccessCount === 1 ? "request" : "requests"} pending to unlock client details.
+            </span>
+          </div>
+          <Link 
+            href="/sales?tab=access-requests" 
+            style={{ 
+              fontSize: "12.5px", 
+              fontWeight: 600, 
+              color: "#b45309", 
+              textDecoration: "underline",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
+            }}
+          >
+            Review & Approve in Sales Portal →
+          </Link>
+        </div>
+      )}
 
       <div className={styles.searchBar}>
         <Search size={20} className={styles.searchIcon} />

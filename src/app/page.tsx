@@ -45,7 +45,8 @@ export default async function Dashboard() {
     projects,
     totalStaff,
     salesStaffCount,
-    activeStaffToday
+    activeStaffToday,
+    pendingClientAccessCount
   ] = await Promise.all([
     prisma.customer.count({ where: { status: { not: "INACTIVE" } } }),
     prisma.domainRegistration.count({ where: { status: "ACTIVE" } }),
@@ -76,6 +77,7 @@ export default async function Dashboard() {
     prisma.user.count({ where: { isActive: true } }),
     prisma.user.count({ where: { role: "SALES", isActive: true } }),
     prisma.attendance.count({ where: { date: todayStart } }),
+    prisma.clientAccessRequest.count({ where: { status: "PENDING" } }),
   ]);
 
   // Project Status Overview
@@ -196,8 +198,97 @@ export default async function Dashboard() {
           >
             <TrendingUp size={16} /> Sales Hub ({salesStaffCount} Reps)
           </Link>
+          <Link 
+            href="/sales?tab=access-requests" 
+            className="btn-secondary" 
+            style={{ 
+              display: "inline-flex", 
+              alignItems: "center", 
+              gap: "8px", 
+              padding: "9px 14px",
+              background: pendingClientAccessCount > 0 ? "rgba(245, 158, 11, 0.12)" : undefined,
+              borderColor: pendingClientAccessCount > 0 ? "#f59e0b" : undefined,
+              color: pendingClientAccessCount > 0 ? "#b45309" : undefined,
+              fontWeight: pendingClientAccessCount > 0 ? 600 : undefined
+            }}
+          >
+            <Shield size={16} /> Approvals {pendingClientAccessCount > 0 ? `(${pendingClientAccessCount} Pending)` : ""}
+          </Link>
         </div>
       </div>
+
+      {/* PENDING CLIENT ACCESS APPROVALS BANNER */}
+      {pendingClientAccessCount > 0 && (
+        <div style={{
+          background: "linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.06) 100%)",
+          border: "1px solid rgba(245, 158, 11, 0.35)",
+          borderRadius: "14px",
+          padding: "16px 20px",
+          marginBottom: "24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "14px",
+          boxShadow: "0 2px 8px rgba(245, 158, 11, 0.08)"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <div style={{
+              width: "42px",
+              height: "42px",
+              borderRadius: "10px",
+              background: "rgba(245, 158, 11, 0.2)",
+              color: "#b45309",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0
+            }}>
+              <Shield size={22} />
+            </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <strong style={{ fontSize: "15px", color: "#92400e" }}>
+                  {pendingClientAccessCount} Sales Staff Client Access {pendingClientAccessCount === 1 ? "Request" : "Requests"} Awaiting Approval
+                </strong>
+                <span style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  background: "#fef3c7",
+                  color: "#b45309",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  border: "1px solid #fde68a"
+                }}>
+                  ACTION REQUIRED
+                </span>
+              </div>
+              <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "var(--text-muted)" }}>
+                Sales representatives need your approval to access masked phone numbers, emails, and credentials for assigned accounts.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/sales?tab=access-requests"
+            className="btn-primary"
+            style={{
+              background: "#d97706",
+              borderColor: "#d97706",
+              color: "#ffffff",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "13px",
+              padding: "9px 18px",
+              fontWeight: 600,
+              borderRadius: "8px",
+              textDecoration: "none"
+            }}
+          >
+            Review & Approve Requests <ArrowRight size={15} />
+          </Link>
+        </div>
+      )}
 
       {/* Main Metrics Grid */}
       <div className={styles.metricsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
