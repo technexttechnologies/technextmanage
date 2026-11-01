@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon, Calendar, MonitorPlay, IndianRupee, Megaphone, LayoutDashboard, CreditCard, Monitor, Repeat, Folder, PieChart, X, UserCheck, Clock, CalendarCheck, Shield } from "lucide-react";
+import { Home, Users, Target, Briefcase, PhoneCall, RefreshCw, CheckSquare, FileText, Mail, Settings, FileSignature, ShoppingCart, Database, Globe, ExternalLink, LogOut, Receipt, HeadphonesIcon, Calendar, MonitorPlay, IndianRupee, Megaphone, LayoutDashboard, CreditCard, Monitor, Repeat, Folder, PieChart, X, UserCheck, Clock, CalendarCheck, Shield, TrendingUp } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
 import NotificationBell from "./NotificationBell";
@@ -54,6 +54,9 @@ export default function Sidebar({ user }: { user: any }) {
           <p className={styles.navSectionTitle}>Main</p>
           <Link href="/" className={`${styles.navItem} ${pathname === '/' ? styles.active : ''}`}>
             <Home size={20} /> Dashboard
+          </Link>
+          <Link href="/sales" className={`${styles.navItem} ${pathname.startsWith('/sales') ? styles.active : ''}`}>
+            <TrendingUp size={20} /> Sales Portal
           </Link>
           <Link href="/customers" className={`${styles.navItem} ${pathname.startsWith('/customers') ? styles.active : ''}`}>
             <Users size={20} /> Customers

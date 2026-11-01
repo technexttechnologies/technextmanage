@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { 
   UserCheck, Clock, CheckCircle2, AlertCircle, Calendar, 
-  Briefcase, Plus, X, LogOut, Shield, Award, Building, Phone, Mail 
+  Briefcase, Plus, X, LogOut, Shield, Award, Building, Phone, Mail, TrendingUp 
 } from "lucide-react";
 import styles from "./portal.module.css";
 import { clockIn, clockOut, submitLeaveRequest } from "../actions";
@@ -80,11 +81,18 @@ export default function EmployeePortalClient({
           </div>
         </div>
 
-        <div className={styles.logoWrapper}>
-          <img 
-            src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" 
-            alt="TechNext Technologies" 
-          />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+          <div className={styles.logoWrapper}>
+            <img 
+              src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" 
+              alt="TechNext Technologies" 
+            />
+          </div>
+          {["SALES", "SUPER_ADMIN", "ADMIN", "HEAD"].includes(employee.role) && (
+            <Link href="/sales" className="btn-secondary" style={{ fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(99, 91, 255, 0.08)", borderColor: "rgba(99, 91, 255, 0.2)", color: "var(--brand-primary)" }}>
+              <TrendingUp size={14} /> Open Sales Hub ↗
+            </Link>
+          )}
         </div>
       </div>
 

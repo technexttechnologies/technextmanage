@@ -31,6 +31,8 @@ model User {
   tasks             Task[]
   followUps         FollowUp[]
   projects          Project[]
+  salesProjects     Project[]          @relation("SalesProjects")
+  salesPackages     ServicePackage[]   @relation("SalesPackages")
   quotations        Quotation[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
@@ -138,8 +140,11 @@ model Project {
   progress        Int                @default(0) // 0-100
   status          String             @default("PROJECT_RECEIVED") // PROJECT_RECEIVED, REQUIREMENT_ANALYSIS, PLANNING, UI_UX_DESIGN, DEVELOPMENT, TESTING, CLIENT_REVIEW, REVISION, DEPLOYMENT, COMPLETED, ON_HOLD
   priority        String             @default("MEDIUM")
+  estimatedBudget Float?
   assignedToId    String?
   assignedTo      User?              @relation(fields: [assignedToId], references: [id])
+  salesRepId      String?
+  salesRep        User?              @relation("SalesProjects", fields: [salesRepId], references: [id])
   tasks           Task[]
   notes           ProjectNote[]
   hardware        ProjectHardware[]
@@ -579,6 +584,8 @@ model ServicePackage {
   isLifetime      Boolean  @default(false)
   contractPeriod  Int      // in months
   status          String   @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED
+  salesRepId      String?
+  salesRep        User?    @relation("SalesPackages", fields: [salesRepId], references: [id])
   assignedTeam    String?
   notes           String?  @db.Text
   createdAt       DateTime @default(now())
