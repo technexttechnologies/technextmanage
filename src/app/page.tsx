@@ -46,7 +46,9 @@ export default async function Dashboard() {
     totalStaff,
     salesStaffCount,
     activeStaffToday,
-    pendingClientAccessCount
+    pendingClientAccessCount,
+    totalPendingQuotes,
+    totalPendingInvoices
   ] = await Promise.all([
     prisma.customer.count({ where: { status: { not: "INACTIVE" } } }),
     prisma.domainRegistration.count({ where: { status: "ACTIVE" } }),
@@ -78,6 +80,8 @@ export default async function Dashboard() {
     prisma.user.count({ where: { role: "SALES", isActive: true } }),
     prisma.attendance.count({ where: { date: todayStart } }),
     prisma.clientAccessRequest.count({ where: { status: "PENDING" } }),
+    prisma.quotationRequest.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
+    prisma.invoiceRequest.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
   ]);
 
   // Project Status Overview
@@ -417,6 +421,50 @@ export default async function Dashboard() {
           <Link href="/packages" className={styles.cardLink}>
             View Packages <ArrowRight size={16} />
           </Link>
+        </div>
+
+        {/* Sales Operations & Staff Panel */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TrendingUp size={20} color="#10B981" />
+              <h2>Sales Operations Panel</h2>
+            </div>
+            <span style={{ fontSize: '11px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', padding: '3px 8px', borderRadius: '12px' }}>
+              {salesStaffCount} Sales Staff
+            </span>
+          </div>
+          <div className={styles.projectList}>
+            <div className={styles.projectItem}>
+              <span className={styles.statusLabel}>Pending Quotations</span>
+              <span className={styles.statusCount} style={{ color: totalPendingQuotes > 0 ? '#d97706' : 'inherit', fontWeight: totalPendingQuotes > 0 ? 700 : 500 }}>
+                {totalPendingQuotes}
+              </span>
+            </div>
+            <div className={styles.projectItem}>
+              <span className={styles.statusLabel}>Pending Invoices</span>
+              <span className={styles.statusCount} style={{ color: totalPendingInvoices > 0 ? '#d97706' : 'inherit', fontWeight: totalPendingInvoices > 0 ? 700 : 500 }}>
+                {totalPendingInvoices}
+              </span>
+            </div>
+            <div className={styles.projectItem}>
+              <span className={styles.statusLabel}>Client Access Requests</span>
+              <span className={styles.statusCount} style={{ color: pendingClientAccessCount > 0 ? '#ef4444' : 'inherit', fontWeight: pendingClientAccessCount > 0 ? 700 : 500 }}>
+                {pendingClientAccessCount}
+              </span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
+            <Link href="/sales" className={styles.cardLink} style={{ flex: 1, minWidth: '110px', textAlign: 'center' }}>
+              Sales Hub <ArrowRight size={16} />
+            </Link>
+            <Link href="/quotation-requests" className={styles.cardLink} style={{ flex: 1, minWidth: '110px', textAlign: 'center' }}>
+              Quotes <ArrowRight size={16} />
+            </Link>
+            <Link href="/invoice-requests" className={styles.cardLink} style={{ flex: 1, minWidth: '110px', textAlign: 'center' }}>
+              Invoices <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
 
         {/* Revenue Overview chart */}
