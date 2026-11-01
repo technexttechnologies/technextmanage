@@ -24,9 +24,44 @@ export async function middleware(request: NextRequest) {
 
   try {
     // Verify JWT in Edge environment
-    await jwtVerify(sessionCookie, encodedKey, {
+    const { payload } = await jwtVerify(sessionCookie, encodedKey, {
       algorithms: ['HS256'],
     });
+
+    const userRole = (payload.role as string) || '';
+
+    // SALE STAFF ACCESS RESTRICTION:
+    // If user is SALES, they only have access to the Sales Portal and their operational workspace
+    if (userRole === 'SALES') {
+      // If sales staff attempts to access the root Admin Dashboard, send to /sales
+      if (path === '/') {
+        return NextResponse.redirect(new URL('/sales', request.url));
+      }
+
+      // Block admin management areas (Employee Directory and Company Attendance Roster)
+      if (path === '/employees' || path === '/employees/attendance') {
+        return NextResponse.redirect(new URL('/sales', request.url));
+      }
+
+      // Block Admin & ERP modules
+      const adminOnlyPrefixes = [
+        '/settings',
+        '/erp',
+        '/users',
+        '/reseller',
+        '/integration',
+        '/campaigns',
+      ];
+
+      const isForbidden = adminOnlyPrefixes.some(
+        prefix => path === prefix || path.startsWith(`${prefix}/`)
+      );
+
+      if (isForbidden) {
+        return NextResponse.redirect(new URL('/sales', request.url));
+      }
+    }
+
     return NextResponse.next();
   } catch (err) {
     return NextResponse.redirect(new URL('/login', request.url));

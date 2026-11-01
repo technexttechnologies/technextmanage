@@ -28,6 +28,10 @@ export default async function StaffAttendancePage({
 
   const isAdminOrHR = ["SUPER_ADMIN", "ADMIN", "HR", "HEAD"].includes(session.role as string);
 
+  if (!isAdminOrHR) {
+    redirect("/employees/portal");
+  }
+
   const [employees, attendances, departments] = await Promise.all([
     prisma.user.findMany({
       where: { isActive: true },

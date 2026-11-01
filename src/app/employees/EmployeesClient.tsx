@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { 
   Users, UserCheck, Plus, Search, Mail, Phone, 
   Building, Clock, Calendar, KeyRound, Edit2, Trash2, 
-  Check, X, ShieldAlert, Award, FileText, CheckCircle2 
+  Check, X, ShieldAlert, Award, FileText, CheckCircle2, UserPlus, Zap
 } from "lucide-react";
 import styles from "./employees.module.css";
 import { 
@@ -62,6 +62,17 @@ export default function EmployeesClient({
   const [actionError, setActionError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [generatedPass, setGeneratedPass] = useState("");
+  const [newStaffPassword, setNewStaffPassword] = useState("TNT@" + Math.random().toString(36).substring(2, 6).toUpperCase() + "!2026");
+
+  // Check URL query parameter to auto-open Add Staff modal (e.g. from Admin Dashboard)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("add") === "1" || params.get("add") === "true") {
+        setIsAddModalOpen(true);
+      }
+    }
+  }, []);
 
   // Stats calculation
   const totalEmployees = employees.length;
@@ -442,15 +453,15 @@ export default function EmployeesClient({
 
                   <div className={styles.inputGroup}>
                     <label>System Role *</label>
-                    <select name="role" required defaultValue="DEVELOPER">
-                      <option value="DEVELOPER">Software Developer / Engineer</option>
-                      <option value="PROJECT">Project Manager</option>
-                      <option value="SALES">Sales Executive</option>
-                      <option value="SUPPORT">Technical Support Engineer</option>
-                      <option value="HR">Human Resources (HR)</option>
-                      <option value="HEAD">Department Head</option>
-                      <option value="ADMIN">Administrator</option>
-                      <option value="SUPER_ADMIN">Super Administrator</option>
+                    <select name="role" required defaultValue="SALES">
+                      <option value="SALES">💼 Sales Executive (Sales Portal Panel Access)</option>
+                      <option value="DEVELOPER">💻 Software Developer / Engineer</option>
+                      <option value="PROJECT">📋 Project Manager</option>
+                      <option value="SUPPORT">🎧 Technical Support Engineer</option>
+                      <option value="HR">👥 Human Resources (HR)</option>
+                      <option value="HEAD">🏢 Department Head</option>
+                      <option value="ADMIN">🛡️ Administrator (Admin Panel Access)</option>
+                      <option value="SUPER_ADMIN">👑 Super Administrator (Full System Control)</option>
                     </select>
                   </div>
                 </div>
@@ -502,9 +513,29 @@ export default function EmployeesClient({
                 </div>
 
                 <div className={styles.inputGroup}>
-                  <label>Initial Login Password *</label>
-                  <input type="text" name="password" required minLength={6} placeholder="e.g. TechNext@2026" />
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Encrypted with bcrypt hash.</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label style={{ margin: 0 }}>Initial Login Password *</label>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const pass = "TNT@" + Math.random().toString(36).substring(2, 6).toUpperCase() + "!" + (new Date().getFullYear());
+                        setNewStaffPassword(pass);
+                      }}
+                      style={{ background: 'transparent', border: 'none', color: 'var(--brand-primary)', fontSize: '12px', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <Zap size={13} /> Generate Password
+                    </button>
+                  </div>
+                  <input 
+                    type="text" 
+                    name="password" 
+                    required 
+                    minLength={6} 
+                    value={newStaffPassword}
+                    onChange={(e) => setNewStaffPassword(e.target.value)}
+                    placeholder="e.g. TechNext@2026" 
+                  />
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Encrypted with bcrypt hash. Share this password with the staff member to log in.</span>
                 </div>
               </div>
 

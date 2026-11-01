@@ -24,10 +24,19 @@ export async function login(prevState: any, formData: FormData) {
     return { error: "Invalid credentials." };
   }
 
+  if (user.isActive === false) {
+    return { error: "Your staff account has been deactivated. Please contact Super Admin." };
+  }
+
   // Create JWT session cookie
   await createSession(user.id, user.role, user.name);
 
-  // Redirect to dashboard on success
+  // Sales staff login directly into the Sales Portal Panel
+  if (user.role === "SALES") {
+    redirect("/sales");
+  }
+
+  // Super Admin & Admin redirect to Admin Panel
   redirect("/");
 }
 
