@@ -130,6 +130,7 @@ export async function updateCustomer(formData: FormData) {
   const notes = formData.get("notes") as string;
   const anydeskId = formData.get("anydeskId") as string;
   const teamviewerId = formData.get("teamviewerId") as string;
+  const pcLoginDetails = formData.get("pcLoginDetails") as string;
   const cleanPhone = phone ? phone.replace(/\s+/g, "") : phone;
 
   await prisma.customer.update({

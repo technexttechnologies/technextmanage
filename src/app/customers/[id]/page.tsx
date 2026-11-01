@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Building2, Phone, Mail, MapPin, Edit, FileText, ShoppingCart, RefreshCw, PhoneCall, ShieldCheck, MessageCircle, Package, Globe, Server, Lock, AlertCircle, Clock } from "lucide-react";
+import { ArrowLeft, Building2, Phone, Mail, MapPin, Edit, FileText, ShoppingCart, RefreshCw, PhoneCall, ShieldCheck, MessageCircle, Package, Globe, Server, Lock, AlertCircle, Clock, KeyRound } from "lucide-react";
 import { getWhatsAppLink, waTemplates } from "@/lib/whatsappTemplates";
 import styles from "./page.module.css";
 import EditCustomerButton from "./EditCustomerButton";
@@ -599,6 +599,34 @@ export default async function CustomerDetailsPage({
         </div>
 
         <div className={styles.sideCol}>
+          {/* Remote Support & Credentials Card */}
+          {(customer.anydeskId || customer.teamviewerId || customer.pcLoginDetails) && (
+            <section className={styles.credentialsCard}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                <KeyRound size={18} color="var(--brand-primary, #635bff)" />
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700 }}>Remote Support Credentials</h3>
+              </div>
+              {customer.anydeskId && (
+                <div className={styles.credRow}>
+                  <span className={styles.credLabel}>AnyDesk Address</span>
+                  <span className={styles.credValue}>{customer.anydeskId}</span>
+                </div>
+              )}
+              {customer.teamviewerId && (
+                <div className={styles.credRow}>
+                  <span className={styles.credLabel}>TeamViewer ID / Pass</span>
+                  <span className={styles.credValue}>{customer.teamviewerId}</span>
+                </div>
+              )}
+              {customer.pcLoginDetails && (
+                <div className={styles.credRow} style={{ marginBottom: 0 }}>
+                  <span className={styles.credLabel}>PC Login Details</span>
+                  <span className={styles.credValue} style={{ whiteSpace: 'pre-wrap' }}>{customer.pcLoginDetails}</span>
+                </div>
+              )}
+            </section>
+          )}
+
           {/* Quick Actions / Integration Card */}
           <section className={styles.card}>
             <h3>Aronium POS Sync</h3>
