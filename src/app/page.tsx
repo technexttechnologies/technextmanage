@@ -184,7 +184,7 @@ export default async function Dashboard() {
               display: "inline-flex", 
               alignItems: "center", 
               gap: "8px", 
-              background: "var(--brand-primary, #635bff)",
+              background: "var(--brand-accent, #4F46E5)",
               padding: "9px 16px",
               fontWeight: 600
             }}
@@ -309,7 +309,7 @@ export default async function Dashboard() {
               <h3>Company Staff Members</h3>
               <p className={styles.metricValue}>{totalStaff}</p>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                {salesStaffCount} Sales • {activeStaffToday} Active Today ↗
+                {salesStaffCount} Sales | {activeStaffToday} Active Today
               </span>
             </div>
           </div>
@@ -487,7 +487,7 @@ export default async function Dashboard() {
                       width: '100%', 
                       maxWidth: '48px', 
                       height: `${heightPercent}%`, 
-                      background: 'linear-gradient(180deg, var(--brand-primary, #635bff) 0%, rgba(99, 91, 255, 0.4) 100%)',
+                      background: 'linear-gradient(180deg, var(--brand-accent, #4F46E5) 0%, rgba(79, 70, 229, 0.35) 100%)',
                       borderRadius: '6px 6px 0 0',
                       transition: 'height 0.3s'
                     }} 
