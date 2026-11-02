@@ -44,6 +44,7 @@ export default function BillingDocumentForm({
   defaultType = "invoice",
   defaultCustomerId,
   defaultProjectId,
+  defaultProductId,
   initialDocument,
   isEdit = false,
 }: {
@@ -53,6 +54,7 @@ export default function BillingDocumentForm({
   defaultType?: string;
   defaultCustomerId?: string;
   defaultProjectId?: string;
+  defaultProductId?: string;
   initialDocument?: any;
   isEdit?: boolean;
 }) {
@@ -203,21 +205,39 @@ export default function BillingDocumentForm({
   );
 
   // Line items
-  const [items, setItems] = useState<LineItem[]>(
-    initialDocument?.items?.length > 0
-      ? initialDocument.items
-      : [
+  const [items, setItems] = useState<LineItem[]>(() => {
+    if (initialDocument?.items?.length > 0) {
+      return initialDocument.items;
+    }
+    if (defaultProductId && products.length > 0) {
+      const p = products.find((prod: any) => prod.id === defaultProductId);
+      if (p) {
+        return [
           {
-            name: "VERC-M-ANIM-WEBSITE DEV",
-            description: "Custom responsive web development with interactive animations & CMS integration.",
+            name: p.name,
+            code: p.sku || p.aroniumId || "",
+            description: p.description || `${p.name} - Official Product/Service item.`,
             quantity: 1,
-            unitPrice: 12000,
-            tax: "---",
-            discount: "-4500",
-            total: 7500,
+            unitPrice: p.sellingPrice || 0,
+            tax: p.taxRate ? `${p.taxRate}%` : "18%",
+            discount: "0",
+            total: p.sellingPrice || 0,
           }
-        ]
-  );
+        ];
+      }
+    }
+    return [
+      {
+        name: "VERC-M-ANIM-WEBSITE DEV",
+        description: "Custom responsive web development with interactive animations & CMS integration.",
+        quantity: 1,
+        unitPrice: 12000,
+        tax: "---",
+        discount: "-4500",
+        total: 7500,
+      }
+    ];
+  });
 
   const [totalDiscount, setTotalDiscount] = useState<number>(initialDocument?.totalDiscount ?? 200);
   const [scopeOfWork, setScopeOfWork] = useState<string>(

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Users, Target, PhoneCall, Briefcase } from "lucide-react";
+import { Plus, Users, Target, PhoneCall, Briefcase, Receipt } from "lucide-react";
 import styles from "./QuickActionFAB.module.css";
 import Link from "next/link";
 
@@ -22,6 +22,10 @@ export default function QuickActionFAB() {
       <div className={styles.fabContainer}>
         {/* Action Menu Items */}
         <div className={`${styles.actionMenu} ${isOpen ? styles.open : ""}`}>
+          <Link href="/billing/new?type=invoice" className={styles.actionItem} onClick={() => setIsOpen(false)}>
+            <span className={styles.actionLabel}>Generate Bill / Invoice</span>
+            <div className={styles.actionIcon} style={{ color: "#00a2ed" }}><Receipt size={20} /></div>
+          </Link>
           <Link href="/customers/new" className={styles.actionItem} onClick={() => setIsOpen(false)}>
             <span className={styles.actionLabel}>Add Customer</span>
             <div className={styles.actionIcon}><Users size={20} /></div>

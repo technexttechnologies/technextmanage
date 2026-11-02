@@ -9,9 +9,9 @@ import BillingDocumentForm from "./BillingDocumentForm";
 export default async function NewBillingDocumentPage({
   searchParams
 }: {
-  searchParams: Promise<{ type?: string; customerId?: string; projectId?: string }>;
+  searchParams: Promise<{ type?: string; customerId?: string; projectId?: string; productId?: string }>;
 }) {
-  const { type = "invoice", customerId, projectId } = await searchParams;
+  const { type = "invoice", customerId, projectId, productId } = await searchParams;
 
   const [customers, products, allProjects] = await Promise.all([
     prisma.customer.findMany({
@@ -65,6 +65,7 @@ export default async function NewBillingDocumentPage({
           defaultType={type}
           defaultCustomerId={customerId}
           defaultProjectId={projectId}
+          defaultProductId={productId}
         />
       </div>
     </div>

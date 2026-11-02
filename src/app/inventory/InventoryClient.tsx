@@ -19,7 +19,8 @@ import {
   X,
   IndianRupee,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Receipt
 } from "lucide-react";
 import styles from "./page.module.css";
 import { adjustStock } from "./actions";
@@ -138,6 +139,9 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <Link href="/billing?tab=products" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#00a2ed', borderColor: 'rgba(0, 162, 237, 0.3)' }}>
+            <Package size={16} color="#00a2ed" /> Aronium Products Console
+          </Link>
           <Link href="/inventory/reports" className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
             <BarChart3 size={16} /> Inventory Reports
           </Link>
@@ -362,6 +366,14 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
                     </td>
                     <td>
                       <div className={styles.actionBtnGroup}>
+                        <Link 
+                          href={`/billing/new?type=invoice&productId=${p.id}`}
+                          className="btn-primary"
+                          style={{ padding: "4px 8px", fontSize: "11px", fontWeight: 700, borderRadius: "4px", gap: "3px" }}
+                          title="Generate Bill for this item"
+                        >
+                          <Receipt size={12} /> Bill
+                        </Link>
                         <button 
                           type="button" 
                           onClick={() => setAdjustingProduct(p)} 

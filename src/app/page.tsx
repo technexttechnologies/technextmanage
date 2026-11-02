@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import ExecutiveDashboardWrapper from "@/components/dashboard/ExecutiveDashboardWrapper";
 import AroniumBillingConsole from "./billing/AroniumBillingConsole";
+import SalesPortalClient from "./sales/SalesPortalClient";
 
 export default async function Dashboard() {
   const session = await getSession();
@@ -59,7 +60,12 @@ export default async function Dashboard() {
     aroniumProducts,
     aroniumCustomers,
     aroniumUsers,
-    aroniumProjects
+    aroniumProjects,
+    salesQuotationRequests,
+    salesProjects,
+    salesServices,
+    salesAccessRequests,
+    salesCustomersRaw
   ] = await Promise.all([
     prisma.customer.count({ where: { status: { not: "INACTIVE" } } }),
     prisma.domainRegistration.count({ where: { status: "ACTIVE" } }),
@@ -141,6 +147,34 @@ export default async function Dashboard() {
         customerId: true, 
         customer: { select: { id: true, name: true } } 
       }
+    }),
+    // Sales Dashboard Integration Queries
+    prisma.quotationRequest.findMany({
+      include: { customer: true, requestedBy: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.project.findMany({
+      include: { customer: true, salesRep: true },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.servicePackage.findMany({
+      include: { customer: true, salesRep: true },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.clientAccessRequest.findMany({
+      include: { customer: true, requestedBy: true, reviewedBy: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.customer.findMany({
+      orderBy: { name: "asc" },
+      include: {
+        assignedTo: { select: { id: true, name: true } },
+        accessRequests: true,
+        quotationRequests: { select: { id: true } },
+        invoiceRequests: { select: { id: true } },
+        projects: { select: { id: true } },
+        packages: { select: { id: true } },
+      },
     })
   ]);
 
@@ -186,11 +220,20 @@ export default async function Dashboard() {
   ];
   const maxRev = Math.max(...revenueData.map(d => d.amount));
 
+  // Admin access formatting for sales customers
+  const formattedSalesCustomers = salesCustomersRaw.map(c => ({
+    ...c,
+    hasAccess: true,
+  }));
+
   return (
     <ExecutiveDashboardWrapper
       totalBilled={totalBilled}
       totalCollected={totalCollected}
       totalDue={totalDue}
+      pendingQuotesCount={totalPendingQuotes}
+      pendingInvoicesCount={totalPendingInvoices}
+      pendingAccessCount={pendingClientAccessCount}
       aroniumConsole={
         <AroniumBillingConsole 
           invoices={aroniumInvoices} 
@@ -201,6 +244,18 @@ export default async function Dashboard() {
           projects={aroniumProjects}
           metrics={{ totalBilled, totalCollected, totalDue, activeQuotes }}
           initialTab="DASHBOARD"
+        />
+      }
+      salesDashboard={
+        <SalesPortalClient
+          currentUser={session}
+          customers={formattedSalesCustomers}
+          accessRequests={salesAccessRequests}
+          quotationRequests={salesQuotationRequests}
+          invoiceRequests={aroniumInvoices}
+          projects={salesProjects}
+          services={salesServices}
+          isAdmin={isSuperAdmin}
         />
       }
       crmDashboard={

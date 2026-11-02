@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, Target, Briefcase, Menu } from "lucide-react";
+import { Home, Users, TrendingUp, Receipt, Menu } from "lucide-react";
 import styles from "./BottomNav.module.css";
 
 export default function BottomNav() {
   const pathname = usePathname() || "";
 
-  const isHome = pathname === "/" || pathname.startsWith("/sales");
+  const isHome = pathname === "/";
+  const isSales = pathname.startsWith("/sales");
+  const isBilling = pathname.startsWith("/billing") || pathname.startsWith("/management");
   const isCustomers = pathname.startsWith("/customers");
-  const isLeads = pathname.startsWith("/leads");
-  const isProjects = pathname.startsWith("/projects");
 
   return (
     <nav className={styles.bottomNav}>
@@ -20,32 +20,32 @@ export default function BottomNav() {
         className={`${styles.navItem} ${isHome ? styles.active : ""}`}
         aria-current={isHome ? "page" : undefined}
       >
-        <Home size={22} className={styles.icon} />
+        <Home size={21} className={styles.icon} />
         <span>Home</span>
+      </Link>
+      <Link 
+        href="/sales" 
+        className={`${styles.navItem} ${isSales ? styles.active : ""}`}
+        aria-current={isSales ? "page" : undefined}
+      >
+        <TrendingUp size={21} className={styles.icon} />
+        <span>Sales</span>
+      </Link>
+      <Link 
+        href="/billing" 
+        className={`${styles.navItem} ${isBilling ? styles.active : ""}`}
+        aria-current={isBilling ? "page" : undefined}
+      >
+        <Receipt size={21} className={styles.icon} />
+        <span>Billing</span>
       </Link>
       <Link 
         href="/customers" 
         className={`${styles.navItem} ${isCustomers ? styles.active : ""}`}
         aria-current={isCustomers ? "page" : undefined}
       >
-        <Users size={22} className={styles.icon} />
+        <Users size={21} className={styles.icon} />
         <span>Clients</span>
-      </Link>
-      <Link 
-        href="/leads" 
-        className={`${styles.navItem} ${isLeads ? styles.active : ""}`}
-        aria-current={isLeads ? "page" : undefined}
-      >
-        <Target size={22} className={styles.icon} />
-        <span>Leads</span>
-      </Link>
-      <Link 
-        href="/projects" 
-        className={`${styles.navItem} ${isProjects ? styles.active : ""}`}
-        aria-current={isProjects ? "page" : undefined}
-      >
-        <Briefcase size={22} className={styles.icon} />
-        <span>Projects</span>
       </Link>
       <button 
         type="button"
@@ -53,7 +53,7 @@ export default function BottomNav() {
         aria-label="Toggle Navigation Menu" 
         onClick={() => window.dispatchEvent(new Event('toggleMobileMenu'))}
       >
-        <Menu size={22} className={styles.icon} />
+        <Menu size={21} className={styles.icon} />
         <span>Menu</span>
       </button>
     </nav>

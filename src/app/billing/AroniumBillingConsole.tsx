@@ -1219,38 +1219,42 @@ export default function AroniumBillingConsole({
               </div>
             </div>
 
-            {/* Visual Bar Chart */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "8px", alignItems: "flex-end", height: "160px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)", paddingBottom: "8px" }}>
-              {monthlySales2026.months.map((m, idx) => {
-                const val = monthlySales2026.totals[idx];
-                const pct = monthlySales2026.maxVal > 0 ? Math.max(8, (val / monthlySales2026.maxVal) * 100) : 8;
-                return (
-                  <div key={m} style={{ display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end" }}>
-                    {val > 0 && (
-                      <span style={{ fontSize: "10px", fontWeight: 700, marginBottom: "4px", opacity: 0.9 }}>
-                        {val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}
-                      </span>
-                    )}
-                    <div 
-                      style={{ 
-                        width: "100%", 
-                        height: `${val > 0 ? pct : 4}%`, 
-                        backgroundColor: barColors[idx] || "#00a2ed", 
-                        borderRadius: "3px 3px 0 0",
-                        transition: "height 0.3s ease"
-                      }} 
-                      title={`${m} 2026: ₹${formatCurrency(val)}`}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+            {/* Visual Bar Chart Scroll Container for Mobile Responsiveness */}
+            <div style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch", paddingBottom: "4px" }}>
+              <div style={{ minWidth: "560px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "8px", alignItems: "flex-end", height: "160px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)", paddingBottom: "8px" }}>
+                  {monthlySales2026.months.map((m, idx) => {
+                    const val = monthlySales2026.totals[idx];
+                    const pct = monthlySales2026.maxVal > 0 ? Math.max(8, (val / monthlySales2026.maxVal) * 100) : 8;
+                    return (
+                      <div key={m} style={{ display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end" }}>
+                        {val > 0 && (
+                          <span style={{ fontSize: "10px", fontWeight: 700, marginBottom: "4px", opacity: 0.9 }}>
+                            {val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}
+                          </span>
+                        )}
+                        <div 
+                          style={{ 
+                            width: "100%", 
+                            height: `${val > 0 ? pct : 4}%`, 
+                            backgroundColor: barColors[idx] || "#00a2ed", 
+                            borderRadius: "3px 3px 0 0",
+                            transition: "height 0.3s ease"
+                          }} 
+                          title={`${m} 2026: ₹${formatCurrency(val)}`}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
 
-            {/* Month Labels */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "8px", marginTop: "6px", textAlign: "center", fontSize: "11px", opacity: 0.75, fontWeight: 600 }}>
-              {monthlySales2026.months.map(m => (
-                <div key={m}>{m}</div>
-              ))}
+                {/* Month Labels */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "8px", marginTop: "6px", textAlign: "center", fontSize: "11px", opacity: 0.75, fontWeight: 600 }}>
+                  {monthlySales2026.months.map(m => (
+                    <div key={m}>{m}</div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1315,6 +1319,40 @@ export default function AroniumBillingConsole({
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", borderTop: "1px solid rgba(148, 163, 184, 0.15)", paddingTop: "8px" }}>
                   <span>Active Quotations:</span>
                   <strong>{metrics.activeQuotes}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Integrated Live Deal & Sales Pipeline Card */}
+            <div className={styles.panelCard} style={{ padding: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <h3 style={{ fontSize: "14px", fontWeight: 700, margin: 0, color: "#10b981", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <TrendingUp size={16} /> Live Deal &amp; Sales Pipeline
+                </h3>
+                <Link href="/sales" style={{ fontSize: "11px", color: "#10b981", fontWeight: 700, textDecoration: "none" }}>
+                  Open Hub →
+                </Link>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                  <span>Active Client Projects:</span>
+                  <strong style={{ color: "#00a2ed" }}>{projects.filter(p => p.status !== "COMPLETED").length}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                  <span>Active Deal Quotations:</span>
+                  <strong style={{ color: "#6366f1" }}>{metrics.activeQuotes}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                  <span>Total Sales Force Users:</span>
+                  <strong>{users.filter(u => u.role === "SALES").length || users.length}</strong>
+                </div>
+                <div style={{ display: "flex", gap: "6px", marginTop: "4px", borderTop: "1px solid rgba(148, 163, 184, 0.15)", paddingTop: "10px" }}>
+                  <Link href="/sales?tab=quotations" className={styles.toolBtn} style={{ flex: 1, justifyContent: "center", fontSize: "11px", padding: "5px 8px", background: "rgba(16, 185, 129, 0.1)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.3)" }}>
+                    Review Quotes
+                  </Link>
+                  <Link href="/sales?tab=invoices" className={styles.toolBtn} style={{ flex: 1, justifyContent: "center", fontSize: "11px", padding: "5px 8px", background: "rgba(0, 162, 237, 0.1)", color: "#00a2ed", border: "1px solid rgba(0, 162, 237, 0.3)" }}>
+                    Review Invoices
+                  </Link>
                 </div>
               </div>
             </div>
