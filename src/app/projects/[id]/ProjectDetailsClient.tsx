@@ -1,14 +1,57 @@
 "use client";
 
-import { useState } from "react";
-import { MessageCircle, Copy, ExternalLink, Pin, Trash2, CheckCircle } from "lucide-react";
+import { useState, useTransition } from "react";
+import { MessageCircle, Copy, ExternalLink, Pin, Trash2, CheckCircle, Star, Send, CheckCircle2 } from "lucide-react";
 import styles from "./page.module.css";
-import { updateProjectStatus, addProjectNote, deleteProjectNote, togglePinNote, createMilestone, completeMilestone, updateProjectWarranty, deleteProject } from "../actions";
+import { 
+  updateProjectStatus, 
+  addProjectNote, 
+  deleteProjectNote, 
+  togglePinNote, 
+  createMilestone, 
+  completeMilestone, 
+  updateProjectWarranty, 
+  deleteProject,
+  dispatchProjectWhatsAppUpdate,
+  dispatchProjectWhatsAppReview
+} from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
 
 export default function ProjectDetailsClient({ project }: { project: any }) {
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [isSendingWA, startSendingWA] = useTransition();
+  const [waNotice, setWaNotice] = useState<string | null>(null);
+
+  const handleSendWAUpdate = () => {
+    startSendingWA(async () => {
+      try {
+        const res = await dispatchProjectWhatsAppUpdate(project.id);
+        setWaNotice("WhatsApp progress update sent / logged successfully!");
+        if (res.waLink && res.result?.status === "SIMULATED") {
+          window.open(res.waLink, "_blank");
+        }
+        setTimeout(() => setWaNotice(null), 4000);
+      } catch (err: any) {
+        setWaNotice(err.message || "Failed to dispatch WhatsApp update");
+      }
+    });
+  };
+
+  const handleSendWAReview = () => {
+    startSendingWA(async () => {
+      try {
+        const res = await dispatchProjectWhatsAppReview(project.id);
+        setWaNotice("Google review invitation sent / logged on WhatsApp!");
+        if (res.waLink && res.result?.status === "SIMULATED") {
+          window.open(res.waLink, "_blank");
+        }
+        setTimeout(() => setWaNotice(null), 4000);
+      } catch (err: any) {
+        setWaNotice(err.message || "Failed to dispatch review request");
+      }
+    });
+  };
 
   const formatStatus = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
@@ -312,17 +355,52 @@ technext`;
       {/* RIGHT COLUMN */}
       <div>
         <div className={styles.whatsappCard}>
-          <h3><MessageCircle size={20} /> Share via WhatsApp</h3>
-          <p>The system will automatically generate a highly formatted, professional text template containing the tracking link.</p>
+          <h3><MessageCircle size={20} /> WhatsApp Automation & Sharing</h3>
+          <p>Instantly notify the customer with an automated formatted status report, live tracking link, or request a 5-star Google review.</p>
+          
+          {waNotice && (
+            <div style={{
+              background: '#DCFCE7',
+              color: '#166534',
+              padding: '10px 12px',
+              borderRadius: '6px',
+              fontSize: '12.5px',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <CheckCircle2 size={15} />
+              {waNotice}
+            </div>
+          )}
+
           <div className={styles.whatsappActions}>
-            <button type="button" onClick={openWhatsApp} className={styles.whatsappBtn}>
-              <ExternalLink size={16} /> Open WhatsApp Web
+            <button 
+              type="button" 
+              onClick={handleSendWAUpdate} 
+              disabled={isSendingWA} 
+              className={styles.whatsappBtn}
+            >
+              <Send size={15} /> {isSendingWA ? "Sending..." : "Send Progress Update"}
+            </button>
+            <button 
+              type="button" 
+              onClick={handleSendWAReview} 
+              disabled={isSendingWA} 
+              className={styles.secondaryBtn}
+              style={{ background: '#FEF3C7', color: '#92400E', borderColor: '#FDE68A' }}
+            >
+              <Star size={15} color="#D97706" /> Request Google Review
+            </button>
+            <button type="button" onClick={openWhatsApp} className={styles.secondaryBtn}>
+              <ExternalLink size={15} /> Open in WhatsApp Web
             </button>
             <button type="button" onClick={copyToClipboard} className={styles.secondaryBtn}>
-              <Copy size={16} /> {copied ? "Copied!" : "Copy Message"}
+              <Copy size={15} /> {copied ? "Copied!" : "Copy Message"}
             </button>
             <button type="button" onClick={copyLink} className={styles.secondaryBtn}>
-              <Copy size={16} /> {linkCopied ? "Link Copied!" : "Copy Tracking Link"}
+              <Copy size={15} /> {linkCopied ? "Link Copied!" : "Copy Tracking Link"}
             </button>
           </div>
         </div>

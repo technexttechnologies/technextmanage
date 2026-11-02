@@ -7,6 +7,11 @@ import { redirect } from "next/navigation";
 import { uploadPublicFile } from "@/lib/cloudinaryStorage";
 import { sendAdminNotification, sendCustomerStatusUpdate } from "@/lib/mailer";
 import { parseQuotationPdf } from "@/lib/aiQuotationParser";
+import { 
+  sendWhatsAppNotification, 
+  buildInvoiceNotificationMessage, 
+  getAppUrl 
+} from "@/lib/whatsapp";
 
 export async function createInvoiceRequest(formData: FormData) {
   const session = await getSession();
@@ -120,6 +125,27 @@ export async function updateInvoiceStatus(formData: FormData) {
       request.pdfUrl,
       request.id
     );
+  }
+
+  if (request.customer?.phone) {
+    try {
+      const trackingUrl = `${getAppUrl()}/track/${request.id}`;
+      const waMsg = buildInvoiceNotificationMessage({
+        customerName: request.customer.name,
+        invoiceNo: request.aroniumInvoiceNo || request.id.substring(0, 8).toUpperCase(),
+        amount: request.amountRequested,
+        trackingUrl,
+      });
+      await sendWhatsAppNotification({
+        phone: request.customer.phone,
+        recipientName: request.customer.name,
+        message: waMsg,
+        triggerType: "INVOICE",
+        customerId: request.customer.id,
+      });
+    } catch (waErr) {
+      console.error("[WhatsApp Invoice Notification Error]", waErr);
+    }
   }
 
   revalidatePath(`/invoice-requests/${id}`);

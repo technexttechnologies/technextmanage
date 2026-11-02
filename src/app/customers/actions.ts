@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 import { findExistingCustomer } from "@/lib/customerDedup";
+import { 
+  sendWhatsAppNotification, 
+  buildCustomerPortalMessage, 
+  getAppUrl 
+} from "@/lib/whatsapp";
 
 export async function createCustomer(formData: FormData) {
   // Hardcode assignment for now until auth is added
@@ -86,6 +91,26 @@ export async function createCustomer(formData: FormData) {
       portalToken,
     }
   });
+
+  if (cleanPhone) {
+    try {
+      const portalUrl = `${getAppUrl()}/portal/${portalToken}`;
+      const waMsg = buildCustomerPortalMessage({
+        customerName: name,
+        companyName: company,
+        portalUrl,
+      });
+      await sendWhatsAppNotification({
+        phone: cleanPhone,
+        recipientName: name,
+        message: waMsg,
+        triggerType: "CUSTOMER_PORTAL",
+        customerId: customer.id,
+      });
+    } catch (waErr) {
+      console.error("[WhatsApp Customer Portal Error]", waErr);
+    }
+  }
 
   if (email) {
     try {

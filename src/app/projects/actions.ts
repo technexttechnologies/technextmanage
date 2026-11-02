@@ -4,41 +4,112 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
+import { 
+  sendWhatsAppNotification, 
+  buildProjectUpdateMessage, 
+  buildCustomerReviewMessage, 
+  getWhatsAppLink,
+  getAppUrl 
+} from "@/lib/whatsapp";
 
 function formatStatus(status: string) {
   return status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 
 async function notifyCustomer(project: any, eventType: string, customMessage: string = "") {
-  if (!project.customer?.email) return;
+  const trackingLink = `${getAppUrl()}/track/${project.id}`;
 
-  const trackingLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/track/${project.id}`;
-  const { templates } = await import("@/lib/email-templates");
-  
-  let bodyContent = "";
-  if (eventType === "CREATED") {
-    bodyContent = templates.projectKickoff({ 
-      name: project.name, 
-      managerName: "TechNext Projects Team", 
-      managerEmail: "info.technexttech@gmail.com" 
-    });
-  } else if (eventType === "DELIVERED") {
-    bodyContent = templates.projectCompletion({ name: project.name });
-  } else {
-    bodyContent = templates.projectProgressUpdate({ 
-      name: project.name, 
-      progress: project.progress || 0, 
-      completedTasks: [customMessage] 
-    });
+  // 1. Email Notification
+  if (project.customer?.email) {
+    try {
+      const { templates } = await import("@/lib/email-templates");
+      let bodyContent = "";
+      if (eventType === "CREATED") {
+        bodyContent = templates.projectKickoff({ 
+          name: project.name, 
+          managerName: "TechNext Projects Team", 
+          managerEmail: "info.technexttech@gmail.com" 
+        });
+      } else if (eventType === "DELIVERED") {
+        bodyContent = templates.projectCompletion({ name: project.name });
+      } else {
+        bodyContent = templates.projectProgressUpdate({ 
+          name: project.name, 
+          progress: project.progress || 0, 
+          completedTasks: [customMessage] 
+        });
+      }
+
+      const html = generateTechnextEmailHtml(
+        `Project Update: ${project.name}`,
+        bodyContent,
+        { text: "Track My Project", url: trackingLink }
+      );
+
+      await sendEmail(project.customer.email, `Technext Update: ${project.name}`, html);
+    } catch (emailErr) {
+      console.error("[Email Notification Error]", emailErr);
+    }
   }
 
-  const html = generateTechnextEmailHtml(
-    `Project Update: ${project.name}`,
-    bodyContent,
-    { text: "Track My Project", url: trackingLink }
-  );
+  // 2. Automated WhatsApp Notification
+  if (project.customer?.phone) {
+    try {
+      const customerName = project.customer.name || "Valued Client";
 
-  await sendEmail(project.customer.email, `Technext Update: ${project.name}`, html);
+      if (eventType === "DELIVERED") {
+        const completionMsg = buildProjectUpdateMessage({
+          customerName,
+          projectName: project.name,
+          status: project.status || "COMPLETED",
+          progress: 100,
+          trackingUrl: trackingLink,
+          customNote: customMessage || "Your project deliverables have been finalized, tested, and deployed!"
+        });
+
+        await sendWhatsAppNotification({
+          phone: project.customer.phone,
+          recipientName: customerName,
+          message: completionMsg,
+          triggerType: "PROJECT_UPDATE",
+          customerId: project.customer.id
+        });
+
+        // Trigger Google Review invitation
+        const reviewMsg = buildCustomerReviewMessage({
+          customerName,
+          projectName: project.name
+        });
+
+        await sendWhatsAppNotification({
+          phone: project.customer.phone,
+          recipientName: customerName,
+          message: reviewMsg,
+          triggerType: "CUSTOMER_REVIEW",
+          customerId: project.customer.id
+        });
+      } else {
+        const updateMsg = buildProjectUpdateMessage({
+          customerName,
+          projectName: project.name,
+          status: project.status || "PROJECT_RECEIVED",
+          progress: project.progress || 0,
+          trackingUrl: trackingLink,
+          customNote: customMessage || undefined
+        });
+
+        await sendWhatsAppNotification({
+          phone: project.customer.phone,
+          recipientName: customerName,
+          message: updateMsg,
+          triggerType: "PROJECT_UPDATE",
+          customerId: project.customer.id
+        });
+      }
+    } catch (waErr) {
+      console.error("[WhatsApp Notification Error]", waErr);
+    }
+  }
 }
 
 export async function createProject(formData: FormData) {
@@ -288,4 +359,71 @@ export async function deleteProjectHardware(hardwareId: string, projectId: strin
     where: { id: hardwareId }
   });
   revalidatePath(`/projects/${projectId}`);
+}
+
+export async function dispatchProjectWhatsAppUpdate(projectId: string) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: { customer: true }
+  });
+
+  if (!project || !project.customer?.phone) {
+    throw new Error("Project or customer phone number not found.");
+  }
+
+  const customerName = project.customer.name || "Valued Client";
+  const trackingLink = `${getAppUrl()}/track/${project.id}`;
+
+  const message = buildProjectUpdateMessage({
+    customerName,
+    projectName: project.name,
+    status: project.status || "IN_PROGRESS",
+    progress: project.progress || 0,
+    trackingUrl: trackingLink
+  });
+
+  const result = await sendWhatsAppNotification({
+    phone: project.customer.phone,
+    recipientName: customerName,
+    message,
+    triggerType: "PROJECT_UPDATE",
+    customerId: project.customer.id,
+    forceSend: true
+  });
+
+  const waLink = getWhatsAppLink(project.customer.phone, message);
+
+  revalidatePath(`/projects/${projectId}`);
+  return { success: true, result, waLink, message };
+}
+
+export async function dispatchProjectWhatsAppReview(projectId: string) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: { customer: true }
+  });
+
+  if (!project || !project.customer?.phone) {
+    throw new Error("Project or customer phone number not found.");
+  }
+
+  const customerName = project.customer.name || "Valued Client";
+  const message = buildCustomerReviewMessage({
+    customerName,
+    projectName: project.name
+  });
+
+  const result = await sendWhatsAppNotification({
+    phone: project.customer.phone,
+    recipientName: customerName,
+    message,
+    triggerType: "CUSTOMER_REVIEW",
+    customerId: project.customer.id,
+    forceSend: true
+  });
+
+  const waLink = getWhatsAppLink(project.customer.phone, message);
+
+  revalidatePath(`/projects/${projectId}`);
+  return { success: true, result, waLink, message };
 }

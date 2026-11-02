@@ -11,7 +11,7 @@ import {
   Receipt, HeadphonesIcon, Calendar, MonitorPlay, IndianRupee, 
   Megaphone, LayoutDashboard, CreditCard, Monitor, Repeat, 
   Folder, PieChart, X, UserCheck, Clock, CalendarCheck, 
-  Shield, TrendingUp, UserPlus, ShieldCheck 
+  Shield, TrendingUp, UserPlus, ShieldCheck, MessageSquare 
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
@@ -308,7 +308,10 @@ export default function Sidebar({ user }: { user: any }) {
                 <Link href="/campaigns" className={`${styles.navItem} ${pathname.startsWith('/campaigns') ? styles.active : ''}`}>
                   <Megaphone size={20} /> Campaigns
                 </Link>
-                <Link href="/settings" className={`${styles.navItem} ${pathname.startsWith('/settings') ? styles.active : ''}`}>
+                <Link href="/settings/whatsapp" className={`${styles.navItem} ${pathname === '/settings/whatsapp' ? styles.active : ''}`}>
+                  <MessageSquare size={20} style={{ color: "#25D366" }} /> WhatsApp Automation
+                </Link>
+                <Link href="/settings" className={`${styles.navItem} ${pathname.startsWith('/settings') && pathname !== '/settings/whatsapp' ? styles.active : ''}`}>
                   <Settings size={20} /> System Settings
                 </Link>
               </div>

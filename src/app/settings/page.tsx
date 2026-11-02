@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
-import { Shield, Settings as SettingsIcon, Users } from "lucide-react";
+import { Shield, Settings as SettingsIcon, Users, MessageSquare } from "lucide-react";
 import styles from "./page.module.css";
 import { updatePlatformSettings } from "./actions";
 import Link from "next/link";
@@ -54,9 +54,34 @@ export default async function SettingsPage() {
 
         <div className={styles.column}>
           <section className={styles.card}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <h2 className={styles.cardTitle} style={{ margin: 0 }}>
+                <MessageSquare size={20} style={{ color: '#25D366' }} />
+                WhatsApp Message Automation
+              </h2>
+              <span style={{ 
+                background: settings?.whatsappProvider === "OFF" ? '#EFF6FF' : '#DCFCE7', 
+                color: settings?.whatsappProvider === "OFF" ? '#1E40AF' : '#166534',
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: '6px'
+              }}>
+                {settings?.whatsappProvider === "OFF" ? "1-Click Direct" : `${settings?.whatsappProvider} Active`}
+              </span>
+            </div>
+            <p style={{color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px'}}>
+              Auto-send WhatsApp alerts for project progress, service requests, Google reviews, and customer portal links.
+            </p>
+            <Link href="/settings/whatsapp" className="btn-primary" style={{display: 'flex', justifyContent: 'center', gap: '8px', background: '#25D366', borderColor: '#25D366'}}>
+              <MessageSquare size={18} /> Configure WhatsApp Automation
+            </Link>
+          </section>
+
+          <section className={styles.card} style={{marginTop: 'var(--spacing-6)'}}>
             <h2 className={styles.cardTitle}>
               <SettingsIcon size={20} />
-              Communication Settings
+              Message Templates
             </h2>
             <p style={{color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px'}}>
               Configure WhatsApp and Email templates for automated customer engagement.

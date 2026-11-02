@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 import { templates } from "@/lib/email-templates";
+import { 
+  sendWhatsAppNotification, 
+  buildServiceRequestMessage, 
+  getAppUrl 
+} from "@/lib/whatsapp";
 
 export async function createServicePackage(formData: FormData) {
   const customerId = formData.get("customerId") as string;
@@ -48,6 +53,30 @@ export async function createServicePackage(formData: FormData) {
       { text: "View Client Portal", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${packageRecord.customer.portalToken}` }
     );
     await sendEmail(packageRecord.customer.email, `Package Activated: ${packageRecord.packageName}`, html);
+  }
+
+  if (packageRecord.customer?.phone) {
+    try {
+      const portalUrl = packageRecord.customer.portalToken ? `${getAppUrl()}/portal/${packageRecord.customer.portalToken}` : undefined;
+      const waMsg = buildServiceRequestMessage({
+        customerName: packageRecord.customer.name,
+        serviceName: packageRecord.packageName,
+        packageType: packageRecord.packageType,
+        price: packageRecord.packagePrice,
+        contractPeriod: packageRecord.contractPeriod,
+        isLifetime: packageRecord.isLifetime,
+        portalUrl,
+      });
+      await sendWhatsAppNotification({
+        phone: packageRecord.customer.phone,
+        recipientName: packageRecord.customer.name,
+        message: waMsg,
+        triggerType: "SERVICE_REQUEST",
+        customerId: packageRecord.customer.id,
+      });
+    } catch (waErr) {
+      console.error("[WhatsApp Service Package Activation Error]", waErr);
+    }
   }
 
   revalidatePath("/packages");

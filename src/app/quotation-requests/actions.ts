@@ -7,6 +7,11 @@ import { redirect } from "next/navigation";
 import { uploadPublicFile } from "@/lib/cloudinaryStorage";
 import { sendAdminNotification, sendCustomerStatusUpdate } from "@/lib/mailer";
 import { parseQuotationPdf } from "@/lib/aiQuotationParser";
+import { 
+  sendWhatsAppNotification, 
+  buildQuotationNotificationMessage, 
+  getAppUrl 
+} from "@/lib/whatsapp";
 
 export async function createQuotationRequest(formData: FormData) {
   const session = await getSession();
@@ -108,6 +113,27 @@ export async function updateQuotationStatus(formData: FormData) {
     request.pdfUrl,
     request.id
   );
+
+  if (request.customer?.phone) {
+    try {
+      const trackingUrl = `${getAppUrl()}/track/${request.id}`;
+      const waMsg = buildQuotationNotificationMessage({
+        customerName: request.customer.name,
+        quoteNo: request.aroniumQuotationNo || request.id.substring(0, 8).toUpperCase(),
+        amount: request.subtotal || 0,
+        trackingUrl,
+      });
+      await sendWhatsAppNotification({
+        phone: request.customer.phone,
+        recipientName: request.customer.name,
+        message: waMsg,
+        triggerType: "QUOTATION",
+        customerId: request.customer.id,
+      });
+    } catch (waErr) {
+      console.error("[WhatsApp Quotation Notification Error]", waErr);
+    }
+  }
 
   revalidatePath(`/quotation-requests/${id}`);
   revalidatePath("/quotation-requests");

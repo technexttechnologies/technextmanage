@@ -110,6 +110,7 @@ model Customer {
   appointments      Appointment[]
   portalToken       String?            @unique
   accessRequests    ClientAccessRequest[]
+  whatsAppLogs      WhatsAppLog[]
   
   // ERP Relations
   erpMails          ErpMail[]
@@ -334,6 +335,20 @@ model SystemSettings {
   enquirySheetUrl    String?
   enquirySyncEnabled Boolean  @default(false)
   geminiApiKey       String?
+  
+  // WhatsApp Automation Settings
+  whatsappProvider     String   @default("OFF") // OFF, META, ULTRAMSG, GENERIC
+  whatsappApiUrl       String?
+  whatsappInstanceId   String?  // Meta Phone Number ID or UltraMsg Instance ID
+  whatsappApiKey       String?  // Meta Access Token or UltraMsg Token
+  whatsappSenderNumber String?
+  googleReviewUrl      String?  @default("https://g.page/r/Cb3TAmXgJGHWEBM/review")
+  waAutoProjectUpdate  Boolean  @default(true)
+  waAutoServiceRequest Boolean  @default(true)
+  waAutoCustomerReview Boolean  @default(true)
+  waAutoCustomerPortal Boolean  @default(true)
+  waAutoInvoice        Boolean  @default(true)
+  
   updatedAt          DateTime @updatedAt
 }
 
@@ -345,6 +360,20 @@ model EmailLog {
   status    String // SENT, FAILED
   error     String?
   createdAt DateTime @default(now())
+}
+
+model WhatsAppLog {
+  id            String    @id @default(cuid())
+  phone         String
+  recipientName String?
+  message       String    @db.Text
+  triggerType   String    // PROJECT_UPDATE, SERVICE_REQUEST, CUSTOMER_REVIEW, CUSTOMER_PORTAL, INVOICE, QUOTATION, TICKET, MANUAL, TEST
+  status        String    // SENT, FAILED, SIMULATED
+  provider      String    // META, ULTRAMSG, GENERIC, MANUAL
+  error         String?   @db.Text
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
 }
 
 model Campaign {

@@ -6,6 +6,15 @@ import { revalidatePath } from "next/cache";
 import { sendAdminNotification, sendEmail, generateTechnextEmailHtml } from "@/lib/mailer";
 import { findExistingCustomer } from "@/lib/customerDedup";
 import crypto from "crypto";
+import { 
+  sendWhatsAppNotification, 
+  buildProjectUpdateMessage, 
+  buildServiceRequestMessage,
+  buildCustomerPortalMessage,
+  buildCustomerReviewMessage,
+  getWhatsAppLink,
+  getAppUrl 
+} from "@/lib/whatsapp";
 
 // 1. Submit Quotation Request
 export async function requestQuotation(formData: FormData) {
@@ -208,7 +217,7 @@ export async function requestProject(formData: FormData) {
     });
 
     if (project.customer?.email) {
-      const trackingLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/track/${project.id}`;
+      const trackingLink = `${getAppUrl()}/track/${project.id}`;
       const emailContent = `
         <p>Dear ${project.customer.name},</p>
         <p>We are delighted to confirm that your project <strong>"${project.name}"</strong> has been officially received and initiated by our sales team.</p>
@@ -222,6 +231,25 @@ export async function requestProject(formData: FormData) {
         { text: "Track Project Status", url: trackingLink }
       );
       await sendEmail(project.customer.email, `TechNext: Project Initiated - ${project.name}`, html);
+    }
+
+    if (project.customer?.phone) {
+      const trackingLink = `${getAppUrl()}/track/${project.id}`;
+      const waMsg = buildProjectUpdateMessage({
+        customerName: project.customer.name,
+        projectName: project.name,
+        status: "PROJECT_RECEIVED",
+        progress: 5,
+        trackingUrl: trackingLink,
+        customNote: "Your project has been officially initiated by our sales team and assigned for technical onboarding."
+      });
+      await sendWhatsAppNotification({
+        phone: project.customer.phone,
+        recipientName: project.customer.name,
+        message: waMsg,
+        triggerType: "PROJECT_UPDATE",
+        customerId: project.customer.id
+      });
     }
   } catch (err) {
     console.error("Non-blocking notification error:", err);
@@ -303,9 +331,29 @@ export async function requestService(formData: FormData) {
       const html = generateTechnextEmailHtml(
         `Service Package Activated: ${pkg.packageName}`,
         emailContent,
-        { text: "View Customer Portal", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${pkg.customer.portalToken}` }
+        { text: "View Customer Portal", url: `${getAppUrl()}/portal/${pkg.customer.portalToken}` }
       );
       await sendEmail(pkg.customer.email, `TechNext: Service Activated - ${pkg.packageName}`, html);
+    }
+
+    if (pkg.customer?.phone) {
+      const portalUrl = pkg.customer.portalToken ? `${getAppUrl()}/portal/${pkg.customer.portalToken}` : undefined;
+      const waMsg = buildServiceRequestMessage({
+        customerName: pkg.customer.name,
+        serviceName: pkg.packageName,
+        packageType: pkg.packageType,
+        price: pkg.packagePrice,
+        contractPeriod: pkg.contractPeriod,
+        isLifetime: pkg.isLifetime,
+        portalUrl
+      });
+      await sendWhatsAppNotification({
+        phone: pkg.customer.phone,
+        recipientName: pkg.customer.name,
+        message: waMsg,
+        triggerType: "SERVICE_REQUEST",
+        customerId: pkg.customer.id
+      });
     }
   } catch (err) {
     console.error("Non-blocking notification error:", err);
@@ -372,6 +420,26 @@ export async function quickCreateCustomer(formData: FormData) {
       assignedToId: session.userId,
     },
   });
+
+  if (newCustomer.phone) {
+    try {
+      const portalUrl = `${getAppUrl()}/portal/${portalToken}`;
+      const waMsg = buildCustomerPortalMessage({
+        customerName: newCustomer.name,
+        companyName: newCustomer.company,
+        portalUrl,
+      });
+      await sendWhatsAppNotification({
+        phone: newCustomer.phone,
+        recipientName: newCustomer.name,
+        message: waMsg,
+        triggerType: "CUSTOMER_PORTAL",
+        customerId: newCustomer.id,
+      });
+    } catch (waErr) {
+      console.error("[WhatsApp Customer Portal Error]", waErr);
+    }
+  }
 
   revalidatePath("/sales");
   revalidatePath("/customers");
@@ -534,4 +602,76 @@ export async function reviewClientAccess(
   revalidatePath("/customers");
   revalidatePath(`/customers/${existingRequest.customerId}`);
   return { success: true };
+}
+
+// 8. 1-Click Send Customer Portal Link via WhatsApp
+export async function dispatchCustomerPortalWhatsApp(customerId: string) {
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+  });
+
+  if (!customer || !customer.phone) {
+    throw new Error("Customer or phone number not found.");
+  }
+
+  let token = customer.portalToken;
+  if (!token) {
+    token = crypto.randomBytes(16).toString("hex");
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: { portalToken: token },
+    });
+  }
+
+  const portalUrl = `${getAppUrl()}/portal/${token}`;
+  const message = buildCustomerPortalMessage({
+    customerName: customer.name,
+    companyName: customer.company,
+    portalUrl,
+  });
+
+  const result = await sendWhatsAppNotification({
+    phone: customer.phone,
+    recipientName: customer.name,
+    message,
+    triggerType: "CUSTOMER_PORTAL",
+    customerId: customer.id,
+    forceSend: true,
+  });
+
+  const waLink = getWhatsAppLink(customer.phone, message);
+
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath("/sales");
+  return { success: true, result, waLink, message };
+}
+
+// 9. 1-Click Send Google Review Request via WhatsApp
+export async function dispatchCustomerReviewWhatsApp(customerId: string) {
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+  });
+
+  if (!customer || !customer.phone) {
+    throw new Error("Customer or phone number not found.");
+  }
+
+  const message = buildCustomerReviewMessage({
+    customerName: customer.name,
+  });
+
+  const result = await sendWhatsAppNotification({
+    phone: customer.phone,
+    recipientName: customer.name,
+    message,
+    triggerType: "CUSTOMER_REVIEW",
+    customerId: customer.id,
+    forceSend: true,
+  });
+
+  const waLink = getWhatsAppLink(customer.phone, message);
+
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath("/sales");
+  return { success: true, result, waLink, message };
 }

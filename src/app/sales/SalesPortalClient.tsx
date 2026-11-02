@@ -8,7 +8,7 @@ import {
   CheckCircle2, Clock, AlertCircle, X, ExternalLink,
   Building, User, IndianRupee, Calendar, ArrowRight,
   ShieldCheck, RefreshCw, Send, Layers, HelpCircle,
-  Lock, KeyRound, Shield, Check, UserCheck
+  Lock, KeyRound, Shield, Check, UserCheck, MessageSquare
 } from "lucide-react";
 import styles from "./sales.module.css";
 import { 
@@ -1173,6 +1173,18 @@ export default function SalesPortalClient({
                           >
                             + Service
                           </button>
+                          {c.phone && (
+                            <a
+                              href={`https://wa.me/${c.phone.replace(/\D/g, '').length === 10 ? '91' + c.phone.replace(/\D/g, '') : c.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${c.name} 👋, here is your secure client portal link from Technext Technologies:\nhttps://technextmanage.vercel.app/portal/${c.portalToken || ''}`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn-secondary"
+                              style={{ fontSize: "11px", padding: "4px 8px", background: "#25D366", color: "#FFFFFF", borderColor: "#25D366", display: "inline-flex", alignItems: "center", gap: "4px", textDecoration: "none" }}
+                              title="Send Client Portal link via WhatsApp"
+                            >
+                              <MessageSquare size={11} /> Portal
+                            </a>
+                          )}
                         </div>
                       ) : (
                         <div>

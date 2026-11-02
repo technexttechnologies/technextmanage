@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Building2, Phone, Mail, MapPin, Edit, FileText, ShoppingCart, RefreshCw, PhoneCall, ShieldCheck, MessageCircle, Package, Globe, Server, Lock, AlertCircle, Clock, KeyRound } from "lucide-react";
+import { ArrowLeft, Building2, Phone, Mail, MapPin, Edit, FileText, ShoppingCart, RefreshCw, PhoneCall, ShieldCheck, MessageCircle, Package, Globe, Server, Lock, AlertCircle, Clock, KeyRound, Star } from "lucide-react";
 import { getWhatsAppLink, waTemplates } from "@/lib/whatsappTemplates";
 import styles from "./page.module.css";
 import EditCustomerButton from "./EditCustomerButton";
@@ -258,6 +258,18 @@ export default async function CustomerDetailsPage({
             style={{ backgroundColor: '#10B981', color: 'white', borderColor: '#10B981' }}
           >
             <MessageCircle size={16} /> Share Portal
+          </a>
+          <a 
+            href={getWhatsAppLink(
+              customer.phone,
+              waTemplates.customerReview(customer.name)
+            )}
+            target="_blank" 
+            rel="noreferrer" 
+            className="btn-secondary" 
+            style={{ backgroundColor: '#F59E0B', color: 'white', borderColor: '#F59E0B' }}
+          >
+            <Star size={16} /> Request Review
           </a>
           {customer.email && (
             <a 
