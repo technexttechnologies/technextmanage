@@ -92,14 +92,14 @@ export default function QuotationForm({ customers, products = [] }: { customers:
   return (
     <form action={createQuotation} className={styles.formCard} encType="multipart/form-data">
       <div className={styles.formSection}>
-        <h2 className={styles.sectionTitle}><UploadCloud size={18} /> Upload PDF (AI Extraction)</h2>
+        <h2 className={styles.sectionTitle}><UploadCloud size={18} /> Document Import &amp; Auto-Parser</h2>
         <p style={{fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px'}}>
-          Upload a quotation PDF. The AI will automatically extract items, terms, and timelines.
+          Import a quotation PDF or DOCX file to automatically extract line items, terms, and schedule.
         </p>
         <div className={styles.inputGroup}>
           <input type="file" id="pdfFile" name="pdfFile" accept="application/pdf,.docx" onChange={handleFileUpload} />
         </div>
-        {isParsing && <p style={{ color: "var(--brand-primary)", marginTop: "10px", display: "flex", alignItems: "center", gap: "8px" }}><Loader2 className="animate-spin" size={16} /> AI is reading the document...</p>}
+        {isParsing && <p style={{ color: "var(--brand-primary)", marginTop: "10px", display: "flex", alignItems: "center", gap: "8px" }}><Loader2 className="animate-spin" size={16} /> Reading and parsing document contents...</p>}
         {error && <p style={{ color: "var(--danger-color)", marginTop: "10px" }}>{error}</p>}
       </div>
 

@@ -12,12 +12,27 @@ import {
   ClipboardList, 
   CreditCard,
   Edit3,
-  Trash2
+  Trash2,
+  PlusCircle,
+  X,
+  Calendar,
+  Layers
 } from "lucide-react";
 import styles from "./TechNextDocumentTemplate.module.css";
-import { deleteBillingDocument } from "@/app/billing/actions";
+import { deleteBillingDocument, recordDocumentPayment } from "@/app/billing/actions";
 
 export type BillingDocType = "INVOICE" | "QUOTATION" | "ORDER_FORM" | "PAYMENT_RECEIPT";
+
+export interface PaymentInstallment {
+  id?: string;
+  date: string | Date;
+  amount: number;
+  method: string;
+  reference?: string;
+  status: "PAID" | "PENDING" | string;
+  recordedBy?: string;
+  recordedAt?: string;
+}
 
 export interface BillingItem {
   id?: string;
@@ -38,7 +53,8 @@ export interface BillingDocumentData {
   dueDate?: string | Date | null;
   paymentStatus?: "Paid" | "Pending" | "Partially Paid" | "Cancelled" | string;
   paymentMethod?: string;
-  paymentType?: "FULL" | "SPLIT" | "CREDIT";
+  paymentType?: "FULL" | "SPLIT" | "CREDIT" | "MULTI_DATE";
+  paymentSchedule?: PaymentInstallment[];
   splitBreakdown?: {
     cash?: number;
     upi?: number;
@@ -91,6 +107,13 @@ export default function TechNextDocumentTemplate({
   showActionButtons = true,
 }: Props) {
   const [docType, setDocType] = useState<BillingDocType>(data.documentType || "INVOICE");
+  const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
+  const [payDate, setPayDate] = useState(new Date().toISOString().split("T")[0]);
+  const [payAmount, setPayAmount] = useState<number>(0);
+  const [payMethod, setPayMethod] = useState("UPI PAYMENT");
+  const [payRef, setPayRef] = useState("");
+  const [payStatus, setPayStatus] = useState("PAID");
+  const [isRecording, setIsRecording] = useState(false);
 
   // Helper date formatter: dd-MMM-yyyy (e.g. 07-Oct-2026)
   const formatDate = (val?: string | Date | null) => {
@@ -216,6 +239,20 @@ export default function TechNextDocumentTemplate({
           </div>
 
           <div className={styles.actionButtons}>
+            {data.id && amountDue > 0 && docType !== "QUOTATION" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPayAmount(amountDue);
+                  setShowRecordPaymentModal(true);
+                }}
+                className={styles.btnBack}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#166534", borderColor: "#86EFAC", background: "#F0FDF4", cursor: "pointer", fontWeight: 600 }}
+              >
+                <PlusCircle size={15} /> Record Payment
+              </button>
+            )}
+
             {data.id && (
               <Link
                 href={`/billing/doc/${docType.toLowerCase()}/${data.id}/edit`}
@@ -457,6 +494,43 @@ export default function TechNextDocumentTemplate({
           </div>
         </div>
 
+        {/* Multi-Date Payment Schedule & Installment Ledger Table */}
+        {data.paymentSchedule && data.paymentSchedule.length > 0 && (
+          <div className={styles.installmentSection}>
+            <div className={styles.installmentTitle}>
+              Payment Schedule &amp; Installment Ledger
+            </div>
+            <table className={styles.installmentTable}>
+              <thead>
+                <tr>
+                  <th style={{ width: "35px", textAlign: "center" }}>#</th>
+                  <th>Payment Date</th>
+                  <th>Method</th>
+                  <th>Reference / Milestone Note</th>
+                  <th style={{ textAlign: "center", width: "100px" }}>Status</th>
+                  <th style={{ textAlign: "right", width: "130px" }}>Amount (₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.paymentSchedule.map((inst, idx) => (
+                  <tr key={inst.id || idx}>
+                    <td style={{ textAlign: "center", color: "#64748b" }}>{idx + 1}</td>
+                    <td style={{ fontWeight: 600 }}>{formatDate(inst.date)}</td>
+                    <td>{inst.method}</td>
+                    <td style={{ color: "#64748b" }}>{inst.reference || "---"}</td>
+                    <td style={{ textAlign: "center" }}>
+                      <span className={inst.status === "PAID" ? styles.badgePaid : styles.badgePending}>
+                        {inst.status === "PAID" ? "Paid" : "Scheduled"}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: "right", fontWeight: 700 }}>₹{formatCurrency(inst.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {/* Scope of Work & Narrative Notes */}
         <div className={styles.scopeBlock}>
           <p className={styles.scopeParagraph}>
@@ -531,6 +605,134 @@ export default function TechNextDocumentTemplate({
           </div>
         </div>
       </div>
+
+      {/* Record Payment Modal */}
+      {showRecordPaymentModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px" }}>
+              <div>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "#0f172a" }}>
+                  Record Payment Installment
+                </h3>
+                <p style={{ fontSize: "12px", color: "#64748b", margin: "2px 0 0 0" }}>
+                  Document #{data.documentNumber} • Outstanding Due: <strong style={{ color: "#DC2626" }}>₹{formatCurrency(amountDue)}</strong>
+                </p>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setShowRecordPaymentModal(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form action={async (formData) => {
+              setIsRecording(true);
+              try {
+                await recordDocumentPayment(formData);
+                setShowRecordPaymentModal(false);
+              } catch (err: any) {
+                alert(err.message || "Failed to record payment");
+              } finally {
+                setIsRecording(false);
+              }
+            }}>
+              <input type="hidden" name="documentId" value={data.id} />
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Payment Date *</label>
+                  <input
+                    type="date"
+                    name="date"
+                    required
+                    value={payDate}
+                    onChange={(e) => setPayDate(e.target.value)}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px" }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Amount Received / Scheduled (₹) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="amount"
+                    required
+                    max={amountDue}
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(parseFloat(e.target.value) || 0)}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", fontWeight: 600 }}
+                  />
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div>
+                    <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Payment Mode</label>
+                    <select
+                      name="method"
+                      value={payMethod}
+                      onChange={(e) => setPayMethod(e.target.value)}
+                      style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px" }}
+                    >
+                      <option value="UPI PAYMENT">UPI PAYMENT</option>
+                      <option value="BANK TRANSFER">BANK TRANSFER / NEFT</option>
+                      <option value="CASH">CASH</option>
+                      <option value="CHEQUE">CHEQUE</option>
+                      <option value="NET BANKING">NET BANKING</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Status</label>
+                    <select
+                      name="status"
+                      value={payStatus}
+                      onChange={(e) => setPayStatus(e.target.value)}
+                      style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px" }}
+                    >
+                      <option value="PAID">Paid / Received</option>
+                      <option value="PENDING">Scheduled / Pending</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Milestone / Note / UTR Reference</label>
+                  <input
+                    type="text"
+                    name="reference"
+                    placeholder="e.g. Advance payment / Milestone 2 / UTR 402910482"
+                    value={payRef}
+                    onChange={(e) => setPayRef(e.target.value)}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px" }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px", borderTop: "1px solid #e2e8f0", paddingTop: "12px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowRecordPaymentModal(false)}
+                    className={styles.btnBack}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isRecording || payAmount <= 0}
+                    className={styles.btnPrint}
+                    style={{ background: "#166534" }}
+                  >
+                    {isRecording ? "Recording..." : "Save Payment"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

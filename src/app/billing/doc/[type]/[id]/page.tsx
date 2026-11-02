@@ -106,6 +106,15 @@ export default async function BillingDocumentViewerPage({
   }
 
   const isPaid = invoice.status === "PAID" || structured.paymentStatus === "Paid";
+  const calculatedTotal = structured.totalAmount !== undefined ? structured.totalAmount : invoice.amountRequested;
+  const calculatedPaid = structured.paidAmount !== undefined 
+    ? structured.paidAmount 
+    : isPaid 
+    ? calculatedTotal 
+    : 0;
+  const calculatedDue = structured.amountDue !== undefined 
+    ? structured.amountDue 
+    : Math.max(0, calculatedTotal - calculatedPaid);
 
   const docData: BillingDocumentData = {
     id: invoice.id,
@@ -113,8 +122,13 @@ export default async function BillingDocumentViewerPage({
     documentNumber: structured.documentNumber || invoice.aroniumInvoiceNo || `26-200-${invoice.id.slice(-6).toUpperCase()}`,
     date: structured.date || invoice.createdAt,
     dueDate: structured.dueDate || invoice.createdAt,
-    paymentStatus: isPaid ? "Paid" : "Pending",
+    paymentStatus: isPaid ? "Paid" : structured.paymentStatus || "Pending",
     paymentMethod: structured.paymentMethod || "UPI PAYMENT",
+    paymentType: structured.paymentType,
+    paymentSchedule: structured.paymentSchedule || [],
+    splitBreakdown: structured.splitBreakdown,
+    creditDueDate: structured.creditDueDate,
+    creditTerms: structured.creditTerms,
     bankDetails: structured.bankDetails || "SOUTH INDIAN BANK\nPULPALLY",
     customer: {
       id: invoice.customer.id,
@@ -130,9 +144,9 @@ export default async function BillingDocumentViewerPage({
     items,
     subtotal: structured.subtotal !== undefined ? structured.subtotal : invoice.subtotal || invoice.amountRequested,
     totalDiscount: structured.totalDiscount || 0,
-    totalAmount: structured.totalAmount || invoice.amountRequested,
-    paidAmount: isPaid ? (structured.paidAmount || invoice.amountRequested) : 0,
-    amountDue: isPaid ? 0 : (structured.amountDue || invoice.amountRequested),
+    totalAmount: calculatedTotal,
+    paidAmount: calculatedPaid,
+    amountDue: calculatedDue,
     scopeOfWork: structured.scopeOfWork || invoice.notes || "The invoice covers the agreed website development scope, including website design, development, responsive optimization, basic functionality, deployment, and related configuration as discussed with the client.",
     paymentTermsNote: structured.paymentTermsNote || "Payment Terms: Payment is due as per the agreed quotation/payment schedule. Any additional features, revisions, third-party services, domain, hosting, or other requirements outside the agreed scope may be charged separately.",
   };

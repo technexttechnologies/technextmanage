@@ -495,6 +495,93 @@
   padding-top: 8px;
 }
 
+/* Installment & Multi-Date Ledger Section */
+.installmentSection {
+  margin-top: 24px;
+  margin-bottom: 20px;
+  border: 1px solid #000000;
+  border-radius: 4px;
+  overflow: hidden;
+  page-break-inside: avoid;
+}
+
+.installmentTitle {
+  background: #0f172a;
+  color: #ffffff;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.installmentTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.installmentTable th {
+  background: #f8fafc;
+  padding: 8px 12px;
+  font-weight: 600;
+  color: #0f172a;
+  border-bottom: 1px solid #cbd5e1;
+  text-align: left;
+}
+
+.installmentTable td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+
+.badgePaid {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badgePending {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Record Payment Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+}
+
 /* Print Stylesheet - Exact A4 output with NO browser chrome */
 @media print {
   body {

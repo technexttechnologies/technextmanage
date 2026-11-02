@@ -73,8 +73,8 @@ export async function createBillingDocument(formData: FormData) {
   const dateStr = (formData.get("date") as string) || new Date().toISOString().split("T")[0];
   const dueDateStr = (formData.get("dueDate") as string) || dateStr;
   
-  // Payment Type: FULL, SPLIT, or CREDIT
-  const paymentType = (formData.get("paymentType") as string) || "FULL";
+  // Payment Mode: SINGLE, MULTI_DATE, or CREDIT
+  const paymentType = (formData.get("paymentType") as string) || "SINGLE";
   let paymentMethod = (formData.get("paymentMethod") as string) || "UPI PAYMENT";
   let paymentStatus = (formData.get("paymentStatus") as string) || "Paid";
   const bankDetails = (formData.get("bankDetails") as string) || "SOUTH INDIAN BANK\nPULPALLY";
@@ -85,12 +85,15 @@ export async function createBillingDocument(formData: FormData) {
   let paidAmount = parseFloat((formData.get("paidAmount") as string) || "0");
   let amountDue = parseFloat((formData.get("amountDue") as string) || "0");
 
-  const splitBreakdownJson = formData.get("splitBreakdownJson") as string;
-  let splitBreakdown: any = null;
-  if (splitBreakdownJson) {
+  // Multi-date payment schedule / installments
+  const paymentScheduleJson = formData.get("paymentScheduleJson") as string;
+  let paymentSchedule: any[] = [];
+  if (paymentScheduleJson) {
     try {
-      splitBreakdown = JSON.parse(splitBreakdownJson);
-    } catch {}
+      paymentSchedule = JSON.parse(paymentScheduleJson);
+    } catch {
+      paymentSchedule = [];
+    }
   }
 
   const creditDueDate = (formData.get("creditDueDate") as string) || null;
@@ -101,12 +104,14 @@ export async function createBillingDocument(formData: FormData) {
     paymentStatus = "Credit / Due";
     paidAmount = 0;
     amountDue = totalAmount;
-  } else if (paymentType === "SPLIT" && splitBreakdown) {
-    paymentMethod = "SPLIT PAYMENT";
-    const sumSplit = Object.values(splitBreakdown).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
-    paidAmount = Number(sumSplit);
+  } else if ((paymentType === "MULTI_DATE" || paymentType === "SPLIT") && paymentSchedule.length > 0) {
+    const totalPaidFromSchedule = paymentSchedule
+      .filter((p: any) => p.status === "PAID")
+      .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+    paidAmount = totalPaidFromSchedule;
     amountDue = Math.max(0, totalAmount - paidAmount);
-    paymentStatus = paidAmount >= totalAmount ? "Paid" : "Partially Paid";
+    paymentStatus = paidAmount >= totalAmount ? "Paid" : paidAmount > 0 ? "Partially Paid" : "Pending";
+    paymentMethod = "SPLIT / MULTI-DATE";
   }
 
   const scopeOfWork = (formData.get("scopeOfWork") as string) || "";
@@ -182,7 +187,7 @@ export async function createBillingDocument(formData: FormData) {
       paymentType,
       paymentStatus,
       paymentMethod,
-      splitBreakdown,
+      paymentSchedule,
       creditDueDate,
       creditTerms,
       bankDetails,
@@ -230,7 +235,6 @@ export async function createBillingDocument(formData: FormData) {
           const product = await prisma.erpProduct.findUnique({
             where: { id: item.productId }
           });
-          // Skip stock deduction for service products
           if (product && !product.isService && product.productType !== "SERVICE") {
             const prevStock = product.currentStock;
             const newStock = Math.max(0, prevStock - item.quantity);
@@ -308,7 +312,7 @@ export async function updateBillingDocument(formData: FormData) {
   const dateStr = (formData.get("date") as string) || new Date().toISOString().split("T")[0];
   const dueDateStr = (formData.get("dueDate") as string) || dateStr;
   
-  const paymentType = (formData.get("paymentType") as string) || "FULL";
+  const paymentType = (formData.get("paymentType") as string) || "SINGLE";
   let paymentMethod = (formData.get("paymentMethod") as string) || "UPI PAYMENT";
   let paymentStatus = (formData.get("paymentStatus") as string) || "Paid";
   const bankDetails = (formData.get("bankDetails") as string) || "SOUTH INDIAN BANK\nPULPALLY";
@@ -319,12 +323,14 @@ export async function updateBillingDocument(formData: FormData) {
   let paidAmount = parseFloat((formData.get("paidAmount") as string) || "0");
   let amountDue = parseFloat((formData.get("amountDue") as string) || "0");
 
-  const splitBreakdownJson = formData.get("splitBreakdownJson") as string;
-  let splitBreakdown: any = null;
-  if (splitBreakdownJson) {
+  const paymentScheduleJson = formData.get("paymentScheduleJson") as string;
+  let paymentSchedule: any[] = [];
+  if (paymentScheduleJson) {
     try {
-      splitBreakdown = JSON.parse(splitBreakdownJson);
-    } catch {}
+      paymentSchedule = JSON.parse(paymentScheduleJson);
+    } catch {
+      paymentSchedule = [];
+    }
   }
 
   const creditDueDate = (formData.get("creditDueDate") as string) || null;
@@ -335,12 +341,14 @@ export async function updateBillingDocument(formData: FormData) {
     paymentStatus = "Credit / Due";
     paidAmount = 0;
     amountDue = totalAmount;
-  } else if (paymentType === "SPLIT" && splitBreakdown) {
-    paymentMethod = "SPLIT PAYMENT";
-    const sumSplit = Object.values(splitBreakdown).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
-    paidAmount = Number(sumSplit);
+  } else if ((paymentType === "MULTI_DATE" || paymentType === "SPLIT") && paymentSchedule.length > 0) {
+    const totalPaidFromSchedule = paymentSchedule
+      .filter((p: any) => p.status === "PAID")
+      .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+    paidAmount = totalPaidFromSchedule;
     amountDue = Math.max(0, totalAmount - paidAmount);
-    paymentStatus = paidAmount >= totalAmount ? "Paid" : "Partially Paid";
+    paymentStatus = paidAmount >= totalAmount ? "Paid" : paidAmount > 0 ? "Partially Paid" : "Pending";
+    paymentMethod = "SPLIT / MULTI-DATE";
   }
 
   const scopeOfWork = (formData.get("scopeOfWork") as string) || "";
@@ -358,7 +366,6 @@ export async function updateBillingDocument(formData: FormData) {
   }
 
   if (documentType === "QUOTATION") {
-    // Delete old items and insert updated items
     await prisma.quotationItem.deleteMany({
       where: { quotationId: id }
     });
@@ -397,7 +404,7 @@ export async function updateBillingDocument(formData: FormData) {
       paymentType,
       paymentStatus,
       paymentMethod,
-      splitBreakdown,
+      paymentSchedule,
       creditDueDate,
       creditTerms,
       bankDetails,
@@ -484,6 +491,84 @@ export async function updateBillingDocument(formData: FormData) {
   redirect(`/billing/doc/${documentType.toLowerCase()}/${id}`);
 }
 
+export async function recordDocumentPayment(formData: FormData) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+
+  const documentId = formData.get("documentId") as string;
+  const dateStr = (formData.get("date") as string) || new Date().toISOString().split("T")[0];
+  const amount = parseFloat((formData.get("amount") as string) || "0");
+  const method = (formData.get("method") as string) || "UPI PAYMENT";
+  const reference = (formData.get("reference") as string) || "";
+  const paymentStatusOption = (formData.get("status") as string) || "PAID";
+
+  if (!documentId || isNaN(amount) || amount <= 0) {
+    throw new Error("Invalid payment amount or document ID");
+  }
+
+  const invoice = await prisma.invoiceRequest.findUnique({
+    where: { id: documentId },
+    include: { customer: true }
+  });
+
+  if (!invoice) throw new Error("Document not found");
+
+  const structured = (invoice.structuredData as any) || {};
+  let schedule = Array.isArray(structured.paymentSchedule) ? [...structured.paymentSchedule] : [];
+
+  const newEntry = {
+    id: `pay-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    date: dateStr,
+    amount,
+    method,
+    reference,
+    status: paymentStatusOption,
+    recordedBy: session.name || "Accounts Staff",
+    recordedAt: new Date().toISOString()
+  };
+
+  schedule.push(newEntry);
+
+  const totalAmount = structured.totalAmount || invoice.amountRequested;
+  const totalPaid = schedule
+    .filter((p: any) => p.status === "PAID")
+    .reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+  const amountDue = Math.max(0, totalAmount - totalPaid);
+  const paymentStatus = totalPaid >= totalAmount ? "Paid" : totalPaid > 0 ? "Partially Paid" : "Pending";
+  const invStatus = totalPaid >= totalAmount ? "PAID" : "UNDER_REVIEW";
+
+  await prisma.invoiceRequest.update({
+    where: { id: documentId },
+    data: {
+      status: invStatus,
+      structuredData: {
+        ...structured,
+        paymentSchedule: schedule,
+        paidAmount: totalPaid,
+        amountDue,
+        paymentStatus,
+        paymentMethod: schedule.length > 1 ? "SPLIT / MULTI-DATE" : method
+      }
+    }
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      action: "PAYMENT_RECORDED",
+      entityType: "INVOICE_REQUEST",
+      entityId: documentId,
+      userId: session.userId as string,
+      details: `Recorded payment installment of ₹${amount.toFixed(2)} on ${dateStr} via ${method}`
+    }
+  });
+
+  revalidatePath("/billing");
+  revalidatePath(`/billing/doc/invoice/${documentId}`);
+  revalidatePath(`/billing/doc/order_form/${documentId}`);
+  revalidatePath(`/billing/doc/payment_receipt/${documentId}`);
+  revalidatePath("/payments");
+}
+
 export async function deleteBillingDocument(formData: FormData) {
   const session = await getSession();
   if (!session || (session.role !== "SUPER_ADMIN" && session.role !== "ADMIN")) {
@@ -535,6 +620,7 @@ export async function convertQuotationToInvoice(quotationId: string) {
     dueDate: quote.expiryDate ? new Date(quote.expiryDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
     paymentStatus: "Pending",
     paymentMethod: "UPI PAYMENT",
+    paymentSchedule: [],
     bankDetails: "SOUTH INDIAN BANK\nPULPALLY",
     items,
     subtotal: quote.subtotal,

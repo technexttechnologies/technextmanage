@@ -267,7 +267,7 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
             className={`${styles.tabBtn} ${statusFilter === "SERVICES" ? styles.active : ""}`}
             onClick={() => setStatusFilter("SERVICES")}
           >
-            🛠️ Services ({products.filter(p => p.isService || p.productType === "SERVICE").length})
+            Services ({products.filter(p => p.isService || p.productType === "SERVICE").length})
           </button>
         </div>
       </div>
@@ -306,7 +306,7 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
                           {isSrv && <span style={{ fontSize: '11px', background: '#EEF2FF', color: '#4F46E5', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>SERVICE</span>}
                           {p.sku && <span className={styles.productSku}>SKU: {p.sku}</span>}
                           {p.barcode && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>BAR: {p.barcode}</span>}
-                          {p.location && <span style={{ fontSize: '11px', color: '#6366F1' }}>📍 {p.location}</span>}
+                          {p.location && <span style={{ fontSize: '11px', color: '#6366F1' }}>{p.location}</span>}
                         </div>
                       </div>
                     </td>
@@ -350,7 +350,7 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
                     <td>
                       {isSrv ? (
                         <span className={styles.stockPill} style={{ background: '#EEF2FF', color: '#4F46E5', borderColor: '#C7D2FE' }}>
-                          🛠️ Service
+                          Service
                         </span>
                       ) : isOut ? (
                         <span className={`${styles.stockPill} ${styles.outOfStock}`}>Out of Stock</span>
@@ -420,10 +420,10 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
                   onChange={(e) => setAdjType(e.target.value as any)}
                   className={styles.select}
                 >
-                  <option value="IN">➕ Restock / Purchase Received (+ IN)</option>
-                  <option value="OUT">➖ Sale Dispatched / Customer Order (- OUT)</option>
-                  <option value="DAMAGE">⚠️ Damaged / Scrapped / Defective (- DAMAGE)</option>
-                  <option value="ADJUSTMENT">🔄 Manual Count Correction (Direct Set)</option>
+                  <option value="IN">Restock / Purchase Received (+ IN)</option>
+                  <option value="OUT">Sale Dispatched / Customer Order (- OUT)</option>
+                  <option value="DAMAGE">Damaged / Scrapped / Defective (- DAMAGE)</option>
+                  <option value="ADJUSTMENT">Manual Count Correction (Direct Set)</option>
                 </select>
               </div>
 

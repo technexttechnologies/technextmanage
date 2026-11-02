@@ -92,9 +92,13 @@ export default function BillingDocumentForm({
     initialDocument?.dueDate ? new Date(initialDocument.dueDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]
   );
 
-  // Payment Mode: FULL, SPLIT, or CREDIT
-  const [paymentType, setPaymentType] = useState<"FULL" | "SPLIT" | "CREDIT">(
-    initialDocument?.paymentType || (initialDocument?.paymentMethod?.includes("SPLIT") ? "SPLIT" : initialDocument?.paymentMethod?.includes("CREDIT") ? "CREDIT" : "FULL")
+  // Payment Mode: FULL, MULTI_DATE, or CREDIT
+  const [paymentType, setPaymentType] = useState<"FULL" | "MULTI_DATE" | "CREDIT">(
+    initialDocument?.paymentType === "MULTI_DATE" || initialDocument?.paymentType === "SPLIT" || initialDocument?.paymentMethod?.includes("SPLIT")
+      ? "MULTI_DATE"
+      : initialDocument?.paymentType === "CREDIT" || initialDocument?.paymentMethod?.includes("CREDIT")
+      ? "CREDIT"
+      : "FULL"
   );
 
   const [paymentStatus, setPaymentStatus] = useState<string>(
@@ -107,11 +111,75 @@ export default function BillingDocumentForm({
     initialDocument?.bankDetails || "SOUTH INDIAN BANK\nPULPALLY"
   );
 
-  // Split payment breakdown state
-  const [splitCash, setSplitCash] = useState<number>(initialDocument?.splitBreakdown?.cash || 0);
-  const [splitUpi, setSplitUpi] = useState<number>(initialDocument?.splitBreakdown?.upi || 0);
-  const [splitBank, setSplitBank] = useState<number>(initialDocument?.splitBreakdown?.bank || 0);
-  const [splitCheque, setSplitCheque] = useState<number>(initialDocument?.splitBreakdown?.cheque || 0);
+  // Multi-date installment / split payment schedule state
+  interface InstallmentItem {
+    id: string;
+    date: string;
+    amount: number;
+    method: string;
+    status: "PAID" | "PENDING";
+    reference: string;
+  }
+
+  const [installments, setInstallments] = useState<InstallmentItem[]>(() => {
+    if (initialDocument?.paymentSchedule && Array.isArray(initialDocument.paymentSchedule) && initialDocument.paymentSchedule.length > 0) {
+      return initialDocument.paymentSchedule.map((p: any, idx: number) => ({
+        id: p.id || `inst-${idx + 1}`,
+        date: p.date ? new Date(p.date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+        amount: Number(p.amount) || 0,
+        method: p.method || "UPI PAYMENT",
+        status: p.status === "PENDING" ? "PENDING" : "PAID",
+        reference: p.reference || "",
+      }));
+    }
+    if (initialDocument?.splitBreakdown) {
+      const list: InstallmentItem[] = [];
+      const today = new Date().toISOString().split("T")[0];
+      if (Number(initialDocument.splitBreakdown.upi) > 0) list.push({ id: "inst-1", date: today, amount: Number(initialDocument.splitBreakdown.upi), method: "UPI PAYMENT", status: "PAID", reference: "UPI Payment" });
+      if (Number(initialDocument.splitBreakdown.cash) > 0) list.push({ id: "inst-2", date: today, amount: Number(initialDocument.splitBreakdown.cash), method: "CASH", status: "PAID", reference: "Cash Payment" });
+      if (Number(initialDocument.splitBreakdown.bank) > 0) list.push({ id: "inst-3", date: today, amount: Number(initialDocument.splitBreakdown.bank), method: "BANK TRANSFER", status: "PAID", reference: "Bank Transfer" });
+      if (Number(initialDocument.splitBreakdown.cheque) > 0) list.push({ id: "inst-4", date: today, amount: Number(initialDocument.splitBreakdown.cheque), method: "CHEQUE", status: "PAID", reference: "Cheque" });
+      if (list.length > 0) return list;
+    }
+    return [
+      {
+        id: "inst-1",
+        date: new Date().toISOString().split("T")[0],
+        amount: 0,
+        method: "UPI PAYMENT",
+        status: "PAID",
+        reference: "Advance Payment"
+      }
+    ];
+  });
+
+  const handleAddInstallment = () => {
+    const currentSum = installments.reduce((sum, inst) => sum + (Number(inst.amount) || 0), 0);
+    const remaining = Math.max(0, grandTotal - currentSum);
+    setInstallments(prev => [
+      ...prev,
+      {
+        id: `inst-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        date: new Date().toISOString().split("T")[0],
+        amount: remaining,
+        method: "UPI PAYMENT",
+        status: remaining === 0 ? "PAID" : "PENDING",
+        reference: prev.length === 0 ? "Advance Payment" : `Milestone ${prev.length + 1}`
+      }
+    ]);
+  };
+
+  const handleInstallmentChange = (idx: number, field: keyof InstallmentItem, value: any) => {
+    setInstallments(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: value };
+      return next;
+    });
+  };
+
+  const handleRemoveInstallment = (idx: number) => {
+    setInstallments(prev => prev.filter((_, i) => i !== idx));
+  };
 
   // Credit terms state
   const [creditDueDate, setCreditDueDate] = useState<string>(
@@ -278,16 +346,20 @@ export default function BillingDocumentForm({
   const grandTotal = Math.max(0, subtotal - (Number(totalDiscount) || 0));
 
   // Compute payment reconciliation
-  const splitSum = (Number(splitCash) || 0) + (Number(splitUpi) || 0) + (Number(splitBank) || 0) + (Number(splitCheque) || 0);
+  const totalInstallmentsScheduled = installments.reduce((sum, inst) => sum + (Number(inst.amount) || 0), 0);
+  const totalInstallmentsPaid = installments
+    .filter(inst => inst.status === "PAID")
+    .reduce((sum, inst) => sum + (Number(inst.amount) || 0), 0);
+
   let effectivePaid = 0;
   let effectiveDue = grandTotal;
 
   if (paymentType === "CREDIT") {
     effectivePaid = 0;
     effectiveDue = grandTotal;
-  } else if (paymentType === "SPLIT") {
-    effectivePaid = splitSum;
-    effectiveDue = Math.max(0, grandTotal - splitSum);
+  } else if (paymentType === "MULTI_DATE") {
+    effectivePaid = totalInstallmentsPaid;
+    effectiveDue = Math.max(0, grandTotal - totalInstallmentsPaid);
   } else {
     // FULL
     effectivePaid = paymentStatus === "Paid" ? grandTotal : 0;
@@ -533,13 +605,13 @@ export default function BillingDocumentForm({
 
             <button
               type="button"
-              onClick={() => setPaymentType("SPLIT")}
+              onClick={() => setPaymentType("MULTI_DATE")}
               style={{
                 padding: "10px 14px",
                 borderRadius: "6px",
-                border: paymentType === "SPLIT" ? "2px solid #6366F1" : "1px solid var(--surface-border)",
-                background: paymentType === "SPLIT" ? "#EEF2FF" : "var(--surface-card)",
-                color: paymentType === "SPLIT" ? "#3730A3" : "var(--text-primary)",
+                border: paymentType === "MULTI_DATE" ? "2px solid #6366F1" : "1px solid var(--surface-border)",
+                background: paymentType === "MULTI_DATE" ? "#EEF2FF" : "var(--surface-card)",
+                color: paymentType === "MULTI_DATE" ? "#3730A3" : "var(--text-primary)",
                 fontWeight: 600,
                 fontSize: "13px",
                 cursor: "pointer",
@@ -549,7 +621,7 @@ export default function BillingDocumentForm({
                 justifyContent: "center"
               }}
             >
-              <Layers size={16} /> Split Payment (Multi-Tender)
+              <Layers size={16} /> Dated Installments / Split Payments
             </button>
 
             <button
@@ -573,7 +645,7 @@ export default function BillingDocumentForm({
                 justifyContent: "center"
               }}
             >
-              <Calendar size={16} /> Credit / Khata (Pay Later)
+              <Calendar size={16} /> Credit / Khata (Net 30)
             </button>
           </div>
 
@@ -610,63 +682,142 @@ export default function BillingDocumentForm({
             </div>
           )}
 
-          {paymentType === "SPLIT" && (
-            <div style={{ background: "var(--surface-card)", padding: "14px", borderRadius: "8px", border: "1px solid var(--surface-border)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <span style={{ fontSize: "13px", fontWeight: 600, color: "#3730A3" }}>
-                  Enter split amount for each payment method:
-                </span>
-                <span style={{ fontSize: "13px", fontWeight: 700 }}>
-                  Grand Total: ₹{grandTotal.toFixed(2)} | Split Sum: <strong style={{ color: splitSum === grandTotal ? "#10B981" : "#DC2626" }}>₹{splitSum.toFixed(2)}</strong>
-                </span>
+          {paymentType === "MULTI_DATE" && (
+            <div style={{ background: "var(--surface-card)", padding: "16px", borderRadius: "8px", border: "1px solid var(--surface-border)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
+                <div>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#1e293b" }}>
+                    Multi-Date Payment Installment Schedule
+                  </div>
+                  <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                    Add payment installments across different dates (advances, milestones, or scheduled balances).
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddInstallment}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    background: "#EEF2FF",
+                    color: "#4F46E5",
+                    border: "1px solid #C7D2FE",
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: "pointer"
+                  }}
+                >
+                  <Plus size={14} /> Add Payment Date / Installment
+                </button>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px" }}>
-                <div className={styles.inputGroup}>
-                  <label style={{ fontSize: "12px" }}>UPI Payment (₹)</label>
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    value={splitUpi || ""} 
-                    placeholder="0.00"
-                    onChange={(e) => setSplitUpi(Number(e.target.value) || 0)}
-                  />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label style={{ fontSize: "12px" }}>Cash (₹)</label>
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    value={splitCash || ""} 
-                    placeholder="0.00"
-                    onChange={(e) => setSplitCash(Number(e.target.value) || 0)}
-                  />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label style={{ fontSize: "12px" }}>Bank / NEFT (₹)</label>
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    value={splitBank || ""} 
-                    placeholder="0.00"
-                    onChange={(e) => setSplitBank(Number(e.target.value) || 0)}
-                  />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label style={{ fontSize: "12px" }}>Cheque / Card (₹)</label>
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    value={splitCheque || ""} 
-                    placeholder="0.00"
-                    onChange={(e) => setSplitCheque(Number(e.target.value) || 0)}
-                  />
-                </div>
+
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+                  <thead>
+                    <tr style={{ background: "var(--surface-background)", borderBottom: "1px solid var(--surface-border)", textAlign: "left" }}>
+                      <th style={{ padding: "8px 10px", width: "35px" }}>#</th>
+                      <th style={{ padding: "8px 10px", width: "150px" }}>Payment Date</th>
+                      <th style={{ padding: "8px 10px", width: "130px" }}>Amount (₹)</th>
+                      <th style={{ padding: "8px 10px", width: "160px" }}>Payment Mode</th>
+                      <th style={{ padding: "8px 10px", width: "140px" }}>Status</th>
+                      <th style={{ padding: "8px 10px" }}>Milestone / Reference Note</th>
+                      <th style={{ padding: "8px 10px", width: "40px" }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {installments.map((inst, idx) => (
+                      <tr key={inst.id || idx} style={{ borderBottom: "1px solid var(--surface-border)" }}>
+                        <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 600, color: "#64748b" }}>
+                          {idx + 1}
+                        </td>
+                        <td style={{ padding: "8px 10px" }}>
+                          <input
+                            type="date"
+                            value={inst.date}
+                            onChange={(e) => handleInstallmentChange(idx, "date", e.target.value)}
+                            required
+                            style={{ width: "100%", padding: "6px 8px", borderRadius: "4px", border: "1px solid var(--surface-border)", fontSize: "13px" }}
+                          />
+                        </td>
+                        <td style={{ padding: "8px 10px" }}>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={inst.amount}
+                            onChange={(e) => handleInstallmentChange(idx, "amount", parseFloat(e.target.value) || 0)}
+                            required
+                            style={{ width: "100%", padding: "6px 8px", borderRadius: "4px", border: "1px solid var(--surface-border)", fontWeight: 600, textAlign: "right", fontSize: "13px" }}
+                          />
+                        </td>
+                        <td style={{ padding: "8px 10px" }}>
+                          <select
+                            value={inst.method}
+                            onChange={(e) => handleInstallmentChange(idx, "method", e.target.value)}
+                            style={{ width: "100%", padding: "6px 8px", borderRadius: "4px", border: "1px solid var(--surface-border)", fontSize: "13px" }}
+                          >
+                            <option value="UPI PAYMENT">UPI PAYMENT</option>
+                            <option value="BANK TRANSFER">BANK TRANSFER / NEFT</option>
+                            <option value="CASH">CASH</option>
+                            <option value="CHEQUE">CHEQUE</option>
+                            <option value="NET BANKING">NET BANKING</option>
+                          </select>
+                        </td>
+                        <td style={{ padding: "8px 10px" }}>
+                          <select
+                            value={inst.status}
+                            onChange={(e) => handleInstallmentChange(idx, "status", e.target.value)}
+                            style={{
+                              width: "100%",
+                              padding: "6px 8px",
+                              borderRadius: "4px",
+                              border: "1px solid var(--surface-border)",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                              background: inst.status === "PAID" ? "#ECFDF5" : "#FEF3C7",
+                              color: inst.status === "PAID" ? "#065F46" : "#92400E"
+                            }}
+                          >
+                            <option value="PAID">Paid / Received</option>
+                            <option value="PENDING">Scheduled</option>
+                          </select>
+                        </td>
+                        <td style={{ padding: "8px 10px" }}>
+                          <input
+                            type="text"
+                            placeholder="e.g. Advance 50% / Final Delivery"
+                            value={inst.reference}
+                            onChange={(e) => handleInstallmentChange(idx, "reference", e.target.value)}
+                            style={{ width: "100%", padding: "6px 8px", borderRadius: "4px", border: "1px solid var(--surface-border)", fontSize: "13px" }}
+                          />
+                        </td>
+                        <td style={{ padding: "8px 10px", textAlign: "center" }}>
+                          {installments.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveInstallment(idx)}
+                              style={{ background: "transparent", border: "none", color: "#DC2626", cursor: "pointer" }}
+                              title="Delete Installment"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <input 
-                type="hidden" 
-                name="splitBreakdownJson" 
-                value={JSON.stringify({ cash: splitCash, upi: splitUpi, bank: splitBank, cheque: splitCheque })} 
-              />
+
+              {/* Installments live reconciliation */}
+              <div style={{ marginTop: "14px", padding: "10px 14px", background: "var(--surface-background)", borderRadius: "6px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", fontSize: "13px" }}>
+                <span>Grand Total: <strong>₹{grandTotal.toFixed(2)}</strong></span>
+                <span>Scheduled Sum: <strong>₹{totalInstallmentsScheduled.toFixed(2)}</strong></span>
+                <span>Paid Across Dates: <strong style={{ color: "#166534" }}>₹{totalInstallmentsPaid.toFixed(2)}</strong></span>
+                <span>Balance Remaining: <strong style={{ color: effectiveDue > 0 ? "#DC2626" : "#166534" }}>₹{effectiveDue.toFixed(2)}</strong></span>
+              </div>
             </div>
           )}
 
@@ -698,7 +849,7 @@ export default function BillingDocumentForm({
                 </div>
               </div>
               <div style={{ marginTop: "10px", fontSize: "12px", color: "#B45309" }}>
-                ⚠️ <strong>Credit Sale Notice:</strong> Amount of ₹{grandTotal.toFixed(2)} will be recorded as Outstanding Balance Due. Payment status will be tracked as Credit / Due.
+                <strong>Credit Sale Notice:</strong> Amount of ₹{grandTotal.toFixed(2)} will be recorded as Outstanding Balance Due. Payment status will be tracked as Credit / Due.
               </div>
             </div>
           )}
@@ -740,10 +891,10 @@ export default function BillingDocumentForm({
                   }}
                   style={{ padding: "8px 12px", fontSize: "13px", borderRadius: "6px", border: "1px solid var(--surface-border)", background: "var(--surface-card)", color: "var(--text-primary)" }}
                 >
-                  <option value="">📦 Add from Catalog...</option>
+                  <option value="">Add from Catalog...</option>
                   {products.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.isService ? "🛠️ " : "📦 "} {p.name} ({p.isService ? "Service" : `Stock: ${p.currentStock}`} • ₹{p.sellingPrice})
+                      {p.name} ({p.isService ? "Service" : `Stock: ${p.currentStock}`} • ₹{p.sellingPrice})
                     </option>
                   ))}
                 </select>
@@ -918,6 +1069,7 @@ export default function BillingDocumentForm({
         <input type="hidden" name="paidAmount" value={effectivePaid.toFixed(2)} />
         <input type="hidden" name="amountDue" value={effectiveDue.toFixed(2)} />
         <input type="hidden" name="itemsJson" value={JSON.stringify(items)} />
+        <input type="hidden" name="paymentScheduleJson" value={JSON.stringify(installments)} />
 
         {/* Actions */}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", borderTop: "1px solid var(--surface-border)", paddingTop: "24px" }}>
