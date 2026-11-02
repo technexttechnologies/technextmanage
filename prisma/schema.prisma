@@ -888,6 +888,8 @@ model ErpProduct {
   currentStock  Float    @default(0)
   reorderLevel  Float    @default(0)
   isLowStock    Boolean  @default(false)
+  isService     Boolean  @default(false)
+  productType   String   @default("PHYSICAL") // PHYSICAL, SERVICE
   stockMovements StockMovement[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

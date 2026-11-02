@@ -14,10 +14,12 @@ import {
   ArrowUpRight, 
   CheckCircle2, 
   Clock, 
-  RefreshCcw 
+  RefreshCcw,
+  Edit3,
+  Trash2
 } from "lucide-react";
 import styles from "./page.module.css";
-import { convertQuotationToInvoice } from "./actions";
+import { convertQuotationToInvoice, deleteBillingDocument } from "./actions";
 
 interface Props {
   invoices: any[];
@@ -299,7 +301,16 @@ export default function BillingDashboardClient({
                         className={styles.iconBtn} 
                         title="View Official Document"
                       >
-                        <Printer size={13} /> View / Print
+                        <Printer size={13} /> View
+                      </Link>
+
+                      <Link 
+                        href={`/billing/doc/${doc.kind.toLowerCase()}/${doc.id}/edit`} 
+                        className={styles.iconBtn} 
+                        style={{ color: "#4F46E5" }}
+                        title="Edit Document"
+                      >
+                        <Edit3 size={13} /> Edit
                       </Link>
 
                       {doc.customerPhone && (
@@ -331,6 +342,23 @@ export default function BillingDashboardClient({
                           </button>
                         </form>
                       )}
+
+                      <form action={async (formData) => {
+                        if (confirm(`Are you sure you want to delete ${doc.kind.replace('_', ' ')} #${doc.docNumber}?`)) {
+                          await deleteBillingDocument(formData);
+                        }
+                      }}>
+                        <input type="hidden" name="id" value={doc.id} />
+                        <input type="hidden" name="type" value={doc.kind.toLowerCase()} />
+                        <button 
+                          type="submit" 
+                          className={styles.iconBtn}
+                          style={{ color: "#DC2626", borderColor: "#FCA5A5" }}
+                          title="Delete Document"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </form>
                     </div>
                   </td>
                 </tr>

@@ -10,9 +10,12 @@ import {
   CheckCircle2, 
   Receipt, 
   ClipboardList, 
-  CreditCard 
+  CreditCard,
+  Edit3,
+  Trash2
 } from "lucide-react";
 import styles from "./TechNextDocumentTemplate.module.css";
+import { deleteBillingDocument } from "@/app/billing/actions";
 
 export type BillingDocType = "INVOICE" | "QUOTATION" | "ORDER_FORM" | "PAYMENT_RECEIPT";
 
@@ -35,6 +38,15 @@ export interface BillingDocumentData {
   dueDate?: string | Date | null;
   paymentStatus?: "Paid" | "Pending" | "Partially Paid" | "Cancelled" | string;
   paymentMethod?: string;
+  paymentType?: "FULL" | "SPLIT" | "CREDIT";
+  splitBreakdown?: {
+    cash?: number;
+    upi?: number;
+    bank?: number;
+    cheque?: number;
+  };
+  creditDueDate?: string | Date | null;
+  creditTerms?: string | null;
   bankDetails?: string;
 
   customer: {
@@ -204,6 +216,34 @@ export default function TechNextDocumentTemplate({
           </div>
 
           <div className={styles.actionButtons}>
+            {data.id && (
+              <Link
+                href={`/billing/doc/${docType.toLowerCase()}/${data.id}/edit`}
+                className={styles.btnBack}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#4F46E5", borderColor: "#C7D2FE", background: "#EEF2FF" }}
+              >
+                <Edit3 size={15} /> Edit
+              </Link>
+            )}
+
+            {data.id && (
+              <form action={async (formData) => {
+                if (confirm("Are you sure you want to delete this billing document? This action cannot be undone.")) {
+                  await deleteBillingDocument(formData);
+                }
+              }}>
+                <input type="hidden" name="id" value={data.id} />
+                <input type="hidden" name="type" value={docType.toLowerCase()} />
+                <button
+                  type="submit"
+                  className={styles.btnBack}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#DC2626", borderColor: "#FCA5A5", background: "#FEF2F2", cursor: "pointer" }}
+                >
+                  <Trash2 size={15} /> Delete
+                </button>
+              </form>
+            )}
+
             <a
               href={prepareWhatsAppUrl()}
               target="_blank"
@@ -386,18 +426,33 @@ export default function TechNextDocumentTemplate({
           <div className={styles.paymentDetailsBlock}>
             <div className={styles.payRow}>
               <span>Payment method:</span>
+              <span style={{ fontWeight: 600 }}>{data.paymentMethod || "UPI PAYMENT"}</span>
             </div>
-            <div className={styles.payRow}>
-              <span>{data.paymentMethod || "UPI PAYMENT"}:</span>
-              <span>₹{formatCurrency(paidAmount)}</span>
-            </div>
+
+            {data.splitBreakdown && (
+              <div style={{ margin: "4px 0 6px 0", padding: "6px 8px", background: "#f8fafc", borderRadius: "4px", border: "1px solid #e2e8f0", fontSize: "12px" }}>
+                <div style={{ fontWeight: 700, color: "#3730A3", marginBottom: "2px" }}>Split Tender Details:</div>
+                {Number(data.splitBreakdown.upi) > 0 && <div className={styles.payRow}><span>• UPI:</span><span>₹{formatCurrency(data.splitBreakdown.upi)}</span></div>}
+                {Number(data.splitBreakdown.cash) > 0 && <div className={styles.payRow}><span>• Cash:</span><span>₹{formatCurrency(data.splitBreakdown.cash)}</span></div>}
+                {Number(data.splitBreakdown.bank) > 0 && <div className={styles.payRow}><span>• Bank / NEFT:</span><span>₹{formatCurrency(data.splitBreakdown.bank)}</span></div>}
+                {Number(data.splitBreakdown.cheque) > 0 && <div className={styles.payRow}><span>• Cheque / Card:</span><span>₹{formatCurrency(data.splitBreakdown.cheque)}</span></div>}
+              </div>
+            )}
+
+            {data.creditTerms && (
+              <div style={{ margin: "4px 0 6px 0", padding: "6px 8px", background: "#FEF3C7", borderRadius: "4px", border: "1px solid #FDE68A", fontSize: "12px", color: "#92400E" }}>
+                <div>• Credit Terms: <strong>{data.creditTerms}</strong></div>
+                {data.creditDueDate && <div>• Payment Due Date: <strong>{formatDate(data.creditDueDate)}</strong></div>}
+              </div>
+            )}
+
             <div className={styles.payRow}>
               <span>Paid amount:</span>
               <span>₹{formatCurrency(paidAmount)}</span>
             </div>
             <div className={styles.payRowBold}>
               <span>Amount due:</span>
-              <span>₹{formatCurrency(amountDue)}</span>
+              <span style={{ color: amountDue > 0 ? "#DC2626" : "inherit" }}>₹{formatCurrency(amountDue)}</span>
             </div>
           </div>
         </div>

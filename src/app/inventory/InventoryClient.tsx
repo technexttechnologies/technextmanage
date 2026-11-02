@@ -39,6 +39,8 @@ interface Product {
   currentStock: number;
   reorderLevel: number;
   isLowStock: boolean;
+  isService?: boolean;
+  productType?: string;
   location: string | null;
 }
 
@@ -57,7 +59,7 @@ interface InventoryClientProps {
 
 export function InventoryClient({ products, stats, categories }: InventoryClientProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK" | "SERVICES">("ALL");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   
   // Stock adjustment modal state
@@ -87,14 +89,18 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
     }
 
     // Status Tab
+    const isSrv = p.isService || p.productType === "SERVICE";
+    if (statusFilter === "SERVICES") {
+      return isSrv;
+    }
     if (statusFilter === "IN_STOCK") {
-      return p.currentStock > p.reorderLevel;
+      return isSrv || p.currentStock > p.reorderLevel;
     }
     if (statusFilter === "LOW_STOCK") {
-      return p.currentStock > 0 && p.currentStock <= p.reorderLevel;
+      return !isSrv && p.currentStock > 0 && p.currentStock <= p.reorderLevel;
     }
     if (statusFilter === "OUT_OF_STOCK") {
-      return p.currentStock <= 0;
+      return !isSrv && p.currentStock <= 0;
     }
 
     return true;
@@ -256,6 +262,13 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
             <XCircle size={13} color={statusFilter === "OUT_OF_STOCK" ? "#FFF" : "#EF4444"} /> Out of Stock
             {stats.outOfStockCount > 0 && <span className={styles.tabBadge}>{stats.outOfStockCount}</span>}
           </button>
+          <button 
+            type="button" 
+            className={`${styles.tabBtn} ${statusFilter === "SERVICES" ? styles.active : ""}`}
+            onClick={() => setStatusFilter("SERVICES")}
+          >
+            🛠️ Services ({products.filter(p => p.isService || p.productType === "SERVICE").length})
+          </button>
         </div>
       </div>
 
@@ -265,7 +278,7 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Item & SKU</th>
+                <th>Item &amp; SKU</th>
                 <th>Category / Brand</th>
                 <th>Current Stock</th>
                 <th>Cost Price</th>
@@ -277,9 +290,10 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
             </thead>
             <tbody>
               {filteredProducts.map((p) => {
+                const isSrv = p.isService || p.productType === "SERVICE";
                 const margin = p.sellingPrice > 0 ? (((p.sellingPrice - p.purchasePrice) / p.sellingPrice) * 100).toFixed(0) : 0;
-                const isOut = p.currentStock <= 0;
-                const isLow = !isOut && p.currentStock <= p.reorderLevel;
+                const isOut = !isSrv && p.currentStock <= 0;
+                const isLow = !isSrv && !isOut && p.currentStock <= p.reorderLevel;
 
                 return (
                   <tr key={p.id}>
@@ -289,6 +303,7 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
                           {p.name}
                         </Link>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          {isSrv && <span style={{ fontSize: '11px', background: '#EEF2FF', color: '#4F46E5', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>SERVICE</span>}
                           {p.sku && <span className={styles.productSku}>SKU: {p.sku}</span>}
                           {p.barcode && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>BAR: {p.barcode}</span>}
                           {p.location && <span style={{ fontSize: '11px', color: '#6366F1' }}>📍 {p.location}</span>}
@@ -302,15 +317,24 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '15px', fontWeight: 700, color: isOut ? '#DC2626' : isLow ? '#D97706' : 'var(--text-primary)' }}>
-                          {p.currentStock}
-                        </span>
-                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{p.unit}</span>
-                      </div>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                        Min alert: {p.reorderLevel} {p.unit}
-                      </span>
+                      {isSrv ? (
+                        <div>
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: '#4F46E5' }}>Non-inventory</span>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Per {p.unit || 'Service'}</div>
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '15px', fontWeight: 700, color: isOut ? '#DC2626' : isLow ? '#D97706' : 'var(--text-primary)' }}>
+                              {p.currentStock}
+                            </span>
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{p.unit}</span>
+                          </div>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                            Min alert: {p.reorderLevel} {p.unit}
+                          </span>
+                        </>
+                      )}
                     </td>
                     <td style={{ fontWeight: 600 }}>₹{p.purchasePrice.toLocaleString("en-IN")}</td>
                     <td style={{ fontWeight: 700, color: 'var(--brand-accent)' }}>₹{p.sellingPrice.toLocaleString("en-IN")}</td>
@@ -324,7 +348,11 @@ export function InventoryClient({ products, stats, categories }: InventoryClient
                       </span>
                     </td>
                     <td>
-                      {isOut ? (
+                      {isSrv ? (
+                        <span className={styles.stockPill} style={{ background: '#EEF2FF', color: '#4F46E5', borderColor: '#C7D2FE' }}>
+                          🛠️ Service
+                        </span>
+                      ) : isOut ? (
                         <span className={`${styles.stockPill} ${styles.outOfStock}`}>Out of Stock</span>
                       ) : isLow ? (
                         <span className={`${styles.stockPill} ${styles.lowStock}`}>Low Stock</span>

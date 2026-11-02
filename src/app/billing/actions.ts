@@ -10,6 +10,58 @@ import {
   getAppUrl 
 } from "@/lib/whatsapp";
 
+export async function quickCreateBillingCustomer(data: {
+  name: string;
+  company?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  gstNumber?: string;
+}) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+
+  if (!data.name?.trim()) throw new Error("Customer name is required");
+
+  // Check phone deduplication
+  if (data.phone) {
+    const clean = data.phone.replace(/\D/g, "");
+    if (clean.length >= 10) {
+      const existing = await prisma.customer.findFirst({
+        where: {
+          phone: { contains: clean.slice(-10) }
+        }
+      });
+      if (existing) {
+        return {
+          success: true,
+          customer: existing,
+          isExisting: true
+        };
+      }
+    }
+  }
+
+  const customer = await prisma.customer.create({
+    data: {
+      name: data.name.trim(),
+      company: data.company?.trim() || null,
+      phone: data.phone?.trim() || null,
+      email: data.email?.trim() || null,
+      address: data.address?.trim() || null,
+      gstNumber: data.gstNumber?.trim() || null,
+      assignedToId: session.userId as string,
+      status: "ACTIVE",
+    }
+  });
+
+  return {
+    success: true,
+    customer,
+    isExisting: false
+  };
+}
+
 export async function createBillingDocument(formData: FormData) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
@@ -20,15 +72,42 @@ export async function createBillingDocument(formData: FormData) {
   const documentNumber = formData.get("documentNumber") as string;
   const dateStr = (formData.get("date") as string) || new Date().toISOString().split("T")[0];
   const dueDateStr = (formData.get("dueDate") as string) || dateStr;
-  const paymentStatus = (formData.get("paymentStatus") as string) || "Paid";
-  const paymentMethod = (formData.get("paymentMethod") as string) || "UPI PAYMENT";
+  
+  // Payment Type: FULL, SPLIT, or CREDIT
+  const paymentType = (formData.get("paymentType") as string) || "FULL";
+  let paymentMethod = (formData.get("paymentMethod") as string) || "UPI PAYMENT";
+  let paymentStatus = (formData.get("paymentStatus") as string) || "Paid";
   const bankDetails = (formData.get("bankDetails") as string) || "SOUTH INDIAN BANK\nPULPALLY";
   
   const subtotal = parseFloat((formData.get("subtotal") as string) || "0");
   const totalDiscount = parseFloat((formData.get("totalDiscount") as string) || "0");
   const totalAmount = parseFloat((formData.get("totalAmount") as string) || "0");
-  const paidAmount = parseFloat((formData.get("paidAmount") as string) || "0");
-  const amountDue = parseFloat((formData.get("amountDue") as string) || "0");
+  let paidAmount = parseFloat((formData.get("paidAmount") as string) || "0");
+  let amountDue = parseFloat((formData.get("amountDue") as string) || "0");
+
+  const splitBreakdownJson = formData.get("splitBreakdownJson") as string;
+  let splitBreakdown: any = null;
+  if (splitBreakdownJson) {
+    try {
+      splitBreakdown = JSON.parse(splitBreakdownJson);
+    } catch {}
+  }
+
+  const creditDueDate = (formData.get("creditDueDate") as string) || null;
+  const creditTerms = (formData.get("creditTerms") as string) || null;
+
+  if (paymentType === "CREDIT") {
+    paymentMethod = creditTerms ? `CREDIT SALE (${creditTerms})` : "CREDIT SALE";
+    paymentStatus = "Credit / Due";
+    paidAmount = 0;
+    amountDue = totalAmount;
+  } else if (paymentType === "SPLIT" && splitBreakdown) {
+    paymentMethod = "SPLIT PAYMENT";
+    const sumSplit = Object.values(splitBreakdown).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
+    paidAmount = Number(sumSplit);
+    amountDue = Math.max(0, totalAmount - paidAmount);
+    paymentStatus = paidAmount >= totalAmount ? "Paid" : "Partially Paid";
+  }
 
   const scopeOfWork = (formData.get("scopeOfWork") as string) || "";
   const paymentTermsNote = (formData.get("paymentTermsNote") as string) || "";
@@ -56,7 +135,6 @@ export async function createBillingDocument(formData: FormData) {
   let createdId = "";
 
   if (documentType === "QUOTATION") {
-    // Save as Quotation in the CRM
     const quotation = await prisma.quotation.create({
       data: {
         quotationNumber: documentNumber,
@@ -101,8 +179,12 @@ export async function createBillingDocument(formData: FormData) {
       documentNumber,
       date: dateStr,
       dueDate: dueDateStr,
+      paymentType,
       paymentStatus,
       paymentMethod,
+      splitBreakdown,
+      creditDueDate,
+      creditTerms,
       bankDetails,
       items,
       subtotal,
@@ -117,6 +199,8 @@ export async function createBillingDocument(formData: FormData) {
 
     const status = paymentStatus === "Paid" 
       ? "PAID" 
+      : paymentStatus.includes("Credit")
+      ? "SENT_TO_CUSTOMER"
       : documentType === "ORDER_FORM" 
       ? "APPROVED" 
       : "INVOICE_GENERATED";
@@ -139,14 +223,15 @@ export async function createBillingDocument(formData: FormData) {
 
     createdId = invoice.id;
 
-    // Deduct stock if Paid
+    // Deduct stock if Paid and not a service
     if (paymentStatus === "Paid" && items.length > 0) {
       for (const item of items) {
         if (item.productId && item.quantity > 0) {
           const product = await prisma.erpProduct.findUnique({
             where: { id: item.productId }
           });
-          if (product) {
+          // Skip stock deduction for service products
+          if (product && !product.isService && product.productType !== "SERVICE") {
             const prevStock = product.currentStock;
             const newStock = Math.max(0, prevStock - item.quantity);
             await prisma.erpProduct.update({
@@ -180,7 +265,7 @@ export async function createBillingDocument(formData: FormData) {
       }
     });
 
-    // Send WhatsApp notification if customer phone exists
+    // Send WhatsApp notification
     if (customer.phone) {
       try {
         const trackingUrl = `${getAppUrl()}/billing/doc/${documentType.toLowerCase()}/${invoice.id}`;
@@ -209,6 +294,194 @@ export async function createBillingDocument(formData: FormData) {
   revalidatePath("/inventory");
 
   redirect(`/billing/doc/${documentType.toLowerCase()}/${createdId}`);
+}
+
+export async function updateBillingDocument(formData: FormData) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+
+  const id = formData.get("id") as string;
+  const documentType = (formData.get("documentType") as string) || "INVOICE";
+  const customerId = formData.get("customerId") as string;
+  const projectId = (formData.get("projectId") as string) || null;
+  const documentNumber = formData.get("documentNumber") as string;
+  const dateStr = (formData.get("date") as string) || new Date().toISOString().split("T")[0];
+  const dueDateStr = (formData.get("dueDate") as string) || dateStr;
+  
+  const paymentType = (formData.get("paymentType") as string) || "FULL";
+  let paymentMethod = (formData.get("paymentMethod") as string) || "UPI PAYMENT";
+  let paymentStatus = (formData.get("paymentStatus") as string) || "Paid";
+  const bankDetails = (formData.get("bankDetails") as string) || "SOUTH INDIAN BANK\nPULPALLY";
+  
+  const subtotal = parseFloat((formData.get("subtotal") as string) || "0");
+  const totalDiscount = parseFloat((formData.get("totalDiscount") as string) || "0");
+  const totalAmount = parseFloat((formData.get("totalAmount") as string) || "0");
+  let paidAmount = parseFloat((formData.get("paidAmount") as string) || "0");
+  let amountDue = parseFloat((formData.get("amountDue") as string) || "0");
+
+  const splitBreakdownJson = formData.get("splitBreakdownJson") as string;
+  let splitBreakdown: any = null;
+  if (splitBreakdownJson) {
+    try {
+      splitBreakdown = JSON.parse(splitBreakdownJson);
+    } catch {}
+  }
+
+  const creditDueDate = (formData.get("creditDueDate") as string) || null;
+  const creditTerms = (formData.get("creditTerms") as string) || null;
+
+  if (paymentType === "CREDIT") {
+    paymentMethod = creditTerms ? `CREDIT SALE (${creditTerms})` : "CREDIT SALE";
+    paymentStatus = "Credit / Due";
+    paidAmount = 0;
+    amountDue = totalAmount;
+  } else if (paymentType === "SPLIT" && splitBreakdown) {
+    paymentMethod = "SPLIT PAYMENT";
+    const sumSplit = Object.values(splitBreakdown).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
+    paidAmount = Number(sumSplit);
+    amountDue = Math.max(0, totalAmount - paidAmount);
+    paymentStatus = paidAmount >= totalAmount ? "Paid" : "Partially Paid";
+  }
+
+  const scopeOfWork = (formData.get("scopeOfWork") as string) || "";
+  const paymentTermsNote = (formData.get("paymentTermsNote") as string) || "";
+  const notes = (formData.get("notes") as string) || "";
+
+  const itemsJson = formData.get("itemsJson") as string;
+  let items: any[] = [];
+  if (itemsJson) {
+    try {
+      items = JSON.parse(itemsJson);
+    } catch {
+      items = [];
+    }
+  }
+
+  if (documentType === "QUOTATION") {
+    // Delete old items and insert updated items
+    await prisma.quotationItem.deleteMany({
+      where: { quotationId: id }
+    });
+
+    await prisma.quotation.update({
+      where: { id },
+      data: {
+        quotationNumber: documentNumber,
+        customerId,
+        date: new Date(dateStr),
+        expiryDate: new Date(dueDateStr),
+        totalAmount,
+        subtotal,
+        notes: scopeOfWork || notes,
+        items: {
+          create: items.map(it => ({
+            name: it.name,
+            description: it.description || null,
+            quantity: Number(it.quantity) || 1,
+            price: Number(it.unitPrice) || 0,
+            total: Number(it.total) || 0,
+          }))
+        }
+      }
+    });
+  } else {
+    const existing = await prisma.invoiceRequest.findUnique({ where: { id } });
+    const prevStructured = (existing?.structuredData as any) || {};
+
+    const structuredPayload = {
+      ...prevStructured,
+      documentType,
+      documentNumber,
+      date: dateStr,
+      dueDate: dueDateStr,
+      paymentType,
+      paymentStatus,
+      paymentMethod,
+      splitBreakdown,
+      creditDueDate,
+      creditTerms,
+      bankDetails,
+      items,
+      subtotal,
+      totalDiscount,
+      totalAmount,
+      paidAmount,
+      amountDue,
+      scopeOfWork,
+      paymentTermsNote,
+    };
+
+    const status = paymentStatus === "Paid" 
+      ? "PAID" 
+      : paymentStatus.includes("Credit")
+      ? "SENT_TO_CUSTOMER"
+      : documentType === "ORDER_FORM" 
+      ? "APPROVED" 
+      : "INVOICE_GENERATED";
+
+    await prisma.invoiceRequest.update({
+      where: { id },
+      data: {
+        customerId,
+        projectId,
+        subtotal,
+        amountRequested: totalAmount,
+        notes: scopeOfWork || notes,
+        status,
+        aroniumInvoiceNo: documentNumber,
+        structuredData: structuredPayload,
+      }
+    });
+
+    // Deduct stock if transitioned to Paid and not previously deducted
+    if (paymentStatus === "Paid" && !prevStructured.stockDeducted && items.length > 0) {
+      for (const item of items) {
+        if (item.productId && item.quantity > 0) {
+          const product = await prisma.erpProduct.findUnique({
+            where: { id: item.productId }
+          });
+          if (product && !product.isService && product.productType !== "SERVICE") {
+            const prevStock = product.currentStock;
+            const newStock = Math.max(0, prevStock - item.quantity);
+            await prisma.erpProduct.update({
+              where: { id: item.productId },
+              data: { currentStock: newStock }
+            });
+            await prisma.stockMovement.create({
+              data: {
+                productId: item.productId,
+                type: "OUT",
+                quantity: item.quantity,
+                previousStock: prevStock,
+                newStock,
+                reason: `${documentType} #${documentNumber} Paid / Fulfilled`,
+                referenceNo: documentNumber,
+                createdById: session.userId as string
+              }
+            });
+          }
+        }
+      }
+      await prisma.invoiceRequest.update({
+        where: { id },
+        data: {
+          structuredData: {
+            ...structuredPayload,
+            stockDeducted: true,
+            stockDeductedAt: new Date().toISOString()
+          }
+        }
+      });
+    }
+  }
+
+  revalidatePath("/billing");
+  revalidatePath(`/billing/doc/${documentType.toLowerCase()}/${id}`);
+  revalidatePath("/invoice-requests");
+  revalidatePath("/quotations");
+  revalidatePath("/inventory");
+
+  redirect(`/billing/doc/${documentType.toLowerCase()}/${id}`);
 }
 
 export async function deleteBillingDocument(formData: FormData) {

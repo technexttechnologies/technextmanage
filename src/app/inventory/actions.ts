@@ -11,27 +11,29 @@ export async function createProduct(formData: FormData) {
     throw new Error("Unauthorized: Please log in to manage inventory.");
   }
 
+  const productType = (formData.get("productType") as string) || "PHYSICAL";
+  const isService = productType === "SERVICE" || formData.get("isService") === "true";
   const name = formData.get("name") as string;
   const sku = (formData.get("sku") as string) || null;
   const barcode = (formData.get("barcode") as string) || null;
-  const category = (formData.get("category") as string) || "General";
+  const category = (formData.get("category") as string) || (isService ? "Services" : "General");
   const brand = (formData.get("brand") as string) || null;
-  const unit = (formData.get("unit") as string) || "Pcs";
+  const unit = (formData.get("unit") as string) || (isService ? "Service" : "Pcs");
   const hsnCode = (formData.get("hsnCode") as string) || null;
   const description = (formData.get("description") as string) || null;
   const location = (formData.get("location") as string) || null;
 
   const purchasePrice = parseFloat((formData.get("purchasePrice") as string) || "0");
   const sellingPrice = parseFloat((formData.get("sellingPrice") as string) || "0");
-  const initialStock = parseFloat((formData.get("currentStock") as string) || "0");
-  const reorderLevel = parseFloat((formData.get("reorderLevel") as string) || "5");
+  const initialStock = isService ? 0 : parseFloat((formData.get("currentStock") as string) || "0");
+  const reorderLevel = isService ? 0 : parseFloat((formData.get("reorderLevel") as string) || "5");
   const taxRate = parseFloat((formData.get("taxRate") as string) || "18");
 
   if (!name || isNaN(purchasePrice) || isNaN(sellingPrice)) {
     throw new Error("Product Name, Cost Price, and Selling Price are required.");
   }
 
-  const isLowStock = initialStock <= reorderLevel;
+  const isLowStock = isService ? false : initialStock <= reorderLevel;
 
   const product = await prisma.erpProduct.create({
     data: {
@@ -50,6 +52,8 @@ export async function createProduct(formData: FormData) {
       currentStock: initialStock,
       reorderLevel,
       isLowStock,
+      isService,
+      productType: isService ? "SERVICE" : "PHYSICAL",
     },
   });
 
@@ -82,26 +86,28 @@ export async function updateProduct(formData: FormData) {
     throw new Error("Unauthorized");
   }
 
+  const productType = (formData.get("productType") as string) || "PHYSICAL";
+  const isService = productType === "SERVICE" || formData.get("isService") === "true";
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
   const sku = (formData.get("sku") as string) || null;
   const barcode = (formData.get("barcode") as string) || null;
-  const category = (formData.get("category") as string) || "General";
+  const category = (formData.get("category") as string) || (isService ? "Services" : "General");
   const brand = (formData.get("brand") as string) || null;
-  const unit = (formData.get("unit") as string) || "Pcs";
+  const unit = (formData.get("unit") as string) || (isService ? "Service" : "Pcs");
   const hsnCode = (formData.get("hsnCode") as string) || null;
   const description = (formData.get("description") as string) || null;
   const location = (formData.get("location") as string) || null;
 
   const purchasePrice = parseFloat((formData.get("purchasePrice") as string) || "0");
   const sellingPrice = parseFloat((formData.get("sellingPrice") as string) || "0");
-  const reorderLevel = parseFloat((formData.get("reorderLevel") as string) || "5");
+  const reorderLevel = isService ? 0 : parseFloat((formData.get("reorderLevel") as string) || "5");
   const taxRate = parseFloat((formData.get("taxRate") as string) || "18");
 
   const existing = await prisma.erpProduct.findUnique({ where: { id } });
   if (!existing) throw new Error("Product not found");
 
-  const isLowStock = existing.currentStock <= reorderLevel;
+  const isLowStock = isService ? false : existing.currentStock <= reorderLevel;
 
   await prisma.erpProduct.update({
     where: { id },
@@ -120,6 +126,8 @@ export async function updateProduct(formData: FormData) {
       sellingPrice,
       reorderLevel,
       isLowStock,
+      isService,
+      productType: isService ? "SERVICE" : "PHYSICAL",
     },
   });
 
