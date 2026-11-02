@@ -584,3 +584,121 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ========================================================= */
+/* INTERACTIVE ACTIVE GRAPH & DRILL-DOWN STYLES               */
+/* ========================================================= */
+.barColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  padding: 0 2px;
+  border-radius: 4px;
+}
+
+.barColumn:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.12);
+}
+
+.barColumnActive {
+  background-color: rgba(2, 132, 199, 0.08);
+}
+
+.barColumnActive div[data-bar] {
+  outline: 2px solid #0284c7;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.35);
+}
+
+.drilldownPanel {
+  margin-top: 16px;
+  border-top: 1px dashed rgba(148, 163, 184, 0.3);
+  padding-top: 16px;
+}
+
+/* ========================================================= */
+/* DEDICATED VECTOR EXECUTIVE PRINT / PDF REPORT STYLES       */
+/* ========================================================= */
+.printableReportContainer {
+  display: none;
+}
+
+@media print {
+  /* Hide standard page layout and UI chrome */
+  :global(body) {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+
+  :global(nav),
+  :global(aside),
+  :global(header),
+  :global(.noPrint),
+  .topNav,
+  .actionToolbar,
+  .filterBar,
+  .periodicGrid,
+  .monthlyChartCard,
+  .productsSplit,
+  .groupTreePanel,
+  .splitPaneContainer,
+  :global(button),
+  :global(a) {
+    display: none !important;
+  }
+
+  .consoleContainer {
+    background: #ffffff !important;
+    color: #000000 !important;
+    min-height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .printableReportContainer {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 12mm 14mm;
+  }
+
+  .printTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+
+  .printTable th,
+  .printTable td {
+    border: 1px solid #cbd5e1;
+    padding: 6px 8px;
+    text-align: left;
+  }
+
+  .printTable thead {
+    display: table-header-group;
+    background-color: #f1f5f9;
+  }
+
+  .printTable tr {
+    page-break-inside: avoid;
+  }
+
+  .printTable tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+}
+

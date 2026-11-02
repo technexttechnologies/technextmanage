@@ -201,9 +201,9 @@ export default function Sidebar({ user }: { user: any }) {
                 </Link>
               </div>
 
-              {/* Aronium Management Suite */}
+              {/* Executive Billing & Management Suite */}
               <div className={styles.navSection}>
-                <p className={styles.navSectionTitle} style={{ color: "#00a2ed", fontWeight: 700 }}>Aronium Management Suite</p>
+                <p className={styles.navSectionTitle} style={{ color: "#0284c7", fontWeight: 700 }}>Executive Billing &amp; Management</p>
                 <Link href="/billing?tab=dashboard" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
                   <TrendingUp size={20} color="#00a2ed" /> Management • Dashboard
                 </Link>
@@ -299,7 +299,7 @@ export default function Sidebar({ user }: { user: any }) {
               <div className={styles.navSection}>
                 <p className={styles.navSectionTitle}>Integrations</p>
                 <Link href="/aronium" className={`${styles.navItem} ${pathname.startsWith('/aronium') ? styles.active : ''}`}>
-                  <ShoppingCart size={20} /> Aronium POS
+                  <ShoppingCart size={20} /> POS &amp; Billing Sync
                 </Link>
                 <Link href="/integration" className={`${styles.navItem} ${pathname.startsWith('/integration') ? styles.active : ''}`}>
                   <Database size={20} /> Sync Center

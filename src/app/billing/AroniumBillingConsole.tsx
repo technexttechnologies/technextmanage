@@ -75,13 +75,18 @@ export default function AroniumBillingConsole({
   const [selectedProductGroup, setSelectedProductGroup] = useState<string | null>(null);
   const [isDeletingProduct, setIsDeletingProduct] = useState(false);
 
-  // Theme State: DARK (authentic Aronium charcoal) or LIGHT
-  const [theme, setTheme] = useState<"DARK" | "LIGHT">("DARK");
+  // Interactive Active Graph Drilldown State
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null);
+
+  // Theme State: Default to Executive Minimal LIGHT
+  const [theme, setTheme] = useState<"DARK" | "LIGHT">("LIGHT");
 
   useEffect(() => {
     const saved = localStorage.getItem("aronium_theme");
-    if (saved === "LIGHT" || saved === "DARK") {
-      setTheme(saved);
+    if (saved === "DARK") {
+      setTheme("DARK");
+    } else {
+      setTheme("LIGHT");
     }
 
     if (typeof window !== "undefined") {
@@ -310,6 +315,11 @@ export default function AroniumBillingConsole({
     );
   }, [invoices, quotations]);
 
+  // Invoices Only Dataset (strictly excluding quotations from calculations and sales reports)
+  const invoiceOnlyDocs = useMemo(() => {
+    return allDocuments.filter(d => d.kind !== "QUOTATION");
+  }, [allDocuments]);
+
   // Selected Document in Master-Detail view
   const [selectedDocId, setSelectedDocId] = useState<string | null>(allDocuments[0]?.id || null);
 
@@ -390,10 +400,10 @@ export default function AroniumBillingConsole({
   });
   const [repEndDate, setRepEndDate] = useState(() => new Date().toISOString().split("T")[0]);
 
-  // Compute Active Report Dataset
+  // Compute Active Report Dataset (STRICTLY INVOICES ONLY - Quotations Excluded)
   const generatedReportData = useMemo(() => {
-    // Filter base documents by date and customer
-    const pool = allDocuments.filter(d => {
+    // Filter base invoice documents by date and customer
+    const pool = invoiceOnlyDocs.filter(d => {
       if (repCustomer !== "ALL" && d.customerId !== repCustomer) return false;
       if (repStartDate && new Date(d.date).getTime() < new Date(repStartDate).getTime()) return false;
       if (repEndDate && new Date(d.date).getTime() > new Date(repEndDate + "T23:59:59").getTime()) return false;
@@ -416,8 +426,8 @@ export default function AroniumBillingConsole({
 
       const rows = Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
       return {
-        title: "Sales by Products Report",
-        headers: ["#", "Product Code", "Product / Service Name", "Quantity Sold", "Transactions", "Total Revenue (₹)"],
+        title: "Sales by Products Report (Invoices Only)",
+        headers: ["#", "Product Code", "Product / Service Name", "Quantity Invoiced", "Invoices Count", "Total Billed (₹)"],
         rows: rows.map((r, i) => [
           i + 1,
           r.code,
@@ -428,6 +438,8 @@ export default function AroniumBillingConsole({
         ]),
         totalSum: rows.reduce((s, r) => s + r.revenue, 0),
         totalQty: rows.reduce((s, r) => s + r.qty, 0),
+        totalPaid: pool.reduce((s, d) => s + d.paidAmount, 0),
+        totalDue: pool.reduce((s, d) => s + d.amountDue, 0),
       };
     } else if (activeReportId === "CUSTOMERS") {
       // Aggregate by customer
@@ -444,8 +456,8 @@ export default function AroniumBillingConsole({
 
       const rows = Array.from(map.values()).sort((a, b) => b.total - a.total);
       return {
-        title: "Sales by Customers Report",
-        headers: ["#", "Customer Code", "Customer Name / Company", "Phone", "Invoices", "Billed Amount (₹)", "Paid (₹)", "Balance Due (₹)"],
+        title: "Sales by Customers Report (Invoices Only)",
+        headers: ["#", "Customer Code", "Customer Name / Company", "Phone", "Invoices Count", "Billed Amount (₹)", "Total Paid (₹)", "Balance Due (₹)"],
         rows: rows.map((r, i) => [
           i + 1,
           r.code,
@@ -475,8 +487,8 @@ export default function AroniumBillingConsole({
 
       const rows = Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
       return {
-        title: "Daily Sales Summary Report",
-        headers: ["#", "Date", "Bills Generated", "Total Sales (₹)", "Total Collected (₹)", "Outstanding Due (₹)"],
+        title: "Daily Sales Summary Report (Invoices Only)",
+        headers: ["#", "Date", "Invoices Count", "Daily Billed (₹)", "Daily Collected (₹)", "Outstanding Due (₹)"],
         rows: rows.map((r, i) => [
           i + 1,
           formatDate(r.date),
@@ -502,8 +514,8 @@ export default function AroniumBillingConsole({
 
       const rows = Array.from(map.values()).sort((a, b) => b.total - a.total);
       return {
-        title: "Payment Types Breakdown Report",
-        headers: ["#", "Payment Tender Method", "Transactions", "Total Processed (₹)", "Share %"],
+        title: "Payment Types Breakdown Report (Invoices Only)",
+        headers: ["#", "Payment Tender Method", "Transactions", "Total Processed (₹)", "Volume Share %"],
         rows: rows.map((r, i) => {
           const grand = pool.reduce((s, d) => s + d.amount, 0);
           const share = grand > 0 ? ((r.total / grand) * 100).toFixed(1) : "0.0";
@@ -516,13 +528,15 @@ export default function AroniumBillingConsole({
           ];
         }),
         totalSum: rows.reduce((s, r) => s + r.total, 0),
+        totalPaid: pool.reduce((s, d) => s + d.paidAmount, 0),
+        totalDue: pool.reduce((s, d) => s + d.amountDue, 0),
       };
     } else if (activeReportId === "UNPAID_SALES") {
       // Unpaid & balance due accounts
       const unpaidList = pool.filter(d => d.amountDue > 0);
       return {
-        title: "Unpaid Sales & Accounts Receivable Report",
-        headers: ["#", "Doc #", "Customer Name", "Phone", "Document Date", "Due Date", "Total (₹)", "Paid (₹)", "Outstanding Due (₹)"],
+        title: "Unpaid Sales & Accounts Receivable Report (Invoices Only)",
+        headers: ["#", "Invoice #", "Customer Name", "Phone", "Document Date", "Due Date", "Total Billed (₹)", "Paid (₹)", "Outstanding Due (₹)"],
         rows: unpaidList.map((d, i) => [
           i + 1,
           d.docNumber,
@@ -539,48 +553,60 @@ export default function AroniumBillingConsole({
         totalDue: unpaidList.reduce((s, d) => s + d.amountDue, 0),
       };
     } else {
-      // INVOICES (Chronological Invoice List)
+      // INVOICES (Chronological Invoice List - Detailed)
       return {
-        title: "Chronological Invoice List Report",
-        headers: ["#", "Doc #", "Type", "Customer / Company", "Date", "Payment Mode", "Status", "Amount (₹)"],
+        title: "Chronological Invoices Audit Report (Invoices Only)",
+        headers: ["#", "Invoice #", "Date", "Customer Code", "Customer / Company", "Contact Phone", "Items Invoiced", "Payment Mode", "Status", "Billed (₹)", "Paid (₹)", "Due (₹)"],
         rows: pool.map((d, i) => [
           i + 1,
           d.docNumber,
-          d.kind.replace("_", " "),
-          d.customerName,
           formatDate(d.date),
+          d.customerCode || "---",
+          d.customerName,
+          d.customerPhone || "---",
+          d.items.map((it: any) => `${it.name} (${it.quantity})`).join("; "),
           d.paymentMethod,
           d.status,
-          `₹${formatCurrency(d.amount)}`
+          `₹${formatCurrency(d.amount)}`,
+          `₹${formatCurrency(d.paidAmount)}`,
+          `₹${formatCurrency(d.amountDue)}`
         ]),
         totalSum: pool.reduce((s, d) => s + d.amount, 0),
         totalPaid: pool.reduce((s, d) => s + d.paidAmount, 0),
         totalDue: pool.reduce((s, d) => s + d.amountDue, 0),
       };
     }
-  }, [allDocuments, activeReportId, repCustomer, repStartDate, repEndDate]);
+  }, [invoiceOnlyDocs, activeReportId, repCustomer, repStartDate, repEndDate]);
 
-  // CSV Exporter for Reporting
+  // Clean Multi-Column CSV Exporter for Reporting (Detailed with Header & Summaries)
   const downloadReportCSV = () => {
     if (!generatedReportData) return;
     const { title, headers, rows } = generatedReportData;
-    let csvContent = `data:text/csv;charset=utf-8,${title}\nGenerated on: ${new Date().toLocaleString()}\n\n`;
+    let csvContent = `data:text/csv;charset=utf-8,`;
+    csvContent += `"TechNext Technologies Private Limited - Official Financial & Sales Audit Report"\n`;
+    csvContent += `"Report Title:","${title.replace(/"/g, '""')}"\n`;
+    csvContent += `"Reporting Period:","${repStartDate || 'All Time'} to ${repEndDate || 'Present'}"\n`;
+    csvContent += `"Document Ref:","TN-REP-2026-${Date.now().toString().slice(-4)}"\n`;
+    csvContent += `"Generated On:","${new Date().toLocaleString()}"\n`;
+    csvContent += `"Filter Scope:","Strictly Invoices Only (Quotations / Estimates Excluded)"\n`;
+    csvContent += `"Summary Metrics:","Total Invoices: ${rows.length}","Total Billed: ₹${generatedReportData.totalSum || 0}","Collected: ₹${generatedReportData.totalPaid || 0}","Due: ₹${generatedReportData.totalDue || 0}"\n\n`;
     csvContent += headers.map(h => `"${h}"`).join(",") + "\n";
-    rows.forEach(r => {
+    rows.forEach((r: any) => {
       csvContent += r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n";
     });
+    csvContent += `\n"GRAND TOTAL (Invoices Only)","","","","","","","","","₹${formatCurrency(generatedReportData.totalSum || 0)}","₹${formatCurrency(generatedReportData.totalPaid || 0)}","₹${formatCurrency(generatedReportData.totalDue || 0)}"\n`;
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `technext-${activeReportId.toLowerCase()}-report-${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute("download", `technext_${activeReportId.toLowerCase()}_report_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   // -------------------------------------------------------------
-  // Dashboard Calculations (Image 5)
+  // Dashboard Calculations (STRICTLY INVOICES ONLY - Image 5 Replica)
   // -------------------------------------------------------------
   const monthlySales2026 = useMemo(() => {
     const months = [
@@ -588,12 +614,15 @@ export default function AroniumBillingConsole({
       "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
     ];
     const totals = Array(12).fill(0);
+    const counts = Array(12).fill(0);
 
-    allDocuments.forEach(doc => {
+    // STRICTLY INVOICES ONLY (Exclude Quotations)
+    invoiceOnlyDocs.forEach(doc => {
       const d = new Date(doc.date);
       if (!isNaN(d.getTime()) && d.getFullYear() === 2026) {
         const m = d.getMonth();
         totals[m] += doc.amount;
+        counts[m] += 1;
       }
     });
 
@@ -603,12 +632,22 @@ export default function AroniumBillingConsole({
     return {
       months,
       totals,
+      counts,
       maxVal,
       topMonthName: months[topIdx] || "SEPTEMBER",
       topMonthTotal: totals[topIdx] || 0,
       yearTotal: totals.reduce((a, b) => a + b, 0),
     };
-  }, [allDocuments]);
+  }, [invoiceOnlyDocs]);
+
+  // Selected Month Invoices for Active Graph Interactive Drilldown
+  const selectedMonthInvoices = useMemo(() => {
+    if (selectedMonthIndex === null) return [];
+    return invoiceOnlyDocs.filter(doc => {
+      const d = new Date(doc.date);
+      return !isNaN(d.getTime()) && d.getFullYear() === 2026 && d.getMonth() === selectedMonthIndex;
+    });
+  }, [invoiceOnlyDocs, selectedMonthIndex]);
 
   // Bar colors matching Aronium Dashboard screenshot (Image 5)
   const barColors = [
@@ -1115,16 +1154,17 @@ export default function AroniumBillingConsole({
                 className={styles.btnSearch}
                 style={{ padding: "6px 14px" }}
               >
-                <Search size={14} /> Show report
+                <Search size={14} /> Refresh Report
               </button>
 
               <button
                 type="button"
                 onClick={() => window.print()}
-                className={styles.btnClear}
-                style={{ padding: "6px 14px" }}
+                className={styles.btnSearch}
+                style={{ padding: "6px 14px", backgroundColor: "#0284c7" }}
+                title="Generates official print-ready statement / vector PDF"
               >
-                <Printer size={14} /> Print
+                <Printer size={14} /> Print / Save as PDF
               </button>
 
               <button
@@ -1132,8 +1172,9 @@ export default function AroniumBillingConsole({
                 onClick={downloadReportCSV}
                 className={styles.btnClear}
                 style={{ padding: "6px 14px", color: "#10b981", borderColor: "#10b981" }}
+                title="Export detailed multi-column financial CSV"
               >
-                <Download size={14} /> Excel (CSV)
+                <Download size={14} /> Export Detailed CSV
               </button>
             </div>
 
@@ -1225,23 +1266,30 @@ export default function AroniumBillingConsole({
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "8px", alignItems: "flex-end", height: "160px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)", paddingBottom: "8px" }}>
                   {monthlySales2026.months.map((m, idx) => {
                     const val = monthlySales2026.totals[idx];
+                    const count = monthlySales2026.counts[idx];
+                    const isSelected = selectedMonthIndex === idx;
                     const pct = monthlySales2026.maxVal > 0 ? Math.max(8, (val / monthlySales2026.maxVal) * 100) : 8;
                     return (
-                      <div key={m} style={{ display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end" }}>
+                      <div 
+                        key={m} 
+                        onClick={() => setSelectedMonthIndex(selectedMonthIndex === idx ? null : idx)}
+                        className={`${styles.barColumn} ${isSelected ? styles.barColumnActive : ""}`}
+                        title={`${m} 2026: ₹${formatCurrency(val)} (${count} Bills) — Click to inspect invoices`}
+                      >
                         {val > 0 && (
-                          <span style={{ fontSize: "10px", fontWeight: 700, marginBottom: "4px", opacity: 0.9 }}>
+                          <span style={{ fontSize: "10px", fontWeight: 700, marginBottom: "4px", color: isSelected ? "#0284c7" : "inherit" }}>
                             {val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}
                           </span>
                         )}
                         <div 
+                          data-bar="true"
                           style={{ 
                             width: "100%", 
                             height: `${val > 0 ? pct : 4}%`, 
-                            backgroundColor: barColors[idx] || "#00a2ed", 
+                            backgroundColor: isSelected ? "#0284c7" : (barColors[idx] || "#0284c7"), 
                             borderRadius: "3px 3px 0 0",
-                            transition: "height 0.3s ease"
+                            transition: "all 0.2s ease"
                           }} 
-                          title={`${m} 2026: ₹${formatCurrency(val)}`}
                         />
                       </div>
                     );
@@ -1250,12 +1298,97 @@ export default function AroniumBillingConsole({
 
                 {/* Month Labels */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "8px", marginTop: "6px", textAlign: "center", fontSize: "11px", opacity: 0.75, fontWeight: 600 }}>
-                  {monthlySales2026.months.map(m => (
-                    <div key={m}>{m}</div>
+                  {monthlySales2026.months.map((m, idx) => (
+                    <div 
+                      key={m} 
+                      onClick={() => setSelectedMonthIndex(selectedMonthIndex === idx ? null : idx)}
+                      style={{ 
+                        cursor: "pointer", 
+                        color: selectedMonthIndex === idx ? "#0284c7" : "inherit",
+                        fontWeight: selectedMonthIndex === idx ? 800 : 600
+                      }}
+                    >
+                      {m}
+                    </div>
                   ))}
                 </div>
               </div>
             </div>
+
+            {/* Interactive Active Month Drilldown Inspection Panel */}
+            {selectedMonthIndex !== null && (
+              <div className={styles.drilldownPanel}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <h3 style={{ fontSize: "14px", fontWeight: 700, margin: 0, color: "#0284c7" }}>
+                      📅 {monthlySales2026.months[selectedMonthIndex]} 2026 Invoices Breakdown
+                    </h3>
+                    <span style={{ fontSize: "11px", background: "rgba(2, 132, 199, 0.1)", color: "#0284c7", padding: "2px 8px", borderRadius: "10px", fontWeight: 700 }}>
+                      {selectedMonthInvoices.length} Invoices • Total: ₹{formatCurrency(monthlySales2026.totals[selectedMonthIndex])}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMonthIndex(null)}
+                    className={styles.toolBtn}
+                    style={{ padding: "4px 10px", fontSize: "11px", cursor: "pointer" }}
+                  >
+                    <X size={12} /> Clear Selection
+                  </button>
+                </div>
+
+                {selectedMonthInvoices.length === 0 ? (
+                  <div style={{ padding: "16px", textAlign: "center", opacity: 0.6, fontSize: "13px" }}>
+                    No billed invoices found for {monthlySales2026.months[selectedMonthIndex]} 2026.
+                  </div>
+                ) : (
+                  <div className={styles.tableWrapper} style={{ maxHeight: "280px" }}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Doc #</th>
+                          <th>Date</th>
+                          <th>Customer</th>
+                          <th>Phone</th>
+                          <th>Items Invoiced</th>
+                          <th>Payment Tender</th>
+                          <th>Status</th>
+                          <th style={{ textAlign: "right" }}>Amount</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedMonthInvoices.map(inv => (
+                          <tr key={inv.id}>
+                            <td><strong>{inv.docNumber}</strong></td>
+                            <td>{formatDate(inv.date)}</td>
+                            <td>{inv.customerName}</td>
+                            <td>{inv.customerPhone || "---"}</td>
+                            <td style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {inv.items.map((it: any) => `${it.name} (${it.quantity})`).join(", ")}
+                            </td>
+                            <td>{inv.paymentMethod}</td>
+                            <td>
+                              <span className={`${styles.statusBadge} ${inv.status === "Paid" ? styles.statusPaid : styles.statusPartial}`}>
+                                {inv.status}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: "right", fontWeight: 700, color: "#10b981" }}>
+                              ₹{formatCurrency(inv.amount)}
+                            </td>
+                            <td>
+                              <Link href={`/billing/doc/invoice/${inv.rawId}`} className={styles.toolBtn} style={{ padding: "3px 8px", fontSize: "11px" }}>
+                                View
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Periodic Reports Grid */}
@@ -1542,6 +1675,110 @@ export default function AroniumBillingConsole({
           </div>
         </div>
       )}
+
+      {/* ========================================================= */}
+      {/* EXECUTIVE PRINTABLE REPORT DOCUMENT (For Vector Print/PDF) */}
+      {/* ========================================================= */}
+      <div id="executive-printable-report" className={styles.printableReportContainer}>
+        {/* Official Letterhead Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0f172a", paddingBottom: "12px", marginBottom: "16px" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+              <div style={{ width: "32px", height: "32px", backgroundColor: "#0f172a", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: 900, fontSize: "16px" }}>
+                TN
+              </div>
+              <div>
+                <h1 style={{ fontSize: "18px", fontWeight: 800, margin: 0, textTransform: "uppercase", letterSpacing: "0.04em", color: "#0f172a" }}>
+                  TechNext Technologies
+                </h1>
+                <div style={{ fontSize: "10px", fontWeight: 600, color: "#475569" }}>
+                  Enterprise Software, Cloud &amp; Billing Systems
+                </div>
+              </div>
+            </div>
+            <div style={{ fontSize: "9pt", color: "#334155", lineHeight: 1.4 }}>
+              Door No. 4/487, Pulpally, Wayanad, Kerala - 673579, India<br />
+              Email: technexttechnologies@gmail.com | Phone: +91 85906 74531
+            </div>
+          </div>
+
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {generatedReportData ? generatedReportData.title : "Financial Audit Report"}
+            </div>
+            <div style={{ fontSize: "9pt", color: "#475569", marginTop: "4px" }}>
+              <strong>Period:</strong> {repStartDate || "All Time"} to {repEndDate || "Present"}<br />
+              <strong>Scope:</strong> Strictly Invoices Only (Estimates Excluded)<br />
+              <strong>Document Ref:</strong> TN-REP-2026-{Date.now().toString().slice(-4)}<br />
+              <strong>Generated:</strong> {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+            </div>
+          </div>
+        </div>
+
+        {/* Executive Summary 4-KPI Row */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "16px" }}>
+          <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", background: "#f8fafc" }}>
+            <div style={{ fontSize: "8pt", textTransform: "uppercase", color: "#64748b", fontWeight: 700 }}>Invoices In Scope</div>
+            <div style={{ fontSize: "14pt", fontWeight: 800, color: "#0f172a" }}>{generatedReportData?.rows.length || 0}</div>
+          </div>
+          <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", background: "#f8fafc" }}>
+            <div style={{ fontSize: "8pt", textTransform: "uppercase", color: "#64748b", fontWeight: 700 }}>Total Net Invoiced</div>
+            <div style={{ fontSize: "14pt", fontWeight: 800, color: "#0284c7" }}>₹{formatCurrency(generatedReportData?.totalSum || 0)}</div>
+          </div>
+          <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", background: "#f8fafc" }}>
+            <div style={{ fontSize: "8pt", textTransform: "uppercase", color: "#64748b", fontWeight: 700 }}>Total Collected</div>
+            <div style={{ fontSize: "14pt", fontWeight: 800, color: "#10b981" }}>₹{formatCurrency(generatedReportData?.totalPaid || 0)}</div>
+          </div>
+          <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", background: "#f8fafc" }}>
+            <div style={{ fontSize: "8pt", textTransform: "uppercase", color: "#64748b", fontWeight: 700 }}>Outstanding Balance Due</div>
+            <div style={{ fontSize: "14pt", fontWeight: 800, color: (generatedReportData?.totalDue || 0) > 0 ? "#ef4444" : "#0f172a" }}>
+              ₹{formatCurrency(generatedReportData?.totalDue || 0)}
+            </div>
+          </div>
+        </div>
+
+        {/* High-Density Vector Tabular Data */}
+        <table className={styles.printTable}>
+          <thead>
+            <tr>
+              {generatedReportData?.headers.map((h, idx) => (
+                <th key={idx}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {generatedReportData?.rows.map((row, rIdx) => (
+              <tr key={rIdx}>
+                {row.map((cell: any, cIdx: number) => (
+                  <td key={cIdx} style={{ textAlign: String(cell).startsWith("₹") ? "right" : "left" }}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+            {/* Grand Totals Summary Row */}
+            <tr style={{ fontWeight: 800, backgroundColor: "#f1f5f9", borderTop: "2px solid #0f172a" }}>
+              <td colSpan={Math.max(1, (generatedReportData?.headers.length || 3) - 3)}>GRAND TOTAL (Invoices Only)</td>
+              <td style={{ textAlign: "right", color: "#0284c7" }}>₹{formatCurrency(generatedReportData?.totalSum || 0)}</td>
+              <td style={{ textAlign: "right", color: "#10b981" }}>₹{formatCurrency(generatedReportData?.totalPaid || 0)}</td>
+              <td style={{ textAlign: "right", color: (generatedReportData?.totalDue || 0) > 0 ? "#ef4444" : "#0f172a" }}>₹{formatCurrency(generatedReportData?.totalDue || 0)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Sign-off & Audit Certification Footer */}
+        <div style={{ marginTop: "24px", paddingTop: "12px", borderTop: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "flex-end", fontSize: "8pt", color: "#64748b" }}>
+          <div>
+            <div>This is an official computer-generated statement from TechNext Enterprise ERP.</div>
+            <div>Verified by Accounts &amp; Financial Auditing Division • Page 1 of 1</div>
+          </div>
+          <div style={{ textAlign: "center", minWidth: "160px" }}>
+            <div style={{ borderBottom: "1px dashed #94a3b8", height: "30px", marginBottom: "4px" }} />
+            <div style={{ fontWeight: 700, color: "#0f172a" }}>Authorized Signatory</div>
+            <div>TechNext Technologies</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

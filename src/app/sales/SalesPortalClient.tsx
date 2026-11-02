@@ -364,7 +364,7 @@ export default function SalesPortalClient({
           </div>
           <div>
             <h3 className={styles.actionTitle}>Request Invoice</h3>
-            <p className={styles.actionDesc}>Bill client for upfront advance, project milestone, or final settlement via Aronium.</p>
+            <p className={styles.actionDesc}>Bill client for upfront advance, project milestone, or final settlement.</p>
           </div>
         </div>
 
@@ -773,7 +773,7 @@ export default function SalesPortalClient({
                   <th>Budget</th>
                   <th>Priority</th>
                   <th>Status</th>
-                  <th>Admin Notes / Aronium</th>
+                  <th>Admin Notes / Ref #</th>
                   <th>Created</th>
                   <th>Actions</th>
                 </tr>
@@ -859,7 +859,7 @@ export default function SalesPortalClient({
                   <th>Total Amount</th>
                   <th>Notes</th>
                   <th>Status</th>
-                  <th>Aronium Inv #</th>
+                  <th>Official Invoice #</th>
                   <th>Date</th>
                 </tr>
               </thead>
@@ -1752,7 +1752,7 @@ export default function SalesPortalClient({
                     <select id="projType" name="type" defaultValue="Website & Web App">
                       <option value="Website & Web App">Website & Web App</option>
                       <option value="Mobile Application">Mobile Application (iOS/Android)</option>
-                      <option value="Aronium POS Setup">Aronium POS Setup & Barcode</option>
+                      <option value="POS & Billing System Setup">POS &amp; Barcode Billing System Setup</option>
                       <option value="E-Commerce Store">E-Commerce Store</option>
                       <option value="Custom ERP & Software">Custom ERP & Software</option>
                       <option value="Digital Marketing & SEO">Digital Marketing & SEO</option>

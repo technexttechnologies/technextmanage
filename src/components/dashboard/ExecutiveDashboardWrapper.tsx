@@ -6,15 +6,9 @@ import {
   Monitor, 
   TrendingUp, 
   LayoutDashboard, 
-  Receipt, 
-  Package, 
-  BarChart3, 
   Plus, 
   FileSignature, 
-  Users, 
-  Briefcase,
-  Layers,
-  ArrowRight
+  Users
 } from "lucide-react";
 
 interface Props {
@@ -33,15 +27,11 @@ export default function ExecutiveDashboardWrapper({
   aroniumConsole,
   salesDashboard,
   crmDashboard,
-  totalBilled,
-  totalCollected,
-  totalDue,
   pendingQuotesCount,
   pendingInvoicesCount,
-  pendingAccessCount,
 }: Props) {
-  // Modes: "ARONIUM" (Aronium Lite Management Console), "SALES" (Sales Operations & Deal Pipeline), or "CRM" (CRM Operations)
-  const [viewMode, setViewMode] = useState<"ARONIUM" | "SALES" | "CRM">("ARONIUM");
+  // Modes: "BILLING" (Billing & Invoicing Console), "SALES" (Sales Operations & Deal Pipeline), or "CRM" (CRM Operations)
+  const [viewMode, setViewMode] = useState<"BILLING" | "SALES" | "CRM">("BILLING");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -55,19 +45,21 @@ export default function ExecutiveDashboardWrapper({
         setViewMode("CRM");
         return;
       }
-      if (modeParam === "ARONIUM" || modeParam === "BILLING") {
-        setViewMode("ARONIUM");
+      if (modeParam === "BILLING" || modeParam === "ARONIUM") {
+        setViewMode("BILLING");
         return;
       }
 
       const saved = localStorage.getItem("technext_dashboard_mode");
-      if (saved === "CRM" || saved === "ARONIUM" || saved === "SALES") {
+      if (saved === "CRM" || saved === "BILLING" || saved === "SALES") {
         setViewMode(saved as any);
+      } else if (saved === "ARONIUM") {
+        setViewMode("BILLING");
       }
     }
   }, []);
 
-  const switchMode = (mode: "ARONIUM" | "SALES" | "CRM") => {
+  const switchMode = (mode: "BILLING" | "SALES" | "CRM") => {
     setViewMode(mode);
     if (typeof window !== "undefined") {
       localStorage.setItem("technext_dashboard_mode", mode);
@@ -77,28 +69,20 @@ export default function ExecutiveDashboardWrapper({
     }
   };
 
-  const formatCurrency = (amt: number) => {
-    return Number(amt || 0).toLocaleString("en-IN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
-
   return (
-    <div style={{ width: "100%", overflowX: "hidden" }}>
-      {/* 1. Executive Top Suite Navigation Bar */}
+    <div style={{ width: "100%", overflowX: "hidden", backgroundColor: "#f8fafc" }}>
+      {/* 1. Executive Top Suite Navigation Bar (Clean Synchronized Light Theme) */}
       <header style={{
-        backgroundColor: viewMode === "ARONIUM" ? "#101418" : "#ffffff",
-        color: viewMode === "ARONIUM" ? "#e2e8f0" : "#0f172a",
+        backgroundColor: "#ffffff",
+        color: "#0f172a",
         padding: "12px 16px",
-        borderBottom: viewMode === "ARONIUM" ? "1px solid #232c34" : "1px solid #e2e8f0",
+        borderBottom: "1px solid #e2e8f0",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         flexWrap: "wrap",
         gap: "12px",
-        transition: "all 0.2s ease",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
+        boxShadow: "0 1px 2px rgba(0,0,0,0.03)"
       }}>
         {/* Left: Suite Switcher Pills */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -107,26 +91,26 @@ export default function ExecutiveDashboardWrapper({
             fontWeight: 700, 
             textTransform: "uppercase", 
             letterSpacing: "0.06em", 
-            color: viewMode === "ARONIUM" ? "#00a2ed" : "#4f46e5",
+            color: "#4f46e5",
             marginRight: "4px"
           }}>
-            Hub:
+            Dashboard View:
           </span>
 
           <div style={{
             display: "inline-flex",
-            backgroundColor: viewMode === "ARONIUM" ? "#1c232a" : "#f1f5f9",
+            backgroundColor: "#f1f5f9",
             borderRadius: "8px",
             padding: "3px",
-            border: viewMode === "ARONIUM" ? "1px solid #2a3742" : "1px solid #cbd5e1",
+            border: "1px solid #e2e8f0",
             maxWidth: "100%",
             overflowX: "auto",
             scrollbarWidth: "none"
           }}>
-            {/* Tab 1: Aronium Billing & Management */}
+            {/* Tab 1: Executive Billing & Invoicing */}
             <button
               type="button"
-              onClick={() => switchMode("ARONIUM")}
+              onClick={() => switchMode("BILLING")}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -138,13 +122,13 @@ export default function ExecutiveDashboardWrapper({
                 fontWeight: 700,
                 cursor: "pointer",
                 whiteSpace: "nowrap",
-                backgroundColor: viewMode === "ARONIUM" ? "#00a2ed" : "transparent",
-                color: viewMode === "ARONIUM" ? "#ffffff" : "inherit",
+                backgroundColor: viewMode === "BILLING" ? "#0284c7" : "transparent",
+                color: viewMode === "BILLING" ? "#ffffff" : "#475569",
                 transition: "all 0.15s ease",
-                boxShadow: viewMode === "ARONIUM" ? "0 2px 4px rgba(0, 162, 237, 0.3)" : "none"
+                boxShadow: viewMode === "BILLING" ? "0 2px 4px rgba(2, 132, 199, 0.25)" : "none"
               }}
             >
-              <Monitor size={14} /> Aronium Billing &amp; Management
+              <Monitor size={14} /> Executive Billing &amp; Management
             </button>
 
             {/* Tab 2: Sales Operations & Deal Pipeline */}
@@ -163,9 +147,9 @@ export default function ExecutiveDashboardWrapper({
                 cursor: "pointer",
                 whiteSpace: "nowrap",
                 backgroundColor: viewMode === "SALES" ? "#10b981" : "transparent",
-                color: viewMode === "SALES" ? "#ffffff" : "inherit",
+                color: viewMode === "SALES" ? "#ffffff" : "#475569",
                 transition: "all 0.15s ease",
-                boxShadow: viewMode === "SALES" ? "0 2px 4px rgba(16, 185, 129, 0.3)" : "none"
+                boxShadow: viewMode === "SALES" ? "0 2px 4px rgba(16, 185, 129, 0.25)" : "none"
               }}
             >
               <TrendingUp size={14} /> Sales &amp; Deals
@@ -199,9 +183,9 @@ export default function ExecutiveDashboardWrapper({
                 cursor: "pointer",
                 whiteSpace: "nowrap",
                 backgroundColor: viewMode === "CRM" ? "#4f46e5" : "transparent",
-                color: viewMode === "CRM" ? "#ffffff" : "inherit",
+                color: viewMode === "CRM" ? "#ffffff" : "#475569",
                 transition: "all 0.15s ease",
-                boxShadow: viewMode === "CRM" ? "0 2px 4px rgba(79, 70, 229, 0.3)" : "none"
+                boxShadow: viewMode === "CRM" ? "0 2px 4px rgba(79, 70, 229, 0.25)" : "none"
               }}
             >
               <LayoutDashboard size={14} /> CRM Operations
@@ -231,9 +215,9 @@ export default function ExecutiveDashboardWrapper({
               fontWeight: 700,
               textDecoration: "none",
               color: "#ffffff",
-              backgroundColor: "#00a2ed",
+              backgroundColor: "#0284c7",
               whiteSpace: "nowrap",
-              boxShadow: "0 1px 3px rgba(0, 162, 237, 0.3)"
+              boxShadow: "0 1px 3px rgba(2, 132, 199, 0.25)"
             }}
           >
             <Plus size={13} /> + New Bill
@@ -250,10 +234,11 @@ export default function ExecutiveDashboardWrapper({
               fontSize: "12px",
               fontWeight: 600,
               textDecoration: "none",
-              color: viewMode === "ARONIUM" ? "#e2e8f0" : "#334155",
-              backgroundColor: viewMode === "ARONIUM" ? "#1e2730" : "#f1f5f9",
-              border: viewMode === "ARONIUM" ? "1px solid #2d3b47" : "1px solid #cbd5e1",
-              whiteSpace: "nowrap"
+              color: "#334155",
+              backgroundColor: "#ffffff",
+              border: "1px solid #e2e8f0",
+              whiteSpace: "nowrap",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.03)"
             }}
           >
             <FileSignature size={13} color="#10b981" /> Quote Requests
@@ -273,10 +258,11 @@ export default function ExecutiveDashboardWrapper({
               fontSize: "12px",
               fontWeight: 600,
               textDecoration: "none",
-              color: viewMode === "ARONIUM" ? "#e2e8f0" : "#334155",
-              backgroundColor: viewMode === "ARONIUM" ? "#1e2730" : "#f1f5f9",
-              border: viewMode === "ARONIUM" ? "1px solid #2d3b47" : "1px solid #cbd5e1",
-              whiteSpace: "nowrap"
+              color: "#334155",
+              backgroundColor: "#ffffff",
+              border: "1px solid #e2e8f0",
+              whiteSpace: "nowrap",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.03)"
             }}
           >
             <Users size={13} color="#6366f1" /> + Add Client
@@ -285,8 +271,8 @@ export default function ExecutiveDashboardWrapper({
       </header>
 
       {/* 2. Render Active Suite */}
-      {viewMode === "ARONIUM" && (
-        <section aria-label="Aronium Management & Billing Console">
+      {viewMode === "BILLING" && (
+        <section aria-label="Executive Billing & Management Console">
           {aroniumConsole}
         </section>
       )}
