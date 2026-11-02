@@ -253,11 +253,11 @@ async function performSync() {
     // 4. Fetch Sales with Items & Payments
     const salesRaw = await queryDB(`
       SELECT 
-        d.Id, d.Number, d.Date, d.Total, d.CustomerId, d.Discount, d.PaidStatus,
+        d.Id, d.Number, d.Date, d.Total, d.CustomerId, d.Discount, d.PaidStatus, d.DocumentTypeId,
         c.Name as CustomerName
       FROM Document d
       LEFT JOIN Customer c ON d.CustomerId = c.Id
-      WHERE d.DocumentTypeId = 2
+      WHERE d.DocumentTypeId IN (2, 4)
       ORDER BY d.Date DESC
     `);
 
@@ -265,11 +265,23 @@ async function performSync() {
     for (const s of salesRaw) {
       const items = await getDocItems(s.Id);
       const payments = await getDocPayments(s.Id);
-      const paymentMethod = payments.length > 1 ? 'SPLIT / MULTI-DATE' : (payments[0]?.PaymentTypeName || 'CASH');
+      const isRefund = s.DocumentTypeId === 4;
+      const paymentMethod = isRefund ? 'REFUND / REVERSAL' : (payments.length > 1 ? 'SPLIT / MULTI-DATE' : (payments[0]?.PaymentTypeName || 'CASH'));
       sales.push({
         ...s,
+        Total: isRefund ? -Math.abs(s.Total) : Math.abs(s.Total),
+        isRefund,
         PaymentMethod: paymentMethod,
-        items,
+        items: items.length > 0 ? items : [
+          {
+            ProductName: 'Refund / Service Cancellation',
+            ProductCode: s.Number,
+            Quantity: 1,
+            Price: isRefund ? -Math.abs(s.Total) : Math.abs(s.Total),
+            Total: isRefund ? -Math.abs(s.Total) : Math.abs(s.Total),
+            MeasurementUnit: 'Refund'
+          }
+        ],
         payments
       });
     }

@@ -304,20 +304,23 @@ export async function POST(req: Request) {
             method: p.PaymentTypeName || p.paymentType || 'CASH'
           }));
 
+          const isRefundDoc = s.isRefund || totalAmount < 0 || invoiceNumber.includes('220-');
+          const docType = isRefundDoc ? 'REFUND' : 'INVOICE';
+
           const structuredData = {
             documentNumber: invoiceNumber,
-            documentType: 'INVOICE',
+            documentType: docType,
             date: s.Date ? s.Date.split(' ')[0] : new Date().toISOString().split('T')[0],
             dueDate: s.Date ? s.Date.split(' ')[0] : new Date().toISOString().split('T')[0],
             totalAmount: totalAmount,
             subtotal: totalAmount,
-            paidAmount: paidAmount,
-            amountDue: amountDue,
-            paymentStatus: isPaid ? 'Paid' : (paidAmount > 0 ? 'Partially Paid' : 'Pending'),
+            paidAmount: isRefundDoc ? Math.abs(totalAmount) : paidAmount,
+            amountDue: isRefundDoc ? 0 : amountDue,
+            paymentStatus: isRefundDoc ? 'Refunded' : (isPaid ? 'Paid' : (paidAmount > 0 ? 'Partially Paid' : 'Pending')),
             paymentMethod: paymentMethod,
             paymentSchedule: paymentSchedule,
             items: structuredItems,
-            scopeOfWork: `Aronium POS Document #${invoiceNumber}`
+            scopeOfWork: isRefundDoc ? `Aronium POS Refund Document #${invoiceNumber}` : `Aronium POS Document #${invoiceNumber}`
           };
 
           const existingInv = await prisma.invoiceRequest.findFirst({
@@ -331,9 +334,9 @@ export async function POST(req: Request) {
                 customerId: customerPrisma.id,
                 amountRequested: totalAmount,
                 subtotal: totalAmount,
-                status: isPaid ? 'PAID' : (paidAmount > 0 ? 'PARTIALLY_PAID' : 'INVOICE_GENERATED'),
+                status: isRefundDoc ? 'PAID' : (isPaid ? 'PAID' : (paidAmount > 0 ? 'PARTIALLY_PAID' : 'INVOICE_GENERATED')),
                 structuredData: structuredData,
-                notes: `Aronium POS Sales Invoice #${invoiceNumber}`
+                notes: isRefundDoc ? `Aronium POS Refund #${invoiceNumber}` : `Aronium POS Sales Invoice #${invoiceNumber}`
               }
             });
           } else {
@@ -343,11 +346,11 @@ export async function POST(req: Request) {
                 amountRequested: totalAmount,
                 subtotal: totalAmount,
                 aroniumInvoiceNo: invoiceNumber,
-                status: isPaid ? 'PAID' : (paidAmount > 0 ? 'PARTIALLY_PAID' : 'INVOICE_GENERATED'),
+                status: isRefundDoc ? 'PAID' : (isPaid ? 'PAID' : (paidAmount > 0 ? 'PARTIALLY_PAID' : 'INVOICE_GENERATED')),
                 requestedById: adminId,
                 assignedAdminId: adminId,
                 structuredData: structuredData,
-                notes: `Aronium POS Sales Invoice #${invoiceNumber}`
+                notes: isRefundDoc ? `Aronium POS Refund #${invoiceNumber}` : `Aronium POS Sales Invoice #${invoiceNumber}`
               }
             });
           }

@@ -32,7 +32,20 @@ import {
   Package,
   Users,
   ShieldCheck,
-  Check
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Globe,
+  Percent,
+  Building2,
+  Gift,
+  LayoutDashboard,
+  Tag,
+  ArrowUpDown,
+  Boxes,
+  HelpCircle,
+  Folder,
+  FolderOpen
 } from "lucide-react";
 import styles from "./AroniumBillingConsole.module.css";
 import { convertQuotationToInvoice, deleteBillingDocument } from "./actions";
@@ -51,7 +64,7 @@ interface Props {
     totalDue: number;
     activeQuotes: number;
   };
-  initialTab?: "DOCUMENTS" | "REPORTING" | "DASHBOARD" | "PRODUCTS";
+  initialTab?: "DOCUMENTS" | "REPORTING" | "DASHBOARD" | "PRODUCTS" | "STOCK" | "CUSTOMERS" | "PAYMENT_TYPES" | "TAX_RATES" | "MY_COMPANY";
 }
 
 export default function AroniumBillingConsole({
@@ -66,9 +79,14 @@ export default function AroniumBillingConsole({
 }: Props) {
   const router = useRouter();
 
-  // Navigation View: DOCUMENTS, REPORTING, DASHBOARD, or PRODUCTS
-  const [activeView, setActiveView] = useState<"DOCUMENTS" | "REPORTING" | "DASHBOARD" | "PRODUCTS">(initialTab);
-  
+  // Navigation View matching Left Sidebar of Aronium Management
+  const [activeView, setActiveView] = useState<
+    "DASHBOARD" | "DOCUMENTS" | "PRODUCTS" | "STOCK" | "REPORTING" | "CUSTOMERS" | "PROMOTIONS" | "SECURITY" | "PAYMENT_TYPES" | "COUNTRIES" | "TAX_RATES" | "MY_COMPANY"
+  >(initialTab as any);
+
+  // Left Sidebar Collapsed state (Authentic Aronium << / >> toggle)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   // Products Module State
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [productSearch, setProductSearch] = useState("");
@@ -77,6 +95,14 @@ export default function AroniumBillingConsole({
 
   // Interactive Active Graph Drilldown State
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null);
+
+  // Periodic Reports Date Range Filter (Screenshot 5)
+  const [periodicStartDate, setPeriodicStartDate] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 2);
+    return d.toISOString().split("T")[0];
+  });
+  const [periodicEndDate, setPeriodicEndDate] = useState(() => new Date().toISOString().split("T")[0]);
 
   // Theme State: Default to Executive Minimal LIGHT
   const [theme, setTheme] = useState<"DARK" | "LIGHT">("LIGHT");
@@ -92,8 +118,11 @@ export default function AroniumBillingConsole({
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get("tab")?.toUpperCase();
-      if (tabParam === "DOCUMENTS" || tabParam === "REPORTING" || tabParam === "DASHBOARD" || tabParam === "PRODUCTS") {
-        setActiveView(tabParam as any);
+      if (tabParam) {
+        const validTabs = ["DASHBOARD", "DOCUMENTS", "PRODUCTS", "STOCK", "REPORTING", "CUSTOMERS", "PAYMENT_TYPES", "TAX_RATES", "MY_COMPANY"];
+        if (validTabs.includes(tabParam)) {
+          setActiveView(tabParam as any);
+        }
       }
     }
   }, []);
@@ -122,7 +151,637 @@ export default function AroniumBillingConsole({
     });
   };
 
-  // Products Management Logic (Aronium Products Image 4)
+  // 1. Normalize All Documents into Unified Master Records
+  const allDocuments = useMemo(() => {
+    const invoiceRows = invoices.map((inv, idx) => {
+      const sData = (inv.structuredData as any) || {};
+      const isRefund = sData.documentType === "REFUND" || inv.aroniumInvoiceNo?.includes("220-") || Number(sData.totalAmount || inv.amountRequested) < 0;
+      const type = isRefund ? "REFUND" : (sData.documentType || (inv.aroniumInvoiceNo?.includes("ORD") ? "ORDER_FORM" : inv.aroniumInvoiceNo?.includes("REC") ? "PAYMENT_RECEIPT" : "INVOICE"));
+      const isPaid = inv.status === "PAID" || sData.paymentStatus === "Paid" || sData.paymentStatus === "Refunded";
+      const totalAmount = Number(sData.totalAmount || inv.amountRequested || 0);
+      const paidAmount = Number(sData.paidAmount || (isPaid ? Math.abs(totalAmount) : 0));
+      const amountDue = isRefund ? 0 : Math.max(0, totalAmount - paidAmount);
+
+      // Line items
+      const items = (sData.items && Array.isArray(sData.items) && sData.items.length > 0)
+        ? sData.items
+        : [
+            {
+              id: `item-${inv.id}`,
+              name: inv.project ? inv.project.name : (inv.notes || (isRefund ? "Refund / Service Cancellation" : "Professional Tech Services")),
+              code: inv.aroniumInvoiceNo || `ITEM-${idx + 1}`,
+              quantity: 1,
+              unit: isRefund ? "Refund" : "Service",
+              unitPrice: totalAmount,
+              tax: "18%",
+              discount: "0.00",
+              total: totalAmount
+            }
+          ];
+
+      return {
+        id: inv.id,
+        rawId: inv.id,
+        kind: type as "INVOICE" | "REFUND" | "ORDER_FORM" | "PAYMENT_RECEIPT",
+        docNumber: sData.documentNumber || inv.aroniumInvoiceNo || `26-200-${inv.id.slice(-6).toUpperCase()}`,
+        externalRef: sData.referenceDocument || (inv.project ? inv.project.name : (inv.aroniumInvoiceNo || "---")),
+        customerName: inv.customer?.name || inv.customer?.company || "SHUHAIB K",
+        customerId: inv.customer?.id || "",
+        customerCode: inv.customer?.customerNumber ? `TN-${inv.customer.customerNumber}` : inv.customer?.aroniumCode ? `TN-${inv.customer.aroniumCode}` : `TN-${inv.customer?.id?.slice(-4) || '8779'}`,
+        customerPhone: inv.customer?.phone || "+91 85906 74531",
+        date: sData.date || inv.createdAt,
+        dueDate: sData.dueDate || inv.createdAt,
+        amount: totalAmount,
+        paidAmount,
+        amountDue,
+        status: isRefund ? "Refunded" : isPaid ? "Paid" : sData.paymentStatus || "Pending",
+        paymentMethod: sData.paymentMethod || (isRefund ? "REFUND / REVERSAL" : "UPI PAYMENT"),
+        posRegister: "Main Register",
+        orderNumber: sData.orderNumber || "---",
+        discount: "0.00",
+        userName: inv.assignedAdminId ? "Accounts Team" : "Admin",
+        viewUrl: `/billing/doc/${type.toLowerCase()}/${inv.id}`,
+        items: items.map((it: any, iIdx: number) => ({
+          id: it.id || `doc-it-${iIdx + 1}`,
+          code: it.code || it.sku || `SKU-${1000 + iIdx}`,
+          name: it.name || "Product / Service Item",
+          unit: it.unit || "Pcs",
+          quantity: Number(it.quantity) || 1,
+          priceBeforeTax: Number(it.unitPrice || it.priceBeforeTax) || 0,
+          tax: it.tax || "18%",
+          unitPrice: Number(it.unitPrice) || 0,
+          totalBeforeDiscount: (Number(it.quantity) || 1) * (Number(it.unitPrice) || 0),
+          discount: it.discount || "0.00",
+          total: Number(it.total) || ((Number(it.quantity) || 1) * (Number(it.unitPrice) || 0)),
+        }))
+      };
+    });
+
+    const quoteRows = quotations.map((q, idx) => {
+      const isApproved = q.status === "APPROVED" || q.status === "CONVERTED";
+      const totalAmount = Number(q.totalAmount || 0);
+
+      const items = (q.items && Array.isArray(q.items) && q.items.length > 0)
+        ? q.items.map((it: any, iIdx: number) => ({
+            id: it.id || `quote-it-${iIdx + 1}`,
+            code: `Q-SKU-${100 + iIdx}`,
+            name: it.name || "Proposal Item",
+            unit: "Pcs",
+            quantity: Number(it.quantity) || 1,
+            priceBeforeTax: Number(it.price) || 0,
+            tax: "18%",
+            unitPrice: Number(it.price) || 0,
+            totalBeforeDiscount: (Number(it.quantity) || 1) * (Number(it.price) || 0),
+            discount: "0.00",
+            total: Number(it.total) || ((Number(it.quantity) || 1) * (Number(it.price) || 0)),
+          }))
+        : [
+            {
+              id: `qitem-${q.id}`,
+              code: "Q-SRV",
+              name: q.notes || "Digital Services Proposal",
+              unit: "Project",
+              quantity: 1,
+              priceBeforeTax: totalAmount,
+              tax: "18%",
+              unitPrice: totalAmount,
+              totalBeforeDiscount: totalAmount,
+              discount: "0.00",
+              total: totalAmount
+            }
+          ];
+
+      return {
+        id: q.id,
+        rawId: q.id,
+        kind: "QUOTATION" as const,
+        docNumber: q.quotationNumber,
+        externalRef: "Proforma Quotation",
+        customerName: q.companyName || q.customer?.name || "Client",
+        customerId: q.customer?.id || "",
+        customerCode: q.customer?.customerNumber ? `TN-${q.customer.customerNumber}` : q.customer?.aroniumCode ? `TN-${q.customer.aroniumCode}` : `TN-${q.customer?.id?.slice(-4) || '8779'}`,
+        customerPhone: q.customer?.phone || "+91 85906 74531",
+        date: q.date,
+        dueDate: q.expiryDate || q.date,
+        amount: totalAmount,
+        paidAmount: isApproved ? totalAmount : 0,
+        amountDue: isApproved ? 0 : totalAmount,
+        status: isApproved ? "Approved" : q.status === "SENT" ? "Sent" : "Draft",
+        paymentMethod: "ESTIMATE",
+        posRegister: "Main Register",
+        orderNumber: "---",
+        discount: "0.00",
+        userName: "Sales Staff",
+        viewUrl: `/billing/doc/quotation/${q.id}`,
+        items
+      };
+    });
+
+    return [...invoiceRows, ...quoteRows].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, [invoices, quotations]);
+
+  // Invoices & Refunds Only Dataset (strictly excluding quotations from billed totals and sales reports)
+  const invoiceOnlyDocs = useMemo(() => {
+    return allDocuments.filter(d => d.kind !== "QUOTATION");
+  }, [allDocuments]);
+
+  // Selected Document in Master-Detail view
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(allDocuments[0]?.id || null);
+
+  useEffect(() => {
+    if (!selectedDocId && allDocuments.length > 0) {
+      setSelectedDocId(allDocuments[0].id);
+    }
+  }, [allDocuments, selectedDocId]);
+
+  const selectedDoc = useMemo(() => {
+    return allDocuments.find(d => d.id === selectedDocId) || allDocuments[0] || null;
+  }, [allDocuments, selectedDocId]);
+
+  // Filters State for Documents view (Structured into 3 rows matching Screenshot 1)
+  const [filterProduct, setFilterProduct] = useState("ALL");
+  const [filterUser, setFilterUser] = useState("ALL");
+  const [filterCashRegister, setFilterCashRegister] = useState("ALL");
+  const [filterCustomer, setFilterCustomer] = useState("ALL");
+  const [filterDocType, setFilterDocType] = useState("ALL");
+  const [filterPaidStatus, setFilterPaidStatus] = useState("ALL");
+  const [filterDocNumber, setFilterDocNumber] = useState("");
+  const [filterExternalDoc, setFilterExternalDoc] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+
+  const handleClearFilters = () => {
+    setFilterProduct("ALL");
+    setFilterUser("ALL");
+    setFilterCashRegister("ALL");
+    setFilterCustomer("ALL");
+    setFilterDocType("ALL");
+    setFilterPaidStatus("ALL");
+    setFilterDocNumber("");
+    setFilterExternalDoc("");
+    setFilterStartDate("");
+    setFilterEndDate("");
+  };
+
+  // Filtered documents for master table
+  const filteredDocs = useMemo(() => {
+    return allDocuments.filter(doc => {
+      if (filterDocType !== "ALL" && doc.kind !== filterDocType) return false;
+      if (filterCustomer !== "ALL" && doc.customerId !== filterCustomer) return false;
+      if (filterPaidStatus !== "ALL") {
+        if (filterPaidStatus === "Paid" && doc.status !== "Paid" && doc.status !== "Approved" && doc.status !== "Refunded") return false;
+        if (filterPaidStatus === "Pending" && doc.status !== "Pending" && doc.status !== "Sent") return false;
+      }
+      if (filterDocNumber) {
+        const q = filterDocNumber.toLowerCase();
+        const matches = 
+          doc.docNumber.toLowerCase().includes(q) ||
+          doc.customerName.toLowerCase().includes(q) ||
+          doc.customerCode.toLowerCase().includes(q);
+        if (!matches) return false;
+      }
+      if (filterExternalDoc) {
+        const q = filterExternalDoc.toLowerCase();
+        if (!doc.externalRef.toLowerCase().includes(q)) return false;
+      }
+      if (filterStartDate) {
+        if (new Date(doc.date).getTime() < new Date(filterStartDate).getTime()) return false;
+      }
+      if (filterEndDate) {
+        if (new Date(doc.date).getTime() > new Date(filterEndDate + "T23:59:59").getTime()) return false;
+      }
+      if (filterProduct !== "ALL") {
+        const hasProd = doc.items.some((it: any) => it.name?.toLowerCase().includes(filterProduct.toLowerCase()) || it.code?.toLowerCase().includes(filterProduct.toLowerCase()));
+        if (!hasProd) return false;
+      }
+      return true;
+    });
+  }, [allDocuments, filterDocType, filterCustomer, filterPaidStatus, filterDocNumber, filterExternalDoc, filterStartDate, filterEndDate, filterProduct]);
+
+  // -------------------------------------------------------------
+  // Reporting Engine State & Calculations (Screenshot 2 Replica)
+  // -------------------------------------------------------------
+  const [activeReportId, setActiveReportId] = useState<string>("PRODUCTS");
+  const [reportSearchQuery, setReportSearchQuery] = useState("");
+  const [repCustomer, setRepCustomer] = useState("ALL");
+  const [repUser, setRepUser] = useState("ALL");
+  const [repProduct, setRepProduct] = useState("ALL");
+  const [repProductGroup, setRepProductGroup] = useState("Products");
+  const [repStartDate, setRepStartDate] = useState(() => "2026-01-01");
+  const [repEndDate, setRepEndDate] = useState(() => "2026-12-31");
+
+  // All 21 Sales Reports catalog matching Screenshot 2
+  const allSalesReports = [
+    { id: "PRODUCTS", label: "Products" },
+    { id: "PRODUCT_GROUPS", label: "Product groups" },
+    { id: "CUSTOMERS", label: "Customers" },
+    { id: "TAX_RATES", label: "Tax rates" },
+    { id: "USERS", label: "Users" },
+    { id: "ITEM_LIST", label: "Item list" },
+    { id: "PAYMENT_TYPES", label: "Payment types" },
+    { id: "PAYMENT_TYPES_USERS", label: "Payment types by users" },
+    { id: "PAYMENT_TYPES_CUSTOMERS", label: "Payment types by customers" },
+    { id: "REFUNDS", label: "Refunds" },
+    { id: "INVOICE_LIST", label: "Invoice list" },
+    { id: "DAILY_SALES", label: "Daily sales" },
+    { id: "HOURLY_SALES", label: "Hourly sales" },
+    { id: "HOURLY_SALES_GROUPS", label: "Hourly sales by product groups" },
+    { id: "TABLE_ORDER", label: "Table or order number" },
+    { id: "PROFIT_MARGIN", label: "Profit & margin" },
+    { id: "UNPAID_SALES", label: "Unpaid sales" },
+    { id: "STARTING_CASH", label: "Starting cash entries" },
+    { id: "VOIDED_ITEMS", label: "Voided items" },
+    { id: "DISCOUNTS_GRANTED", label: "Discounts granted" },
+    { id: "ITEMS_DISCOUNTS", label: "Items discounts" },
+  ];
+
+  const filteredReportList = useMemo(() => {
+    if (!reportSearchQuery.trim()) return allSalesReports;
+    const q = reportSearchQuery.toLowerCase();
+    return allSalesReports.filter(r => r.label.toLowerCase().includes(q));
+  }, [reportSearchQuery]);
+
+  // Compute Active Report Dataset (Strictly Invoices Only, Quotations Excluded)
+  const generatedReportData = useMemo(() => {
+    const pool = invoiceOnlyDocs.filter(d => {
+      if (repCustomer !== "ALL" && d.customerId !== repCustomer) return false;
+      if (repStartDate && new Date(d.date).getTime() < new Date(repStartDate).getTime()) return false;
+      if (repEndDate && new Date(d.date).getTime() > new Date(repEndDate + "T23:59:59").getTime()) return false;
+      return true;
+    });
+
+    if (activeReportId === "PRODUCTS") {
+      const map = new Map<string, { code: string; name: string; qty: number; revenue: number; ordersCount: number }>();
+      pool.forEach(doc => {
+        doc.items.forEach((it: any) => {
+          const key = it.name.trim();
+          const existing = map.get(key) || { code: it.code || "---", name: key, qty: 0, revenue: 0, ordersCount: 0 };
+          existing.qty += (Number(it.quantity) || 1);
+          existing.revenue += (Number(it.total) || 0);
+          existing.ordersCount += 1;
+          map.set(key, existing);
+        });
+      });
+
+      const rows = Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
+      return {
+        title: "Sales by Products Report (Invoices Only)",
+        headers: ["#", "Product Code", "Product / Service Name", "Quantity Sold", "Invoices Count", "Total Billed (₹)"],
+        rows: rows.map((r, i) => [
+          i + 1,
+          r.code,
+          r.name,
+          r.qty,
+          r.ordersCount,
+          `₹${formatCurrency(r.revenue)}`
+        ]),
+        totalSum: rows.reduce((s, r) => s + r.revenue, 0),
+        totalQty: rows.reduce((s, r) => s + r.qty, 0),
+        totalPaid: pool.reduce((s, d) => s + (d.amount > 0 ? d.paidAmount : 0), 0),
+        totalDue: pool.reduce((s, d) => s + d.amountDue, 0),
+      };
+    } else if (activeReportId === "PRODUCT_GROUPS") {
+      const map = new Map<string, { group: string; qty: number; revenue: number; itemsCount: number }>();
+      pool.forEach(doc => {
+        doc.items.forEach((it: any) => {
+          const matchedProd = products.find(p => p.name === it.name || p.sku === it.code);
+          const grp = matchedProd?.category || "BILLING";
+          const existing = map.get(grp) || { group: grp, qty: 0, revenue: 0, itemsCount: 0 };
+          existing.qty += (Number(it.quantity) || 1);
+          existing.revenue += (Number(it.total) || 0);
+          existing.itemsCount += 1;
+          map.set(grp, existing);
+        });
+      });
+
+      const grandRev = pool.reduce((s, d) => s + d.amount, 0);
+      const rows = Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
+      return {
+        title: "Sales by Product Groups Report",
+        headers: ["#", "Product Group / Category", "Items Count", "Quantity Sold", "Group Revenue (₹)", "Volume Share %"],
+        rows: rows.map((r, i) => [
+          i + 1,
+          r.group,
+          r.itemsCount,
+          r.qty,
+          `₹${formatCurrency(r.revenue)}`,
+          `${grandRev > 0 ? ((r.revenue / grandRev) * 100).toFixed(1) : 0}%`
+        ]),
+        totalSum: grandRev,
+        totalPaid: pool.reduce((s, d) => s + (d.amount > 0 ? d.paidAmount : 0), 0),
+        totalDue: pool.reduce((s, d) => s + d.amountDue, 0),
+      };
+    } else if (activeReportId === "CUSTOMERS" || activeReportId === "PAYMENT_TYPES_CUSTOMERS") {
+      const map = new Map<string, { name: string; code: string; phone: string; count: number; total: number; paid: number; due: number }>();
+      pool.forEach(doc => {
+        const key = doc.customerId || doc.customerName;
+        const existing = map.get(key) || { name: doc.customerName, code: doc.customerCode, phone: doc.customerPhone, count: 0, total: 0, paid: 0, due: 0 };
+        existing.count += 1;
+        existing.total += doc.amount;
+        existing.paid += (doc.amount > 0 ? doc.paidAmount : 0);
+        existing.due += doc.amountDue;
+        map.set(key, existing);
+      });
+
+      const rows = Array.from(map.values()).sort((a, b) => b.total - a.total);
+      return {
+        title: "Sales by Customers Report (Invoices Only)",
+        headers: ["#", "Customer Code", "Customer Name / Company", "Phone", "Invoices Count", "Billed Amount (₹)", "Total Paid (₹)", "Balance Due (₹)"],
+        rows: rows.map((r, i) => [
+          i + 1,
+          r.code,
+          r.name,
+          r.phone || "---",
+          r.count,
+          `₹${formatCurrency(r.total)}`,
+          `₹${formatCurrency(r.paid)}`,
+          `₹${formatCurrency(r.due)}`
+        ]),
+        totalSum: rows.reduce((s, r) => s + r.total, 0),
+        totalPaid: rows.reduce((s, r) => s + r.paid, 0),
+        totalDue: rows.reduce((s, r) => s + r.due, 0),
+      };
+    } else if (activeReportId === "REFUNDS") {
+      const refunds = pool.filter(d => d.kind === "REFUND");
+      return {
+        title: "Official Refunds & Sales Cancellations Audit Report",
+        headers: ["#", "Refund #", "Date", "Customer Code", "Customer Name", "Payment Tender", "Notes / Reason", "Refund Amount (₹)"],
+        rows: refunds.map((r, i) => [
+          i + 1,
+          r.docNumber,
+          formatDate(r.date),
+          r.customerCode,
+          r.customerName,
+          r.paymentMethod,
+          r.items[0]?.name || "Refund / Reversal",
+          `₹${formatCurrency(Math.abs(r.amount))}`
+        ]),
+        totalSum: refunds.reduce((s, r) => s + Math.abs(r.amount), 0),
+        totalPaid: refunds.reduce((s, r) => s + Math.abs(r.amount), 0),
+        totalDue: 0,
+      };
+    } else if (activeReportId === "DAILY_SALES") {
+      const map = new Map<string, { date: string; count: number; total: number; paid: number; due: number }>();
+      pool.forEach(doc => {
+        const dayStr = new Date(doc.date).toISOString().split("T")[0];
+        const existing = map.get(dayStr) || { date: dayStr, count: 0, total: 0, paid: 0, due: 0 };
+        existing.count += 1;
+        existing.total += doc.amount;
+        existing.paid += (doc.amount > 0 ? doc.paidAmount : 0);
+        existing.due += doc.amountDue;
+        map.set(dayStr, existing);
+      });
+
+      const rows = Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
+      return {
+        title: "Daily Sales Summary Report (Invoices Only)",
+        headers: ["#", "Date", "Invoices Count", "Daily Billed (₹)", "Daily Collected (₹)", "Outstanding Due (₹)"],
+        rows: rows.map((r, i) => [
+          i + 1,
+          formatDate(r.date),
+          r.count,
+          `₹${formatCurrency(r.total)}`,
+          `₹${formatCurrency(r.paid)}`,
+          `₹${formatCurrency(r.due)}`
+        ]),
+        totalSum: rows.reduce((s, r) => s + r.total, 0),
+        totalPaid: rows.reduce((s, r) => s + r.paid, 0),
+        totalDue: rows.reduce((s, r) => s + r.due, 0),
+      };
+    } else if (activeReportId === "PAYMENT_TYPES" || activeReportId === "PAYMENT_TYPES_USERS") {
+      const map = new Map<string, { method: string; count: number; total: number }>();
+      pool.forEach(doc => {
+        const method = doc.paymentMethod || "UPI PAYMENT";
+        const existing = map.get(method) || { method, count: 0, total: 0 };
+        existing.count += 1;
+        existing.total += doc.amount;
+        map.set(method, existing);
+      });
+
+      const grand = pool.reduce((s, d) => s + d.amount, 0);
+      const rows = Array.from(map.values()).sort((a, b) => b.total - a.total);
+      return {
+        title: "Payment Tender Types Audit Report",
+        headers: ["#", "Payment Tender Method", "Transactions", "Total Processed (₹)", "Volume Share %"],
+        rows: rows.map((r, i) => [
+          i + 1,
+          r.method,
+          r.count,
+          `₹${formatCurrency(r.total)}`,
+          `${grand > 0 ? ((r.total / grand) * 100).toFixed(1) : 0}%`
+        ]),
+        totalSum: grand,
+        totalPaid: pool.reduce((s, d) => s + (d.amount > 0 ? d.paidAmount : 0), 0),
+        totalDue: pool.reduce((s, d) => s + d.amountDue, 0),
+      };
+    } else if (activeReportId === "UNPAID_SALES") {
+      const unpaidList = pool.filter(d => d.amountDue > 0);
+      return {
+        title: "Unpaid Sales & Accounts Receivable Report (Invoices Only)",
+        headers: ["#", "Invoice #", "Customer Name", "Phone", "Document Date", "Due Date", "Total Billed (₹)", "Paid (₹)", "Outstanding Due (₹)"],
+        rows: unpaidList.map((d, i) => [
+          i + 1,
+          d.docNumber,
+          d.customerName,
+          d.customerPhone || "---",
+          formatDate(d.date),
+          formatDate(d.dueDate),
+          `₹${formatCurrency(d.amount)}`,
+          `₹${formatCurrency(d.paidAmount)}`,
+          `₹${formatCurrency(d.amountDue)}`
+        ]),
+        totalSum: unpaidList.reduce((s, d) => s + d.amount, 0),
+        totalPaid: unpaidList.reduce((s, d) => s + d.paidAmount, 0),
+        totalDue: unpaidList.reduce((s, d) => s + d.amountDue, 0),
+      };
+    } else if (activeReportId === "PROFIT_MARGIN") {
+      const map = new Map<string, { name: string; qty: number; revenue: number; cost: number }>();
+      pool.forEach(doc => {
+        doc.items.forEach((it: any) => {
+          const matchedProd = products.find(p => p.name === it.name || p.sku === it.code);
+          const cPrice = Number(matchedProd?.purchasePrice || 0);
+          const key = it.name.trim();
+          const existing = map.get(key) || { name: key, qty: 0, revenue: 0, cost: 0 };
+          const q = Number(it.quantity) || 1;
+          existing.qty += q;
+          existing.revenue += Number(it.total) || 0;
+          existing.cost += (q * cPrice);
+          map.set(key, existing);
+        });
+      });
+
+      const rows = Array.from(map.values()).map(r => {
+        const profit = r.revenue - r.cost;
+        const margin = r.revenue > 0 ? ((profit / r.revenue) * 100).toFixed(1) : "0.0";
+        return { ...r, profit, margin };
+      }).sort((a, b) => b.profit - a.profit);
+
+      return {
+        title: "Profit & Margin Financial Analysis Report",
+        headers: ["#", "Item / Service Name", "Qty Invoiced", "Revenue (₹)", "Cost of Goods (₹)", "Gross Profit (₹)", "Profit Margin %"],
+        rows: rows.map((r, i) => [
+          i + 1,
+          r.name,
+          r.qty,
+          `₹${formatCurrency(r.revenue)}`,
+          `₹${formatCurrency(r.cost)}`,
+          `₹${formatCurrency(r.profit)}`,
+          `${r.margin}%`
+        ]),
+        totalSum: rows.reduce((s, r) => s + r.revenue, 0),
+        totalPaid: rows.reduce((s, r) => s + r.profit, 0),
+        totalDue: rows.reduce((s, r) => s + r.cost, 0),
+      };
+    } else {
+      // INVOICE_LIST & default
+      return {
+        title: "Chronological Invoices Audit Report (Invoices Only)",
+        headers: ["#", "Invoice #", "Date", "Customer Code", "Customer / Company", "Contact Phone", "Items Invoiced", "Payment Mode", "Status", "Billed (₹)", "Paid (₹)", "Due (₹)"],
+        rows: pool.map((d, i) => [
+          i + 1,
+          d.docNumber,
+          formatDate(d.date),
+          d.customerCode || "---",
+          d.customerName,
+          d.customerPhone || "---",
+          d.items.map((it: any) => `${it.name} (${it.quantity})`).join("; "),
+          d.paymentMethod,
+          d.status,
+          `₹${formatCurrency(d.amount)}`,
+          `₹${formatCurrency(d.paidAmount)}`,
+          `₹${formatCurrency(d.amountDue)}`
+        ]),
+        totalSum: pool.reduce((s, d) => s + d.amount, 0),
+        totalPaid: pool.reduce((s, d) => s + (d.amount > 0 ? d.paidAmount : 0), 0),
+        totalDue: pool.reduce((s, d) => s + d.amountDue, 0),
+      };
+    }
+  }, [invoiceOnlyDocs, activeReportId, repCustomer, repStartDate, repEndDate, products]);
+
+  // Clean Multi-Column CSV Exporter
+  const downloadReportCSV = () => {
+    if (!generatedReportData) return;
+    const { title, headers, rows } = generatedReportData;
+    let csvContent = `data:text/csv;charset=utf-8,`;
+    csvContent += `"TechNext Technologies Private Limited - Official Financial & Sales Audit Report"\n`;
+    csvContent += `"Report Title:","${title.replace(/"/g, '""')}"\n`;
+    csvContent += `"Reporting Period:","${repStartDate || 'All Time'} to ${repEndDate || 'Present'}"\n`;
+    csvContent += `"Document Ref:","TN-REP-2026-${Date.now().toString().slice(-4)}"\n`;
+    csvContent += `"Generated On:","${new Date().toLocaleString()}"\n`;
+    csvContent += `"Filter Scope:","Strictly Invoices Only (Quotations / Estimates Excluded)"\n`;
+    csvContent += `"Summary Metrics:","Total Records: ${rows.length}","Total Volume: ₹${generatedReportData.totalSum || 0}","Collected: ₹${generatedReportData.totalPaid || 0}","Due: ₹${generatedReportData.totalDue || 0}"\n\n`;
+    csvContent += headers.map(h => `"${h}"`).join(",") + "\n";
+    rows.forEach((r: any) => {
+      csvContent += r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n";
+    });
+    csvContent += `\n"GRAND TOTAL","","","","","","","","","₹${formatCurrency(generatedReportData.totalSum || 0)}","₹${formatCurrency(generatedReportData.totalPaid || 0)}","₹${formatCurrency(generatedReportData.totalDue || 0)}"\n`;
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `technext_${activeReportId.toLowerCase()}_report_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // -------------------------------------------------------------
+  // Dashboard Calculations (Strictly Invoices Only - Screenshot 5)
+  // -------------------------------------------------------------
+  const monthlySales2026 = useMemo(() => {
+    const months = [
+      "JAN", "FEB", "MAR", "APR", "MAY", "JUN", 
+      "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+    ];
+    const totals = Array(12).fill(0);
+    const counts = Array(12).fill(0);
+
+    // Strictly Invoices and Refunds only (Estimates strictly excluded)
+    invoiceOnlyDocs.forEach(doc => {
+      const d = new Date(doc.date);
+      if (!isNaN(d.getTime()) && d.getFullYear() === 2026) {
+        const m = d.getMonth();
+        totals[m] += doc.amount;
+        counts[m] += 1;
+      }
+    });
+
+    const maxVal = Math.max(...totals, 1000);
+    const topIdx = totals.indexOf(Math.max(...totals));
+
+    return {
+      months,
+      totals,
+      counts,
+      maxVal,
+      topMonthName: months[topIdx] || "SEPTEMBER",
+      topMonthTotal: totals[topIdx] || 0,
+      yearTotal: totals.reduce((a, b) => a + b, 0),
+    };
+  }, [invoiceOnlyDocs]);
+
+  // Selected Month Invoices for Active Graph Interactive Drilldown
+  const selectedMonthInvoices = useMemo(() => {
+    if (selectedMonthIndex === null) return [];
+    return invoiceOnlyDocs.filter(doc => {
+      const d = new Date(doc.date);
+      return !isNaN(d.getTime()) && d.getFullYear() === 2026 && d.getMonth() === selectedMonthIndex;
+    });
+  }, [invoiceOnlyDocs, selectedMonthIndex]);
+
+  // Periodic Reports Data based on periodic date range (Screenshot 5)
+  const periodicData = useMemo(() => {
+    const pool = invoiceOnlyDocs.filter(d => {
+      const t = new Date(d.date).getTime();
+      if (periodicStartDate && t < new Date(periodicStartDate).getTime()) return false;
+      if (periodicEndDate && t > new Date(periodicEndDate + "T23:59:59").getTime()) return false;
+      return true;
+    });
+
+    // Top Products
+    const prodMap = new Map<string, { name: string; qty: number; rev: number }>();
+    pool.forEach(doc => {
+      doc.items.forEach((it: any) => {
+        const k = it.name.trim();
+        const cur = prodMap.get(k) || { name: k, qty: 0, rev: 0 };
+        cur.qty += (Number(it.quantity) || 1);
+        cur.rev += (Number(it.total) || 0);
+        prodMap.set(k, cur);
+      });
+    });
+    const topProducts = Array.from(prodMap.values()).sort((a, b) => b.rev - a.rev).slice(0, 5);
+
+    // Top Product Groups
+    const groupMap = new Map<string, { group: string; rev: number; count: number }>();
+    pool.forEach(doc => {
+      doc.items.forEach((it: any) => {
+        const matchedProd = products.find(p => p.name === it.name || p.sku === it.code);
+        const grp = matchedProd?.category || "BILLING";
+        const cur = groupMap.get(grp) || { group: grp, rev: 0, count: 0 };
+        cur.rev += (Number(it.total) || 0);
+        cur.count += 1;
+        groupMap.set(grp, cur);
+      });
+    });
+    const topGroups = Array.from(groupMap.values()).sort((a, b) => b.rev - a.rev);
+
+    // Top Customers
+    const custMap = new Map<string, { name: string; code: string; rev: number; count: number }>();
+    pool.forEach(doc => {
+      const k = doc.customerId || doc.customerName;
+      const cur = custMap.get(k) || { name: doc.customerName, code: doc.customerCode, rev: 0, count: 0 };
+      cur.rev += doc.amount;
+      cur.count += 1;
+      custMap.set(k, cur);
+    });
+    const topCustomers = Array.from(custMap.values()).sort((a, b) => b.rev - a.rev).slice(0, 5);
+
+    return { topProducts, topGroups, topCustomers, poolCount: pool.length, poolTotal: pool.reduce((s, d) => s + d.amount, 0) };
+  }, [invoiceOnlyDocs, periodicStartDate, periodicEndDate, products]);
+
+  // Products Category Groups
   const productGroups = useMemo(() => {
     return Array.from(new Set(products.map(p => p.category || "General"))).filter(Boolean).sort();
   }, [products]);
@@ -185,1035 +844,517 @@ export default function AroniumBillingConsole({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `aronium_products_${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute("download", `technext_products_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // 1. Normalize All Documents into Unified Records
-  const allDocuments = useMemo(() => {
-    const invoiceRows = invoices.map((inv, idx) => {
-      const sData = (inv.structuredData as any) || {};
-      const type = sData.documentType || (inv.aroniumInvoiceNo?.includes("ORD") ? "ORDER_FORM" : inv.aroniumInvoiceNo?.includes("REC") ? "PAYMENT_RECEIPT" : "INVOICE");
-      const isPaid = inv.status === "PAID" || sData.paymentStatus === "Paid";
-      const totalAmount = Number(sData.totalAmount || inv.amountRequested || 0);
-      const paidAmount = Number(sData.paidAmount || (isPaid ? totalAmount : 0));
-      const amountDue = Math.max(0, totalAmount - paidAmount);
-
-      // Line items
-      const items = (sData.items && Array.isArray(sData.items) && sData.items.length > 0)
-        ? sData.items
-        : [
-            {
-              id: `item-${inv.id}`,
-              name: inv.project ? inv.project.name : (inv.notes || "Professional Tech Services"),
-              code: inv.aroniumInvoiceNo || `ITEM-${idx + 1}`,
-              quantity: 1,
-              unit: "Service",
-              unitPrice: totalAmount,
-              tax: "---",
-              discount: "---",
-              total: totalAmount
-            }
-          ];
-
-      return {
-        id: inv.id,
-        rawId: inv.id,
-        kind: type as "INVOICE" | "ORDER_FORM" | "PAYMENT_RECEIPT",
-        docNumber: sData.documentNumber || inv.aroniumInvoiceNo || `26-200-${inv.id.slice(-6).toUpperCase()}`,
-        externalRef: inv.project ? inv.project.name : (inv.aroniumInvoiceNo || "---"),
-        customerName: inv.customer?.company || inv.customer?.name || "Client",
-        customerId: inv.customer?.id || "",
-        customerCode: inv.customer?.customerNumber ? `TN-${inv.customer.customerNumber}` : inv.customer?.aroniumCode ? `TN-${inv.customer.aroniumCode}` : `TN-${inv.customer?.id?.slice(-4) || '8779'}`,
-        customerPhone: inv.customer?.phone || "",
-        date: sData.date || inv.createdAt,
-        dueDate: sData.dueDate || inv.createdAt,
-        amount: totalAmount,
-        paidAmount,
-        amountDue,
-        status: isPaid ? "Paid" : sData.paymentStatus || "Pending",
-        paymentMethod: sData.paymentMethod || "UPI PAYMENT",
-        userName: inv.assignedAdminId ? "Accounts Team" : "Admin",
-        viewUrl: `/billing/doc/${type.toLowerCase()}/${inv.id}`,
-        items: items.map((it: any, iIdx: number) => ({
-          id: it.id || `doc-it-${iIdx + 1}`,
-          code: it.code || it.sku || `SKU-${1000 + iIdx}`,
-          name: it.name || "Product / Service Item",
-          unit: it.unit || "Pcs",
-          quantity: Number(it.quantity) || 1,
-          priceBeforeTax: Number(it.unitPrice) || 0,
-          tax: it.tax || "---",
-          unitPrice: Number(it.unitPrice) || 0,
-          totalBeforeDiscount: (Number(it.quantity) || 1) * (Number(it.unitPrice) || 0),
-          discount: it.discount || "---",
-          total: Number(it.total) || ((Number(it.quantity) || 1) * (Number(it.unitPrice) || 0)),
-        }))
-      };
-    });
-
-    const quoteRows = quotations.map((q, idx) => {
-      const isApproved = q.status === "APPROVED" || q.status === "CONVERTED";
-      const totalAmount = Number(q.totalAmount || 0);
-
-      const items = (q.items && Array.isArray(q.items) && q.items.length > 0)
-        ? q.items.map((it: any, iIdx: number) => ({
-            id: it.id || `quote-it-${iIdx + 1}`,
-            code: `Q-SKU-${100 + iIdx}`,
-            name: it.name || "Proposal Item",
-            unit: "Pcs",
-            quantity: Number(it.quantity) || 1,
-            priceBeforeTax: Number(it.price) || 0,
-            tax: "---",
-            unitPrice: Number(it.price) || 0,
-            totalBeforeDiscount: (Number(it.quantity) || 1) * (Number(it.price) || 0),
-            discount: "---",
-            total: Number(it.total) || ((Number(it.quantity) || 1) * (Number(it.price) || 0)),
-          }))
-        : [
-            {
-              id: `qitem-${q.id}`,
-              code: "Q-SRV",
-              name: q.notes || "Digital Services Proposal",
-              unit: "Project",
-              quantity: 1,
-              priceBeforeTax: totalAmount,
-              tax: "---",
-              unitPrice: totalAmount,
-              totalBeforeDiscount: totalAmount,
-              discount: "---",
-              total: totalAmount
-            }
-          ];
-
-      return {
-        id: q.id,
-        rawId: q.id,
-        kind: "QUOTATION" as const,
-        docNumber: q.quotationNumber,
-        externalRef: "Quotation Estimate",
-        customerName: q.companyName || q.customer?.name || "Client",
-        customerId: q.customer?.id || "",
-        customerCode: q.customer?.customerNumber ? `TN-${q.customer.customerNumber}` : q.customer?.aroniumCode ? `TN-${q.customer.aroniumCode}` : `TN-${q.customer?.id?.slice(-4) || '8779'}`,
-        customerPhone: q.customer?.phone || "",
-        date: q.date,
-        dueDate: q.expiryDate || q.date,
-        amount: totalAmount,
-        paidAmount: isApproved ? totalAmount : 0,
-        amountDue: isApproved ? 0 : totalAmount,
-        status: isApproved ? "Approved" : q.status === "SENT" ? "Sent" : "Draft",
-        paymentMethod: "ESTIMATE",
-        userName: "Sales Staff",
-        viewUrl: `/billing/doc/quotation/${q.id}`,
-        items
-      };
-    });
-
-    return [...invoiceRows, ...quoteRows].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  }, [invoices, quotations]);
-
-  // Invoices Only Dataset (strictly excluding quotations from calculations and sales reports)
-  const invoiceOnlyDocs = useMemo(() => {
-    return allDocuments.filter(d => d.kind !== "QUOTATION");
-  }, [allDocuments]);
-
-  // Selected Document in Master-Detail view
-  const [selectedDocId, setSelectedDocId] = useState<string | null>(allDocuments[0]?.id || null);
-
-  // Sync selectedDocId when document list changes
-  useEffect(() => {
-    if (!selectedDocId && allDocuments.length > 0) {
-      setSelectedDocId(allDocuments[0].id);
-    }
-  }, [allDocuments, selectedDocId]);
-
-  const selectedDoc = useMemo(() => {
-    return allDocuments.find(d => d.id === selectedDocId) || allDocuments[0] || null;
-  }, [allDocuments, selectedDocId]);
-
-  // Filters State for Documents view
-  const [filterProduct, setFilterProduct] = useState("ALL");
-  const [filterUser, setFilterUser] = useState("ALL");
-  const [filterCustomer, setFilterCustomer] = useState("ALL");
-  const [filterDocType, setFilterDocType] = useState("ALL");
-  const [filterPaidStatus, setFilterPaidStatus] = useState("ALL");
-  const [filterDocNumber, setFilterDocNumber] = useState("");
-  const [filterStartDate, setFilterStartDate] = useState("");
-  const [filterEndDate, setFilterEndDate] = useState("");
-
-  const handleClearFilters = () => {
-    setFilterProduct("ALL");
-    setFilterUser("ALL");
-    setFilterCustomer("ALL");
-    setFilterDocType("ALL");
-    setFilterPaidStatus("ALL");
-    setFilterDocNumber("");
-    setFilterStartDate("");
-    setFilterEndDate("");
-  };
-
-  // Filtered documents for master table
-  const filteredDocs = useMemo(() => {
-    return allDocuments.filter(doc => {
-      if (filterDocType !== "ALL" && doc.kind !== filterDocType) return false;
-      if (filterCustomer !== "ALL" && doc.customerId !== filterCustomer) return false;
-      if (filterPaidStatus !== "ALL") {
-        if (filterPaidStatus === "Paid" && doc.status !== "Paid" && doc.status !== "Approved") return false;
-        if (filterPaidStatus === "Pending" && doc.status !== "Pending" && doc.status !== "Sent") return false;
-      }
-      if (filterDocNumber) {
-        const q = filterDocNumber.toLowerCase();
-        const matches = 
-          doc.docNumber.toLowerCase().includes(q) ||
-          doc.customerName.toLowerCase().includes(q) ||
-          doc.customerCode.toLowerCase().includes(q);
-        if (!matches) return false;
-      }
-      if (filterStartDate) {
-        if (new Date(doc.date).getTime() < new Date(filterStartDate).getTime()) return false;
-      }
-      if (filterEndDate) {
-        if (new Date(doc.date).getTime() > new Date(filterEndDate + "T23:59:59").getTime()) return false;
-      }
-      if (filterProduct !== "ALL") {
-        const hasProd = doc.items.some((it: any) => it.name?.toLowerCase().includes(filterProduct.toLowerCase()) || it.code?.toLowerCase().includes(filterProduct.toLowerCase()));
-        if (!hasProd) return false;
-      }
-      return true;
-    });
-  }, [allDocuments, filterDocType, filterCustomer, filterPaidStatus, filterDocNumber, filterStartDate, filterEndDate, filterProduct]);
-
-  // -------------------------------------------------------------
-  // Reporting Engine State & Calculations
-  // -------------------------------------------------------------
-  const [activeReportId, setActiveReportId] = useState<string>("PRODUCTS");
-  const [repCustomer, setRepCustomer] = useState("ALL");
-  const [repUser, setRepUser] = useState("ALL");
-  const [repProduct, setRepProduct] = useState("ALL");
-  const [repStartDate, setRepStartDate] = useState(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 1);
-    return d.toISOString().split("T")[0];
-  });
-  const [repEndDate, setRepEndDate] = useState(() => new Date().toISOString().split("T")[0]);
-
-  // Compute Active Report Dataset (STRICTLY INVOICES ONLY - Quotations Excluded)
-  const generatedReportData = useMemo(() => {
-    // Filter base invoice documents by date and customer
-    const pool = invoiceOnlyDocs.filter(d => {
-      if (repCustomer !== "ALL" && d.customerId !== repCustomer) return false;
-      if (repStartDate && new Date(d.date).getTime() < new Date(repStartDate).getTime()) return false;
-      if (repEndDate && new Date(d.date).getTime() > new Date(repEndDate + "T23:59:59").getTime()) return false;
-      return true;
-    });
-
-    if (activeReportId === "PRODUCTS") {
-      // Aggregate by product line item
-      const map = new Map<string, { code: string; name: string; qty: number; revenue: number; ordersCount: number }>();
-      pool.forEach(doc => {
-        doc.items.forEach((it: any) => {
-          const key = it.name.trim();
-          const existing = map.get(key) || { code: it.code || "---", name: key, qty: 0, revenue: 0, ordersCount: 0 };
-          existing.qty += (Number(it.quantity) || 1);
-          existing.revenue += (Number(it.total) || 0);
-          existing.ordersCount += 1;
-          map.set(key, existing);
-        });
-      });
-
-      const rows = Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
-      return {
-        title: "Sales by Products Report (Invoices Only)",
-        headers: ["#", "Product Code", "Product / Service Name", "Quantity Invoiced", "Invoices Count", "Total Billed (₹)"],
-        rows: rows.map((r, i) => [
-          i + 1,
-          r.code,
-          r.name,
-          r.qty,
-          r.ordersCount,
-          `₹${formatCurrency(r.revenue)}`
-        ]),
-        totalSum: rows.reduce((s, r) => s + r.revenue, 0),
-        totalQty: rows.reduce((s, r) => s + r.qty, 0),
-        totalPaid: pool.reduce((s, d) => s + d.paidAmount, 0),
-        totalDue: pool.reduce((s, d) => s + d.amountDue, 0),
-      };
-    } else if (activeReportId === "CUSTOMERS") {
-      // Aggregate by customer
-      const map = new Map<string, { name: string; code: string; phone: string; count: number; total: number; paid: number; due: number }>();
-      pool.forEach(doc => {
-        const key = doc.customerId || doc.customerName;
-        const existing = map.get(key) || { name: doc.customerName, code: doc.customerCode, phone: doc.customerPhone, count: 0, total: 0, paid: 0, due: 0 };
-        existing.count += 1;
-        existing.total += doc.amount;
-        existing.paid += doc.paidAmount;
-        existing.due += doc.amountDue;
-        map.set(key, existing);
-      });
-
-      const rows = Array.from(map.values()).sort((a, b) => b.total - a.total);
-      return {
-        title: "Sales by Customers Report (Invoices Only)",
-        headers: ["#", "Customer Code", "Customer Name / Company", "Phone", "Invoices Count", "Billed Amount (₹)", "Total Paid (₹)", "Balance Due (₹)"],
-        rows: rows.map((r, i) => [
-          i + 1,
-          r.code,
-          r.name,
-          r.phone || "---",
-          r.count,
-          `₹${formatCurrency(r.total)}`,
-          `₹${formatCurrency(r.paid)}`,
-          `₹${formatCurrency(r.due)}`
-        ]),
-        totalSum: rows.reduce((s, r) => s + r.total, 0),
-        totalPaid: rows.reduce((s, r) => s + r.paid, 0),
-        totalDue: rows.reduce((s, r) => s + r.due, 0),
-      };
-    } else if (activeReportId === "DAILY_SALES") {
-      // Aggregate by day
-      const map = new Map<string, { date: string; count: number; total: number; paid: number; due: number }>();
-      pool.forEach(doc => {
-        const dayStr = new Date(doc.date).toISOString().split("T")[0];
-        const existing = map.get(dayStr) || { date: dayStr, count: 0, total: 0, paid: 0, due: 0 };
-        existing.count += 1;
-        existing.total += doc.amount;
-        existing.paid += doc.paidAmount;
-        existing.due += doc.amountDue;
-        map.set(dayStr, existing);
-      });
-
-      const rows = Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
-      return {
-        title: "Daily Sales Summary Report (Invoices Only)",
-        headers: ["#", "Date", "Invoices Count", "Daily Billed (₹)", "Daily Collected (₹)", "Outstanding Due (₹)"],
-        rows: rows.map((r, i) => [
-          i + 1,
-          formatDate(r.date),
-          r.count,
-          `₹${formatCurrency(r.total)}`,
-          `₹${formatCurrency(r.paid)}`,
-          `₹${formatCurrency(r.due)}`
-        ]),
-        totalSum: rows.reduce((s, r) => s + r.total, 0),
-        totalPaid: rows.reduce((s, r) => s + r.paid, 0),
-        totalDue: rows.reduce((s, r) => s + r.due, 0),
-      };
-    } else if (activeReportId === "PAYMENT_TYPES") {
-      // Aggregate by payment method
-      const map = new Map<string, { method: string; count: number; total: number }>();
-      pool.forEach(doc => {
-        const method = doc.paymentMethod || "UPI PAYMENT";
-        const existing = map.get(method) || { method, count: 0, total: 0 };
-        existing.count += 1;
-        existing.total += doc.amount;
-        map.set(method, existing);
-      });
-
-      const rows = Array.from(map.values()).sort((a, b) => b.total - a.total);
-      return {
-        title: "Payment Types Breakdown Report (Invoices Only)",
-        headers: ["#", "Payment Tender Method", "Transactions", "Total Processed (₹)", "Volume Share %"],
-        rows: rows.map((r, i) => {
-          const grand = pool.reduce((s, d) => s + d.amount, 0);
-          const share = grand > 0 ? ((r.total / grand) * 100).toFixed(1) : "0.0";
-          return [
-            i + 1,
-            r.method,
-            r.count,
-            `₹${formatCurrency(r.total)}`,
-            `${share}%`
-          ];
-        }),
-        totalSum: rows.reduce((s, r) => s + r.total, 0),
-        totalPaid: pool.reduce((s, d) => s + d.paidAmount, 0),
-        totalDue: pool.reduce((s, d) => s + d.amountDue, 0),
-      };
-    } else if (activeReportId === "UNPAID_SALES") {
-      // Unpaid & balance due accounts
-      const unpaidList = pool.filter(d => d.amountDue > 0);
-      return {
-        title: "Unpaid Sales & Accounts Receivable Report (Invoices Only)",
-        headers: ["#", "Invoice #", "Customer Name", "Phone", "Document Date", "Due Date", "Total Billed (₹)", "Paid (₹)", "Outstanding Due (₹)"],
-        rows: unpaidList.map((d, i) => [
-          i + 1,
-          d.docNumber,
-          d.customerName,
-          d.customerPhone || "---",
-          formatDate(d.date),
-          formatDate(d.dueDate),
-          `₹${formatCurrency(d.amount)}`,
-          `₹${formatCurrency(d.paidAmount)}`,
-          `₹${formatCurrency(d.amountDue)}`
-        ]),
-        totalSum: unpaidList.reduce((s, d) => s + d.amount, 0),
-        totalPaid: unpaidList.reduce((s, d) => s + d.paidAmount, 0),
-        totalDue: unpaidList.reduce((s, d) => s + d.amountDue, 0),
-      };
-    } else {
-      // INVOICES (Chronological Invoice List - Detailed)
-      return {
-        title: "Chronological Invoices Audit Report (Invoices Only)",
-        headers: ["#", "Invoice #", "Date", "Customer Code", "Customer / Company", "Contact Phone", "Items Invoiced", "Payment Mode", "Status", "Billed (₹)", "Paid (₹)", "Due (₹)"],
-        rows: pool.map((d, i) => [
-          i + 1,
-          d.docNumber,
-          formatDate(d.date),
-          d.customerCode || "---",
-          d.customerName,
-          d.customerPhone || "---",
-          d.items.map((it: any) => `${it.name} (${it.quantity})`).join("; "),
-          d.paymentMethod,
-          d.status,
-          `₹${formatCurrency(d.amount)}`,
-          `₹${formatCurrency(d.paidAmount)}`,
-          `₹${formatCurrency(d.amountDue)}`
-        ]),
-        totalSum: pool.reduce((s, d) => s + d.amount, 0),
-        totalPaid: pool.reduce((s, d) => s + d.paidAmount, 0),
-        totalDue: pool.reduce((s, d) => s + d.amountDue, 0),
-      };
-    }
-  }, [invoiceOnlyDocs, activeReportId, repCustomer, repStartDate, repEndDate]);
-
-  // Clean Multi-Column CSV Exporter for Reporting (Detailed with Header & Summaries)
-  const downloadReportCSV = () => {
-    if (!generatedReportData) return;
-    const { title, headers, rows } = generatedReportData;
-    let csvContent = `data:text/csv;charset=utf-8,`;
-    csvContent += `"TechNext Technologies Private Limited - Official Financial & Sales Audit Report"\n`;
-    csvContent += `"Report Title:","${title.replace(/"/g, '""')}"\n`;
-    csvContent += `"Reporting Period:","${repStartDate || 'All Time'} to ${repEndDate || 'Present'}"\n`;
-    csvContent += `"Document Ref:","TN-REP-2026-${Date.now().toString().slice(-4)}"\n`;
-    csvContent += `"Generated On:","${new Date().toLocaleString()}"\n`;
-    csvContent += `"Filter Scope:","Strictly Invoices Only (Quotations / Estimates Excluded)"\n`;
-    csvContent += `"Summary Metrics:","Total Invoices: ${rows.length}","Total Billed: ₹${generatedReportData.totalSum || 0}","Collected: ₹${generatedReportData.totalPaid || 0}","Due: ₹${generatedReportData.totalDue || 0}"\n\n`;
-    csvContent += headers.map(h => `"${h}"`).join(",") + "\n";
-    rows.forEach((r: any) => {
-      csvContent += r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n";
-    });
-    csvContent += `\n"GRAND TOTAL (Invoices Only)","","","","","","","","","₹${formatCurrency(generatedReportData.totalSum || 0)}","₹${formatCurrency(generatedReportData.totalPaid || 0)}","₹${formatCurrency(generatedReportData.totalDue || 0)}"\n`;
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `technext_${activeReportId.toLowerCase()}_report_${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // -------------------------------------------------------------
-  // Dashboard Calculations (STRICTLY INVOICES ONLY - Image 5 Replica)
-  // -------------------------------------------------------------
-  const monthlySales2026 = useMemo(() => {
-    const months = [
-      "JAN", "FEB", "MAR", "APR", "MAY", "JUN", 
-      "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
-    ];
-    const totals = Array(12).fill(0);
-    const counts = Array(12).fill(0);
-
-    // STRICTLY INVOICES ONLY (Exclude Quotations)
-    invoiceOnlyDocs.forEach(doc => {
-      const d = new Date(doc.date);
-      if (!isNaN(d.getTime()) && d.getFullYear() === 2026) {
-        const m = d.getMonth();
-        totals[m] += doc.amount;
-        counts[m] += 1;
-      }
-    });
-
-    const maxVal = Math.max(...totals, 1000);
-    const topIdx = totals.indexOf(Math.max(...totals));
-
-    return {
-      months,
-      totals,
-      counts,
-      maxVal,
-      topMonthName: months[topIdx] || "SEPTEMBER",
-      topMonthTotal: totals[topIdx] || 0,
-      yearTotal: totals.reduce((a, b) => a + b, 0),
-    };
-  }, [invoiceOnlyDocs]);
-
-  // Selected Month Invoices for Active Graph Interactive Drilldown
-  const selectedMonthInvoices = useMemo(() => {
-    if (selectedMonthIndex === null) return [];
-    return invoiceOnlyDocs.filter(doc => {
-      const d = new Date(doc.date);
-      return !isNaN(d.getTime()) && d.getFullYear() === 2026 && d.getMonth() === selectedMonthIndex;
-    });
-  }, [invoiceOnlyDocs, selectedMonthIndex]);
-
-  // Bar colors matching Aronium Dashboard screenshot (Image 5)
+  // Bar colors matching Aronium Dashboard screenshot (Screenshot 5)
   const barColors = [
     "#64748B", "#64748B", "#64748B", "#64748B", 
     "#84cc16", "#e879f9", "#38bdf8", "#f43f5e", 
     "#f87171", "#60a5fa", "#64748B", "#64748B"
   ];
 
+  // Authentic Aronium Left Navigation items
+  const sidebarNavItems = [
+    { id: "DASHBOARD", label: "Dashboard", icon: LayoutDashboard },
+    { id: "DOCUMENTS", label: "Documents", icon: Receipt },
+    { id: "PRODUCTS", label: "Products", icon: Package },
+    { id: "STOCK", label: "Stock", icon: Layers },
+    { id: "REPORTING", label: "Reporting", icon: BarChart3 },
+    { id: "CUSTOMERS", label: "Customers & suppliers", icon: Users },
+    { id: "PROMOTIONS", label: "Promotions", icon: Gift },
+    { id: "SECURITY", label: "Users & security", icon: ShieldCheck },
+    { id: "PAYMENT_TYPES", label: "Payment types", icon: CreditCard },
+    { id: "COUNTRIES", label: "Countries", icon: Globe },
+    { id: "TAX_RATES", label: "Tax rates", icon: Percent },
+    { id: "MY_COMPANY", label: "My company", icon: Building2 },
+  ];
+
+  const currentViewTitle = useMemo(() => {
+    const item = sidebarNavItems.find(i => i.id === activeView);
+    return item ? item.label : "Documents";
+  }, [activeView]);
+
   return (
     <div className={`${styles.consoleContainer} ${theme === "DARK" ? styles.darkTheme : styles.lightTheme}`}>
-      {/* 1. Aronium Top Management Header & View Switcher */}
-      <header className={styles.topNav}>
-        <div className={styles.breadcrumbGroup}>
-          <span style={{ color: "#00a2ed", fontWeight: 700 }}>Management</span>
-          <span style={{ opacity: 0.5 }}>•</span>
-          <span className={styles.breadcrumbTitle}>
-            {activeView === "DOCUMENTS" ? "Documents" : activeView === "REPORTING" ? "Reporting" : activeView === "PRODUCTS" ? "Products" : "Dashboard"}
-          </span>
-        </div>
-
-        <div className={styles.tabPillGroup}>
-          <button
-            type="button"
-            onClick={() => setActiveView("DASHBOARD")}
-            className={`${styles.tabPill} ${activeView === "DASHBOARD" ? styles.tabPillActive : ""}`}
-          >
-            <TrendingUp size={14} /> Dashboard
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView("DOCUMENTS")}
-            className={`${styles.tabPill} ${activeView === "DOCUMENTS" ? styles.tabPillActive : ""}`}
-          >
-            <Receipt size={14} /> Documents
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView("PRODUCTS")}
-            className={`${styles.tabPill} ${activeView === "PRODUCTS" ? styles.tabPillActive : ""}`}
-          >
-            <Package size={14} /> Products
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView("REPORTING")}
-            className={`${styles.tabPill} ${activeView === "REPORTING" ? styles.tabPillActive : ""}`}
-          >
-            <BarChart3 size={14} /> Reporting
-          </button>
-          <Link
-            href="/customers"
-            className={styles.tabPill}
-            style={{ textDecoration: "none" }}
-          >
-            <Users size={14} /> Customers
-          </Link>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className={styles.themeToggleBtn}
-            title="Toggle Aronium Dark / Light Console"
-          >
-            {theme === "DARK" ? <Sun size={14} color="#FBBF24" /> : <Moon size={14} color="#6366F1" />}
-            <span>{theme === "DARK" ? "Aronium Dark" : "Executive Light"}</span>
-          </button>
-
-          <Link
-            href="/billing/new?type=invoice"
-            className={styles.toolBtn}
-            style={{ background: "#00a2ed", color: "#ffffff", fontWeight: 700 }}
-          >
-            <Plus size={14} /> New Bill
-          </Link>
-        </div>
-      </header>
-
       {/* ========================================================= */}
-      {/* VIEW 1: MANAGEMENT • DOCUMENTS (Master-Detail Split Pane)   */}
+      {/* 1. AUTHENTIC LEFT ARONIUM MANAGEMENT SIDEBAR               */}
       {/* ========================================================= */}
-      {activeView === "DOCUMENTS" && (
-        <>
-          {/* Action Toolbar */}
-          <div className={styles.actionToolbar}>
-            <div style={{ background: "#00a2ed", color: "#ffffff", padding: "4px 10px", borderRadius: "3px", fontSize: "11px", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
-              <Receipt size={12} /> View documents
+      <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ""}`}>
+        <div>
+          <div className={styles.sidebarHeader}>
+            <div style={{ width: "24px", height: "24px", borderRadius: "4px", backgroundColor: "#00a2ed", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: 900, fontSize: "13px" }}>
+              TN
             </div>
+            {!sidebarCollapsed && (
+              <div className={styles.sidebarTitle}>
+                Management
+              </div>
+            )}
+          </div>
 
-            <div style={{ height: "18px", width: "1px", background: "rgba(148, 163, 184, 0.3)", margin: "0 4px" }} />
-
-            <Link href="/billing/new?type=invoice" className={styles.toolBtn}>
-              <Plus size={14} /> Add
-            </Link>
-
-            <button
-              type="button"
-              disabled={!selectedDoc}
-              onClick={() => {
-                if (selectedDoc) window.open(selectedDoc.viewUrl, "_blank");
-              }}
-              className={`${styles.toolBtn} ${!selectedDoc ? styles.toolBtnDisabled : ""}`}
-            >
-              <Printer size={14} /> Print
-            </button>
-
-            <button
-              type="button"
-              disabled={!selectedDoc}
-              onClick={() => {
-                if (selectedDoc) router.push(selectedDoc.viewUrl);
-              }}
-              className={`${styles.toolBtn} ${!selectedDoc ? styles.toolBtnDisabled : ""}`}
-            >
-              <Eye size={14} /> Print preview
-            </button>
-
-            <button
-              type="button"
-              disabled={!selectedDoc}
-              onClick={() => {
-                if (selectedDoc) window.open(selectedDoc.viewUrl, "_blank");
-              }}
-              className={`${styles.toolBtn} ${!selectedDoc ? styles.toolBtnDisabled : ""}`}
-            >
-              <FileDown size={14} /> Save as PDF
-            </button>
-
-            <button
-              type="button"
-              disabled={!selectedDoc}
-              onClick={() => {
-                if (selectedDoc) router.push(`/billing/doc/${selectedDoc.kind.toLowerCase()}/${selectedDoc.id}/edit`);
-              }}
-              className={`${styles.toolBtn} ${!selectedDoc ? styles.toolBtnDisabled : ""}`}
-            >
-              <Edit3 size={14} /> Edit
-            </button>
-
-            {selectedDoc && (
-              <form 
-                action={async (formData) => {
-                  if (confirm(`Are you sure you want to delete ${selectedDoc.kind} #${selectedDoc.docNumber}?`)) {
-                    await deleteBillingDocument(formData);
-                    setSelectedDocId(null);
-                  }
-                }}
-                style={{ display: "inline" }}
-              >
-                <input type="hidden" name="id" value={selectedDoc.id} />
-                <input type="hidden" name="type" value={selectedDoc.kind.toLowerCase()} />
+          <nav className={styles.sidebarNav}>
+            {sidebarNavItems.map(item => {
+              const Icon = item.icon;
+              const isActive = activeView === item.id;
+              return (
                 <button
-                  type="submit"
-                  className={styles.toolBtn}
-                  style={{ color: "#EF4444" }}
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveView(item.id as any)}
+                  className={`${styles.sidebarNavItem} ${isActive ? styles.sidebarNavItemActive : ""}`}
+                  title={sidebarCollapsed ? item.label : undefined}
                 >
-                  <Trash2 size={14} /> Delete
+                  <Icon size={16} />
+                  {!sidebarCollapsed && <span>{item.label}</span>}
                 </button>
-              </form>
-            )}
+              );
+            })}
+          </nav>
+        </div>
 
-            {selectedDoc?.customerPhone && (
-              <a
-                href={`https://wa.me/91${selectedDoc.customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
-                  `Hello ${selectedDoc.customerName}, here is your ${selectedDoc.kind.replace('_', ' ')} #${selectedDoc.docNumber} from TechNext Technologies for ₹${formatCurrency(selectedDoc.amount)}. View document: https://technextmanage.vercel.app${selectedDoc.viewUrl}`
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className={styles.toolBtn}
-                style={{ color: "#22c55e" }}
-              >
-                <Share2 size={14} /> WhatsApp
-              </a>
-            )}
+        <div className={styles.sidebarFooter}>
+          <button
+            type="button"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className={styles.btnCollapse}
+            title={sidebarCollapsed ? "Expand Sidebar (>>)" : "Collapse Sidebar (<<)"}
+          >
+            {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        </div>
+      </aside>
+
+      {/* ========================================================= */}
+      {/* 2. MAIN WORKSPACE CONTENT AREA                             */}
+      {/* ========================================================= */}
+      <main className={styles.mainContent}>
+        {/* Top Management Breadcrumb Bar */}
+        <header className={styles.topNav}>
+          <div className={styles.breadcrumbGroup}>
+            <span style={{ color: "#00a2ed", fontWeight: 700 }}>Management</span>
+            <span style={{ opacity: 0.5 }}>•</span>
+            <span className={styles.breadcrumbTitle}>
+              {currentViewTitle}
+            </span>
           </div>
 
-          {/* Aronium Filter Bar */}
-          <div className={styles.filterBar}>
-            <div className={styles.filterItem}>
-              <label className={styles.filterLabel}>Product</label>
-              <select
-                value={filterProduct}
-                onChange={(e) => setFilterProduct(e.target.value)}
-                className={styles.selectField}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className={styles.themeToggleBtn}
+              title="Toggle Light / Dark Mode"
+            >
+              {theme === "DARK" ? <Sun size={13} color="#FBBF24" /> : <Moon size={13} color="#6366F1" />}
+              <span>{theme === "DARK" ? "Dark Mode" : "Light Mode"}</span>
+            </button>
+
+            <Link
+              href="/billing/new?type=invoice"
+              className={styles.toolBtn}
+              style={{ background: "#00a2ed", color: "#ffffff", fontWeight: 700 }}
+            >
+              <Plus size={13} /> New Bill
+            </Link>
+          </div>
+        </header>
+
+        {/* ========================================================= */}
+        {/* VIEW 1: MANAGEMENT • DOCUMENTS (Screenshot 1 & 3 Replica)  */}
+        {/* ========================================================= */}
+        {activeView === "DOCUMENTS" && (
+          <>
+            {/* Action Toolbar */}
+            <div className={styles.actionToolbar}>
+              <div style={{ background: "#00a2ed", color: "#ffffff", padding: "4px 10px", borderRadius: "3px", fontSize: "11px", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <Receipt size={12} /> View documents
+              </div>
+
+              <div style={{ height: "18px", width: "1px", background: "rgba(148, 163, 184, 0.3)", margin: "0 4px" }} />
+
+              <Link href="/billing/new?type=invoice" className={styles.toolBtn}>
+                <Plus size={13} /> Add
+              </Link>
+
+              <button
+                type="button"
+                disabled={!selectedDoc}
+                onClick={() => {
+                  if (selectedDoc) window.open(selectedDoc.viewUrl, "_blank");
+                }}
+                className={`${styles.toolBtn} ${!selectedDoc ? styles.toolBtnDisabled : ""}`}
               >
-                <option value="ALL">All products</option>
-                {products.map(p => (
-                  <option key={p.id} value={p.name}>{p.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.filterItem}>
-              <label className={styles.filterLabel}>Customer</label>
-              <select
-                value={filterCustomer}
-                onChange={(e) => setFilterCustomer(e.target.value)}
-                className={styles.selectField}
-              >
-                <option value="ALL">All customers</option>
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} {c.company ? `(${c.company})` : ""}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.filterItem}>
-              <label className={styles.filterLabel}>Document Type</label>
-              <select
-                value={filterDocType}
-                onChange={(e) => setFilterDocType(e.target.value)}
-                className={styles.selectField}
-              >
-                <option value="ALL">All document types</option>
-                <option value="INVOICE">Invoices</option>
-                <option value="QUOTATION">Quotations</option>
-                <option value="ORDER_FORM">Order Forms</option>
-                <option value="PAYMENT_RECEIPT">Payment Receipts</option>
-              </select>
-            </div>
-
-            <div className={styles.filterItem}>
-              <label className={styles.filterLabel}>Paid Status</label>
-              <select
-                value={filterPaidStatus}
-                onChange={(e) => setFilterPaidStatus(e.target.value)}
-                className={styles.selectField}
-              >
-                <option value="ALL">All transactions</option>
-                <option value="Paid">Paid</option>
-                <option value="Pending">Pending / Unpaid</option>
-              </select>
-            </div>
-
-            <div className={styles.filterItem}>
-              <label className={styles.filterLabel}>Document Number</label>
-              <input
-                type="text"
-                placeholder="Search number..."
-                value={filterDocNumber}
-                onChange={(e) => setFilterDocNumber(e.target.value)}
-                className={styles.inputField}
-              />
-            </div>
-
-            <div className={styles.filterItem}>
-              <label className={styles.filterLabel}>Date From</label>
-              <input
-                type="date"
-                value={filterStartDate}
-                onChange={(e) => setFilterStartDate(e.target.value)}
-                className={styles.inputField}
-              />
-            </div>
-
-            <div className={styles.filterItem}>
-              <label className={styles.filterLabel}>Date To</label>
-              <input
-                type="date"
-                value={filterEndDate}
-                onChange={(e) => setFilterEndDate(e.target.value)}
-                className={styles.inputField}
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
-              <button type="button" onClick={handleClearFilters} className={styles.btnClear} title="Reset filters">
-                <X size={14} /> Clear
+                <Printer size={13} /> Print
               </button>
-            </div>
-          </div>
 
-          {/* Master-Detail Split Pane */}
-          <div className={styles.splitPaneContainer}>
-            {/* Top Table: Master Documents (N) */}
-            <div className={styles.panelCard} style={{ padding: "12px" }}>
-              <div className={styles.paneHeader}>
-                <span className={styles.paneTitle}>
-                  Documents ({filteredDocs.length})
-                </span>
-                <span style={{ fontSize: "12px", opacity: 0.75 }}>
-                  Click any document row to view itemized lines below
-                </span>
-              </div>
+              <button
+                type="button"
+                disabled={!selectedDoc}
+                onClick={() => {
+                  if (selectedDoc) router.push(selectedDoc.viewUrl);
+                }}
+                className={`${styles.toolBtn} ${!selectedDoc ? styles.toolBtnDisabled : ""}`}
+              >
+                <Eye size={13} /> Print preview
+              </button>
 
-              <div className={styles.tableWrapper}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={{ width: "24px" }}></th>
-                      <th>Number</th>
-                      <th>External Ref / Project</th>
-                      <th>Document Type</th>
-                      <th>Paid Status</th>
-                      <th>Customer</th>
-                      <th>Date</th>
-                      <th>Due Date</th>
-                      <th>Payment Method</th>
-                      <th style={{ textAlign: "right" }}>Total (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredDocs.length === 0 ? (
-                      <tr>
-                        <td colSpan={10} style={{ textAlign: "center", padding: "24px", opacity: 0.6 }}>
-                          No documents found matching the filter criteria.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredDocs.map((doc, idx) => {
-                        const isSelected = selectedDoc?.id === doc.id;
-                        return (
-                          <tr
-                            key={doc.id}
-                            onClick={() => setSelectedDocId(doc.id)}
-                            className={isSelected ? styles.selectedRow : ""}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <td style={{ textAlign: "center" }}>
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => setSelectedDocId(doc.id)}
-                                style={{ accentColor: "#00a2ed" }}
-                              />
-                            </td>
-                            <td style={{ fontWeight: 700, color: "#00a2ed" }}>
-                              {doc.docNumber}
-                            </td>
-                            <td style={{ opacity: 0.85 }}>
-                              {doc.externalRef}
-                            </td>
-                            <td>
-                              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase" }}>
-                                {doc.kind.replace("_", " ")}
-                              </span>
-                            </td>
-                            <td>
-                              <span className={doc.status === "Paid" || doc.status === "Approved" ? styles.badgePaid : styles.badgePending}>
-                                {doc.status}
-                              </span>
-                            </td>
-                            <td style={{ fontWeight: 600 }}>
-                              {doc.customerName}
-                            </td>
-                            <td>{formatDate(doc.date)}</td>
-                            <td>{formatDate(doc.dueDate)}</td>
-                            <td style={{ fontSize: "11px", opacity: 0.85 }}>{doc.paymentMethod}</td>
-                            <td style={{ textAlign: "right", fontWeight: 800 }}>
-                              ₹{formatCurrency(doc.amount)}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+              <button
+                type="button"
+                disabled={!selectedDoc}
+                onClick={() => {
+                  if (selectedDoc) window.open(selectedDoc.viewUrl, "_blank");
+                }}
+                className={`${styles.toolBtn} ${!selectedDoc ? styles.toolBtnDisabled : ""}`}
+              >
+                <FileDown size={13} /> Save as PDF
+              </button>
 
-            {/* Bottom Table: Document Items (N) for Selected Document */}
-            <div className={styles.panelCard} style={{ padding: "12px" }}>
-              <div className={styles.paneHeader}>
-                <span className={styles.paneTitle} style={{ color: "#38bdf8" }}>
-                  Document items ({selectedDoc ? selectedDoc.items.length : 0})
-                  {selectedDoc && ` — #${selectedDoc.docNumber} (${selectedDoc.customerName})`}
-                </span>
-                {selectedDoc && (
-                  <div style={{ display: "flex", gap: "16px", fontSize: "12px", fontWeight: 600 }}>
-                    <span>Total Billed: <strong style={{ color: "#00a2ed" }}>₹{formatCurrency(selectedDoc.amount)}</strong></span>
-                    <span>Paid: <strong style={{ color: "#22c55e" }}>₹{formatCurrency(selectedDoc.paidAmount)}</strong></span>
-                    <span>Due: <strong style={{ color: selectedDoc.amountDue > 0 ? "#ef4444" : "inherit" }}>₹{formatCurrency(selectedDoc.amountDue)}</strong></span>
-                  </div>
-                )}
-              </div>
+              <button
+                type="button"
+                disabled={!selectedDoc}
+                onClick={() => {
+                  if (selectedDoc) router.push(`/billing/doc/${selectedDoc.kind.toLowerCase()}/${selectedDoc.id}/edit`);
+                }}
+                className={`${styles.toolBtn} ${!selectedDoc ? styles.toolBtnDisabled : ""}`}
+              >
+                <Edit3 size={13} /> Edit
+              </button>
 
-              <div className={styles.tableWrapper}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={{ width: "35px" }}>#</th>
-                      <th>Code / SKU</th>
-                      <th>Name / Description</th>
-                      <th>Unit of Measure</th>
-                      <th style={{ textAlign: "center" }}>Quantity</th>
-                      <th style={{ textAlign: "right" }}>Unit Price</th>
-                      <th style={{ textAlign: "center" }}>Tax</th>
-                      <th style={{ textAlign: "right" }}>Discount</th>
-                      <th style={{ textAlign: "right" }}>Total (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {!selectedDoc || selectedDoc.items.length === 0 ? (
-                      <tr>
-                        <td colSpan={9} style={{ textAlign: "center", padding: "20px", opacity: 0.6 }}>
-                          Select a document above to inspect its itemized lines.
-                        </td>
-                      </tr>
-                    ) : (
-                      selectedDoc.items.map((item: any, iIdx: number) => (
-                        <tr key={item.id || iIdx}>
-                          <td style={{ opacity: 0.7 }}>{iIdx + 1}</td>
-                          <td style={{ fontFamily: "monospace", fontSize: "11px", opacity: 0.85 }}>{item.code}</td>
-                          <td style={{ fontWeight: 600 }}>{item.name}</td>
-                          <td>{item.unit || "Pcs"}</td>
-                          <td style={{ textAlign: "center", fontWeight: 600 }}>{item.quantity}</td>
-                          <td style={{ textAlign: "right" }}>₹{formatCurrency(item.unitPrice)}</td>
-                          <td style={{ textAlign: "center" }}>{item.tax || "---"}</td>
-                          <td style={{ textAlign: "right" }}>{item.discount || "---"}</td>
-                          <td style={{ textAlign: "right", fontWeight: 700 }}>₹{formatCurrency(item.total)}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ========================================================= */}
-      {/* VIEW 2: MANAGEMENT • REPORTING (Image 2 Replica)           */}
-      {/* ========================================================= */}
-      {activeView === "REPORTING" && (
-        <div className={styles.reportingLayout}>
-          {/* Left Column: Reports Catalog */}
-          <div className={`${styles.panelCard} ${styles.reportSideList}`}>
-            <div style={{ background: "#00a2ed", color: "#ffffff", padding: "6px 12px", borderRadius: "4px", fontSize: "12px", fontWeight: 700, marginBottom: "14px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-              <BarChart3 size={14} /> Select report
-            </div>
-
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", opacity: 0.7, display: "block", marginBottom: "6px" }}>
-                Sales Reports
-              </label>
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                {[
-                  { id: "PRODUCTS", label: "Products" },
-                  { id: "CUSTOMERS", label: "Customers" },
-                  { id: "INVOICES", label: "Invoice list" },
-                  { id: "DAILY_SALES", label: "Daily sales" },
-                  { id: "PAYMENT_TYPES", label: "Payment types" },
-                  { id: "UNPAID_SALES", label: "Unpaid sales" },
-                ].map(rep => (
-                  <button
-                    key={rep.id}
-                    type="button"
-                    onClick={() => setActiveReportId(rep.id)}
-                    className={`${styles.reportItemBtn} ${activeReportId === rep.id ? styles.reportItemBtnActive : ""}`}
-                  >
-                    <FileText size={13} /> {rep.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Filter & Output Panel */}
-          <div className={`${styles.panelCard} ${styles.reportMainPanel}`}>
-            {/* Filter Row */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px" }}>
-              <div className={styles.filterItem}>
-                <label className={styles.filterLabel}>Customers &amp; Suppliers</label>
-                <select
-                  value={repCustomer}
-                  onChange={(e) => setRepCustomer(e.target.value)}
-                  className={styles.selectField}
+              {selectedDoc && (
+                <form 
+                  action={async (formData) => {
+                    if (confirm(`Are you sure you want to delete ${selectedDoc.kind} #${selectedDoc.docNumber}?`)) {
+                      await deleteBillingDocument(formData);
+                      setSelectedDocId(null);
+                    }
+                  }}
+                  style={{ display: "inline" }}
                 >
-                  <option value="ALL">All customers</option>
-                  {customers.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} {c.company ? `(${c.company})` : ""}</option>
-                  ))}
-                </select>
-              </div>
+                  <input type="hidden" name="id" value={selectedDoc.id} />
+                  <input type="hidden" name="type" value={selectedDoc.kind.toLowerCase()} />
+                  <button
+                    type="submit"
+                    className={styles.toolBtn}
+                    style={{ color: "#EF4444" }}
+                  >
+                    <Trash2 size={13} /> Delete
+                  </button>
+                </form>
+              )}
 
-              <div className={styles.filterItem}>
-                <label className={styles.filterLabel}>Date From</label>
-                <input
-                  type="date"
-                  value={repStartDate}
-                  onChange={(e) => setRepStartDate(e.target.value)}
-                  className={styles.inputField}
-                />
-              </div>
-
-              <div className={styles.filterItem}>
-                <label className={styles.filterLabel}>Date To</label>
-                <input
-                  type="date"
-                  value={repEndDate}
-                  onChange={(e) => setRepEndDate(e.target.value)}
-                  className={styles.inputField}
-                />
-              </div>
+              {selectedDoc?.customerPhone && (
+                <a
+                  href={`https://wa.me/91${selectedDoc.customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                    `Hello ${selectedDoc.customerName}, here is your ${selectedDoc.kind.replace('_', ' ')} #${selectedDoc.docNumber} from TechNext Technologies for ₹${formatCurrency(selectedDoc.amount)}. View document: https://technextmanage.vercel.app${selectedDoc.viewUrl}`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.toolBtn}
+                  style={{ color: "#22c55e" }}
+                >
+                  <Share2 size={13} /> WhatsApp
+                </a>
+              )}
             </div>
 
-            {/* Actions Bar */}
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", borderTop: "1px solid rgba(148, 163, 184, 0.2)", paddingTop: "12px" }}>
-              <button
-                type="button"
-                onClick={() => {}}
-                className={styles.btnSearch}
-                style={{ padding: "6px 14px" }}
-              >
-                <Search size={14} /> Refresh Report
-              </button>
+            {/* Structured 3-Row Filter Bar (Matching Screenshot 1) */}
+            <div className={`${styles.panelCard} ${styles.filterBarStructured}`}>
+              {/* Row 1: Product, User, Cash register */}
+              <div className={styles.filterRow}>
+                <div className={styles.filterFieldGroup}>
+                  <label className={styles.filterFieldLabel}>Product</label>
+                  <select
+                    value={filterProduct}
+                    onChange={(e) => setFilterProduct(e.target.value)}
+                    className={styles.selectField}
+                  >
+                    <option value="ALL">All products</option>
+                    {products.map(p => (
+                      <option key={p.id} value={p.name}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className={styles.btnSearch}
-                style={{ padding: "6px 14px", backgroundColor: "#0284c7" }}
-                title="Generates official print-ready statement / vector PDF"
-              >
-                <Printer size={14} /> Print / Save as PDF
-              </button>
+                <div className={styles.filterFieldGroup}>
+                  <label className={styles.filterFieldLabel}>User</label>
+                  <select
+                    value={filterUser}
+                    onChange={(e) => setFilterUser(e.target.value)}
+                    className={styles.selectField}
+                  >
+                    <option value="ALL">All users</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Accounts Team">Accounts Team</option>
+                  </select>
+                </div>
 
-              <button
-                type="button"
-                onClick={downloadReportCSV}
-                className={styles.btnClear}
-                style={{ padding: "6px 14px", color: "#10b981", borderColor: "#10b981" }}
-                title="Export detailed multi-column financial CSV"
-              >
-                <Download size={14} /> Export Detailed CSV
-              </button>
-            </div>
+                <div className={styles.filterFieldGroup}>
+                  <label className={styles.filterFieldLabel}>Cash register</label>
+                  <select
+                    value={filterCashRegister}
+                    onChange={(e) => setFilterCashRegister(e.target.value)}
+                    className={styles.selectField}
+                  >
+                    <option value="ALL">All cash registers</option>
+                    <option value="MAIN">Main POS Register</option>
+                  </select>
+                </div>
+              </div>
 
-            {/* Generated Report Result View */}
-            {generatedReportData && (
-              <div style={{ marginTop: "10px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <h3 style={{ fontSize: "14px", fontWeight: 700, margin: 0, color: "#00a2ed" }}>
-                    {generatedReportData.title}
-                  </h3>
-                  <div style={{ fontSize: "13px", fontWeight: 700 }}>
-                    Total Volume: <span style={{ color: "#22c55e" }}>₹{formatCurrency(generatedReportData.totalSum || 0)}</span>
+              {/* Row 2: Customer, Document type, Paid status */}
+              <div className={styles.filterRow}>
+                <div className={styles.filterFieldGroup}>
+                  <label className={styles.filterFieldLabel}>Customer</label>
+                  <select
+                    value={filterCustomer}
+                    onChange={(e) => setFilterCustomer(e.target.value)}
+                    className={styles.selectField}
+                  >
+                    <option value="ALL">All customers</option>
+                    {customers.map(c => (
+                      <option key={c.id} value={c.id}>{c.name} {c.company ? `(${c.company})` : ""}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={styles.filterFieldGroup}>
+                  <label className={styles.filterFieldLabel}>Document type</label>
+                  <select
+                    value={filterDocType}
+                    onChange={(e) => setFilterDocType(e.target.value)}
+                    className={styles.selectField}
+                  >
+                    <option value="ALL">All document types</option>
+                    <option value="INVOICE">Invoices</option>
+                    <option value="QUOTATION">Quotations / Proforma</option>
+                    <option value="REFUND">Refunds</option>
+                    <option value="ORDER_FORM">Order Forms</option>
+                    <option value="PAYMENT_RECEIPT">Receipts</option>
+                  </select>
+                </div>
+
+                <div className={styles.filterFieldGroup}>
+                  <label className={styles.filterFieldLabel}>Paid status</label>
+                  <select
+                    value={filterPaidStatus}
+                    onChange={(e) => setFilterPaidStatus(e.target.value)}
+                    className={styles.selectField}
+                  >
+                    <option value="ALL">All transactions</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Pending">Pending / Unpaid</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 3: Document number, External document, Period, Search & Clear */}
+              <div className={styles.filterRowThird}>
+                <div className={styles.filterFieldGroup}>
+                  <label className={styles.filterFieldLabel}>Document number</label>
+                  <input
+                    type="text"
+                    placeholder="Search number..."
+                    value={filterDocNumber}
+                    onChange={(e) => setFilterDocNumber(e.target.value)}
+                    className={styles.inputField}
+                  />
+                </div>
+
+                <div className={styles.filterFieldGroup}>
+                  <label className={styles.filterFieldLabel}>External document</label>
+                  <input
+                    type="text"
+                    placeholder="External ref..."
+                    value={filterExternalDoc}
+                    onChange={(e) => setFilterExternalDoc(e.target.value)}
+                    className={styles.inputField}
+                  />
+                </div>
+
+                <div className={styles.filterFieldGroup}>
+                  <label className={styles.filterFieldLabel}>Period</label>
+                  <div style={{ display: "flex", gap: "6px", width: "100%" }}>
+                    <input
+                      type="date"
+                      value={filterStartDate}
+                      onChange={(e) => setFilterStartDate(e.target.value)}
+                      className={styles.inputField}
+                    />
+                    <input
+                      type="date"
+                      value={filterEndDate}
+                      onChange={(e) => setFilterEndDate(e.target.value)}
+                      className={styles.inputField}
+                    />
                   </div>
                 </div>
 
-                <div className={styles.tableWrapper} style={{ maxHeight: "480px" }}>
+                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                  <button type="button" onClick={() => {}} className={styles.btnSearchIcon} title="Search">
+                    <Search size={14} />
+                  </button>
+                  <button type="button" onClick={handleClearFilters} className={styles.btnClearIcon} title="Clear filters">
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Master-Detail Split Pane (Matching Screenshot 1) */}
+            <div className={styles.splitPaneContainer}>
+              {/* Top Table: Master Documents (N) */}
+              <div className={styles.panelCard} style={{ padding: "10px 14px" }}>
+                <div className={styles.paneHeader}>
+                  <span className={styles.paneTitle}>
+                    Documents ({filteredDocs.length})
+                  </span>
+                  <span style={{ fontSize: "11.5px", opacity: 0.75 }}>
+                    Select a document to inspect itemized lines below
+                  </span>
+                </div>
+
+                <div className={styles.tableWrapper}>
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        {generatedReportData.headers.map((h, hIdx) => (
-                          <th key={hIdx}>{h}</th>
-                        ))}
+                        <th style={{ width: "24px" }}></th>
+                        <th style={{ width: "35px" }}>ID</th>
+                        <th>Number</th>
+                        <th>External...</th>
+                        <th>Document type</th>
+                        <th>Paid</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>POS</th>
+                        <th>Ord...</th>
+                        <th>Payment...</th>
+                        <th>User</th>
+                        <th>Discount</th>
+                        <th style={{ textAlign: "right" }}>Total</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {generatedReportData.rows.length === 0 ? (
+                      {filteredDocs.length === 0 ? (
                         <tr>
-                          <td colSpan={generatedReportData.headers.length} style={{ textAlign: "center", padding: "24px", opacity: 0.6 }}>
-                            No data available for the selected period and parameters.
+                          <td colSpan={14} style={{ textAlign: "center", padding: "24px", opacity: 0.6 }}>
+                            No documents found matching the filter criteria.
                           </td>
                         </tr>
                       ) : (
-                        generatedReportData.rows.map((row, rIdx) => (
-                          <tr key={rIdx}>
-                            {row.map((cell: any, cIdx: number) => (
-                              <td key={cIdx} style={{ fontWeight: cIdx === 2 ? 600 : "normal" }}>
-                                {cell}
+                        filteredDocs.map((doc, idx) => {
+                          const isSelected = selectedDoc?.id === doc.id;
+                          return (
+                            <tr
+                              key={doc.id}
+                              onClick={() => setSelectedDocId(doc.id)}
+                              className={isSelected ? styles.selectedRow : ""}
+                              style={{ cursor: "pointer" }}
+                            >
+                              <td style={{ textAlign: "center" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => setSelectedDocId(doc.id)}
+                                  style={{ accentColor: "#00a2ed" }}
+                                />
                               </td>
-                            ))}
+                              <td style={{ opacity: 0.6 }}>{idx + 1}</td>
+                              <td style={{ fontWeight: 700, color: doc.kind === "REFUND" ? "#ef4444" : "#00a2ed" }}>
+                                {doc.docNumber}
+                              </td>
+                              <td style={{ opacity: 0.85 }}>{doc.externalRef}</td>
+                              <td>
+                                <span style={{ fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase" }}>
+                                  {doc.kind.replace("_", " ")}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={doc.kind === "REFUND" ? styles.badgeRefund : doc.status === "Paid" || doc.status === "Approved" ? styles.badgePaid : styles.badgePending}>
+                                  {doc.status}
+                                </span>
+                              </td>
+                              <td style={{ fontWeight: 600 }}>{doc.customerName}</td>
+                              <td>{formatDate(doc.date)}</td>
+                              <td>{doc.posRegister}</td>
+                              <td>{doc.orderNumber}</td>
+                              <td>{doc.paymentMethod}</td>
+                              <td>{doc.userName}</td>
+                              <td>{doc.discount}</td>
+                              <td style={{ textAlign: "right", fontWeight: 800, color: doc.kind === "REFUND" ? "#ef4444" : "inherit" }}>
+                                {doc.amount < 0 ? `-₹${formatCurrency(Math.abs(doc.amount))}` : `₹${formatCurrency(doc.amount)}`}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Horizontal Separator Bar */}
+              <div className={styles.splitDivider}>...</div>
+
+              {/* Bottom Table: Document Items (X) (Matching Screenshot 1) */}
+              <div className={styles.panelCard} style={{ padding: "10px 14px" }}>
+                <div className={styles.paneHeader}>
+                  <span className={styles.paneTitle} style={{ color: "#38bdf8" }}>
+                    Document items ({selectedDoc ? selectedDoc.items.length : 0})
+                    {selectedDoc && ` — #${selectedDoc.docNumber} (${selectedDoc.customerName})`}
+                  </span>
+                  {selectedDoc && (
+                    <div style={{ display: "flex", gap: "16px", fontSize: "11.5px", fontWeight: 600 }}>
+                      <span>Total: <strong style={{ color: selectedDoc.kind === "REFUND" ? "#ef4444" : "#00a2ed" }}>₹{formatCurrency(Math.abs(selectedDoc.amount))}</strong></span>
+                      <span>Paid: <strong style={{ color: "#22c55e" }}>₹{formatCurrency(selectedDoc.paidAmount)}</strong></span>
+                      <span>Due: <strong style={{ color: selectedDoc.amountDue > 0 ? "#ef4444" : "inherit" }}>₹{formatCurrency(selectedDoc.amountDue)}</strong></span>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.tableWrapper}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: "35px" }}>ID</th>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Unit of measure</th>
+                        <th style={{ textAlign: "center" }}>Quantity</th>
+                        <th style={{ textAlign: "right" }}>Price before tax</th>
+                        <th style={{ textAlign: "center" }}>Tax</th>
+                        <th style={{ textAlign: "right" }}>Price</th>
+                        <th style={{ textAlign: "right" }}>Total before discount</th>
+                        <th style={{ textAlign: "right" }}>Discount</th>
+                        <th style={{ textAlign: "right" }}>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {!selectedDoc || selectedDoc.items.length === 0 ? (
+                        <tr>
+                          <td colSpan={11} style={{ textAlign: "center", padding: "16px", opacity: 0.6 }}>
+                            Select a document above to inspect its itemized lines.
+                          </td>
+                        </tr>
+                      ) : (
+                        selectedDoc.items.map((item: any, iIdx: number) => (
+                          <tr key={item.id || iIdx}>
+                            <td style={{ opacity: 0.6 }}>{iIdx + 1}</td>
+                            <td style={{ fontFamily: "monospace", fontSize: "11px", opacity: 0.85 }}>{item.code}</td>
+                            <td style={{ fontWeight: 600 }}>{item.name}</td>
+                            <td>{item.unit || "Pcs"}</td>
+                            <td style={{ textAlign: "center", fontWeight: 600 }}>{item.quantity}</td>
+                            <td style={{ textAlign: "right" }}>₹{formatCurrency(item.priceBeforeTax)}</td>
+                            <td style={{ textAlign: "center" }}>{item.tax || "18%"}</td>
+                            <td style={{ textAlign: "right" }}>₹{formatCurrency(item.unitPrice)}</td>
+                            <td style={{ textAlign: "right" }}>₹{formatCurrency(item.totalBeforeDiscount)}</td>
+                            <td style={{ textAlign: "right" }}>{item.discount || "0.00"}</td>
+                            <td style={{ textAlign: "right", fontWeight: 700, color: item.total < 0 ? "#ef4444" : "inherit" }}>
+                              {item.total < 0 ? `-₹${formatCurrency(Math.abs(item.total))}` : `₹${formatCurrency(item.total)}`}
+                            </td>
                           </tr>
                         ))
                       )}
@@ -1221,135 +1362,350 @@ export default function AroniumBillingConsole({
                   </table>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================= */}
-      {/* VIEW 3: MANAGEMENT • DASHBOARD (Image 5 Replica)           */}
-      {/* ========================================================= */}
-      {activeView === "DASHBOARD" && (
-        <div className={styles.dashboardGrid}>
-          {/* Top Card: Monthly Sales - 2026 Bar Chart */}
-          <div className={`${styles.panelCard} ${styles.monthlyChartCard}`}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: "16px" }}>
-              <div>
-                <h2 style={{ fontSize: "18px", fontWeight: 700, margin: "0 0 4px 0" }}>
-                  Monthly Sales - 2026
-                </h2>
-                <div style={{ fontSize: "13px", opacity: 0.75 }}>
-                  Sales data grouped by month
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: "32px", alignItems: "flex-end" }}>
-                <div>
-                  <div style={{ fontSize: "12px", opacity: 0.75, textTransform: "uppercase" }}>Total Sales</div>
-                  <div style={{ fontSize: "28px", fontWeight: 800, color: "#00a2ed" }}>
-                    ₹{formatCurrency(monthlySales2026.yearTotal)}
-                  </div>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: "11px", opacity: 0.75, textTransform: "uppercase" }}>Top Performing Month</div>
-                  <div style={{ fontSize: "16px", fontWeight: 700, color: "#22c55e" }}>
-                    {monthlySales2026.topMonthName} — ₹{formatCurrency(monthlySales2026.topMonthTotal)}
-                  </div>
-                </div>
-              </div>
             </div>
+          </>
+        )}
 
-            {/* Visual Bar Chart Scroll Container for Mobile Responsiveness */}
-            <div style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch", paddingBottom: "4px" }}>
-              <div style={{ minWidth: "560px" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "8px", alignItems: "flex-end", height: "160px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)", paddingBottom: "8px" }}>
-                  {monthlySales2026.months.map((m, idx) => {
-                    const val = monthlySales2026.totals[idx];
-                    const count = monthlySales2026.counts[idx];
-                    const isSelected = selectedMonthIndex === idx;
-                    const pct = monthlySales2026.maxVal > 0 ? Math.max(8, (val / monthlySales2026.maxVal) * 100) : 8;
-                    return (
-                      <div 
-                        key={m} 
-                        onClick={() => setSelectedMonthIndex(selectedMonthIndex === idx ? null : idx)}
-                        className={`${styles.barColumn} ${isSelected ? styles.barColumnActive : ""}`}
-                        title={`${m} 2026: ₹${formatCurrency(val)} (${count} Bills) — Click to inspect invoices`}
-                      >
-                        {val > 0 && (
-                          <span style={{ fontSize: "10px", fontWeight: 700, marginBottom: "4px", color: isSelected ? "#0284c7" : "inherit" }}>
-                            {val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}
-                          </span>
-                        )}
-                        <div 
-                          data-bar="true"
-                          style={{ 
-                            width: "100%", 
-                            height: `${val > 0 ? pct : 4}%`, 
-                            backgroundColor: isSelected ? "#0284c7" : (barColors[idx] || "#0284c7"), 
-                            borderRadius: "3px 3px 0 0",
-                            transition: "all 0.2s ease"
-                          }} 
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
+        {/* ========================================================= */}
+        {/* VIEW 2: MANAGEMENT • REPORTING (Screenshot 2 Replica)      */}
+        {/* ========================================================= */}
+        {activeView === "REPORTING" && (
+          <div className={styles.reportingLayout}>
+            {/* Left Column: 21 Sales Reports List (Matching Screenshot 2) */}
+            <div className={`${styles.panelCard} ${styles.reportSideList}`}>
+              <div style={{ background: "#00a2ed", color: "#ffffff", padding: "6px 12px", borderRadius: "4px", fontSize: "12px", fontWeight: 700, marginBottom: "12px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                <BarChart3 size={13} /> Select report
+              </div>
 
-                {/* Month Labels */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "8px", marginTop: "6px", textAlign: "center", fontSize: "11px", opacity: 0.75, fontWeight: 600 }}>
-                  {monthlySales2026.months.map((m, idx) => (
-                    <div 
-                      key={m} 
-                      onClick={() => setSelectedMonthIndex(selectedMonthIndex === idx ? null : idx)}
-                      style={{ 
-                        cursor: "pointer", 
-                        color: selectedMonthIndex === idx ? "#0284c7" : "inherit",
-                        fontWeight: selectedMonthIndex === idx ? 800 : 600
-                      }}
+              <div style={{ fontSize: "12px", fontWeight: 700, marginBottom: "8px", opacity: 0.9 }}>
+                Select report to view or print
+              </div>
+
+              <div className={styles.reportSearchBox}>
+                <input
+                  type="text"
+                  placeholder="Search reports..."
+                  value={reportSearchQuery}
+                  onChange={(e) => setReportSearchQuery(e.target.value)}
+                  className={styles.inputField}
+                />
+              </div>
+
+              <div style={{ marginBottom: "6px" }}>
+                <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#00a2ed", display: "block", marginBottom: "6px" }}>
+                  Sales ({filteredReportList.length})
+                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                  {filteredReportList.map(rep => (
+                    <button
+                      key={rep.id}
+                      type="button"
+                      onClick={() => setActiveReportId(rep.id)}
+                      className={`${styles.reportItemBtn} ${activeReportId === rep.id ? styles.reportItemBtnActive : ""}`}
                     >
-                      {m}
-                    </div>
+                      <FileText size={12} /> {rep.label}
+                    </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Interactive Active Month Drilldown Inspection Panel */}
-            {selectedMonthIndex !== null && (
-              <div className={styles.drilldownPanel}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <h3 style={{ fontSize: "14px", fontWeight: 700, margin: 0, color: "#0284c7" }}>
-                      📅 {monthlySales2026.months[selectedMonthIndex]} 2026 Invoices Breakdown
-                    </h3>
-                    <span style={{ fontSize: "11px", background: "rgba(2, 132, 199, 0.1)", color: "#0284c7", padding: "2px 8px", borderRadius: "10px", fontWeight: 700 }}>
-                      {selectedMonthInvoices.length} Invoices • Total: ₹{formatCurrency(monthlySales2026.totals[selectedMonthIndex])}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMonthIndex(null)}
-                    className={styles.toolBtn}
-                    style={{ padding: "4px 10px", fontSize: "11px", cursor: "pointer" }}
-                  >
-                    <X size={12} /> Clear Selection
-                  </button>
+            {/* Right Column: Filter Panel & Report Output (Matching Screenshot 2) */}
+            <div className={`${styles.panelCard} ${styles.reportMainPanel}`}>
+              <div className={styles.reportFilterBox}>
+                <div style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#00a2ed" }}>
+                  Filter
                 </div>
 
-                {selectedMonthInvoices.length === 0 ? (
-                  <div style={{ padding: "16px", textAlign: "center", opacity: 0.6, fontSize: "13px" }}>
-                    No billed invoices found for {monthlySales2026.months[selectedMonthIndex]} 2026.
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px" }}>
+                  <div className={styles.filterFieldGroup}>
+                    <label className={styles.filterFieldLabel}>Customers &amp; suppliers</label>
+                    <select
+                      value={repCustomer}
+                      onChange={(e) => setRepCustomer(e.target.value)}
+                      className={styles.selectField}
+                    >
+                      <option value="ALL">All</option>
+                      {customers.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
                   </div>
-                ) : (
-                  <div className={styles.tableWrapper} style={{ maxHeight: "280px" }}>
+
+                  <div className={styles.filterFieldGroup}>
+                    <label className={styles.filterFieldLabel}>User</label>
+                    <select
+                      value={repUser}
+                      onChange={(e) => setRepUser(e.target.value)}
+                      className={styles.selectField}
+                    >
+                      <option value="ALL">All</option>
+                      <option value="Admin">Admin</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.filterFieldGroup}>
+                    <label className={styles.filterFieldLabel}>Cash register</label>
+                    <select className={styles.selectField}>
+                      <option value="ALL">All</option>
+                      <option value="MAIN">Main POS Register</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.filterFieldGroup}>
+                    <label className={styles.filterFieldLabel}>Product</label>
+                    <select
+                      value={repProduct}
+                      onChange={(e) => setRepProduct(e.target.value)}
+                      className={styles.selectField}
+                    >
+                      <option value="ALL">All</option>
+                      {products.map(p => (
+                        <option key={p.id} value={p.name}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className={styles.filterFieldGroup}>
+                    <label className={styles.filterFieldLabel}>Product group</label>
+                    <select
+                      value={repProductGroup}
+                      onChange={(e) => setRepProductGroup(e.target.value)}
+                      className={styles.selectField}
+                    >
+                      <option value="Products">Products</option>
+                      <option value="BILLING">BILLING</option>
+                      <option value="website">website</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.filterFieldGroup} style={{ gridColumn: "span 2" }}>
+                    <label className={styles.filterFieldLabel}>Period</label>
+                    <div style={{ display: "flex", gap: "6px", width: "100%" }}>
+                      <input
+                        type="date"
+                        value={repStartDate}
+                        onChange={(e) => setRepStartDate(e.target.value)}
+                        className={styles.inputField}
+                      />
+                      <input
+                        type="date"
+                        value={repEndDate}
+                        onChange={(e) => setRepEndDate(e.target.value)}
+                        className={styles.inputField}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4 Action Buttons matching Screenshot 2 */}
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end", borderTop: "1px solid rgba(148, 163, 184, 0.15)", paddingTop: "10px" }}>
+                  <button
+                    type="button"
+                    onClick={() => {}}
+                    className={styles.toolBtn}
+                    style={{ background: "#00a2ed", color: "#ffffff", padding: "6px 14px" }}
+                  >
+                    <Search size={13} /> Show report
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className={styles.toolBtn}
+                    style={{ background: "#0284c7", color: "#ffffff", padding: "6px 14px" }}
+                    title="Print report / Save as vector PDF"
+                  >
+                    <Printer size={13} /> Print
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={downloadReportCSV}
+                    className={styles.toolBtn}
+                    style={{ borderColor: "#10b981", color: "#10b981", padding: "6px 14px" }}
+                    title="Export multi-column Excel CSV"
+                  >
+                    <Download size={13} /> Excel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className={styles.toolBtn}
+                    style={{ borderColor: "#ef4444", color: "#ef4444", padding: "6px 14px" }}
+                    title="Export PDF Document"
+                  >
+                    <FileDown size={13} /> PDF
+                  </button>
+                </div>
+              </div>
+
+              {/* Generated Report Table Output */}
+              {generatedReportData && (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                    <h3 style={{ fontSize: "13.5px", fontWeight: 700, margin: 0, color: "#00a2ed" }}>
+                      {generatedReportData.title}
+                    </h3>
+                    <div style={{ fontSize: "12px", fontWeight: 700 }}>
+                      Total Volume: <span style={{ color: "#22c55e" }}>₹{formatCurrency(generatedReportData.totalSum || 0)}</span>
+                    </div>
+                  </div>
+
+                  <div className={styles.tableWrapper} style={{ maxHeight: "450px" }}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          {generatedReportData.headers.map((h, hIdx) => (
+                            <th key={hIdx}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {generatedReportData.rows.length === 0 ? (
+                          <tr>
+                            <td colSpan={generatedReportData.headers.length} style={{ textAlign: "center", padding: "24px", opacity: 0.6 }}>
+                              No data available for the selected parameters.
+                            </td>
+                          </tr>
+                        ) : (
+                          generatedReportData.rows.map((row, rIdx) => (
+                            <tr key={rIdx}>
+                              {row.map((cell: any, cIdx: number) => (
+                                <td key={cIdx} style={{ fontWeight: cIdx === 2 ? 600 : "normal" }}>
+                                  {cell}
+                                </td>
+                              ))}
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* VIEW 3: MANAGEMENT • DASHBOARD (Screenshot 5 Replica)      */}
+        {/* ========================================================= */}
+        {activeView === "DASHBOARD" && (
+          <div className={styles.dashboardGrid}>
+            {/* Top Card: Monthly Sales - 2026 Bar Chart (Screenshot 5) */}
+            <div className={`${styles.panelCard} ${styles.monthlyChartCard}`}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", flexWrap: "wrap", gap: "16px" }}>
+                <div>
+                  <h2 style={{ fontSize: "17px", fontWeight: 700, margin: "0 0 2px 0" }}>
+                    Monthly Sales - 2026
+                  </h2>
+                  <div style={{ fontSize: "12px", opacity: 0.75 }}>
+                    Sales data grouped by month
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: "28px", alignItems: "flex-end" }}>
+                  <div>
+                    <div style={{ fontSize: "11px", opacity: 0.75, textTransform: "uppercase" }}>Total Sales</div>
+                    <div style={{ fontSize: "26px", fontWeight: 800, color: "#00a2ed" }}>
+                      ₹{formatCurrency(monthlySales2026.yearTotal)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: "10.5px", opacity: 0.75, textTransform: "uppercase" }}>Top Performing Month</div>
+                    <div style={{ fontSize: "15px", fontWeight: 700, color: "#22c55e" }}>
+                      {monthlySales2026.topMonthName} — ₹{formatCurrency(monthlySales2026.topMonthTotal)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 12-Month Bar Chart */}
+              <div style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch", paddingBottom: "4px" }}>
+                <div style={{ minWidth: "560px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "8px", alignItems: "flex-end", height: "150px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)", paddingBottom: "8px" }}>
+                    {monthlySales2026.months.map((m, idx) => {
+                      const val = monthlySales2026.totals[idx];
+                      const isSelected = selectedMonthIndex === idx;
+                      const pct = monthlySales2026.maxVal > 0 ? Math.max(6, (val / monthlySales2026.maxVal) * 100) : 6;
+                      return (
+                        <div 
+                          key={m} 
+                          onClick={() => setSelectedMonthIndex(selectedMonthIndex === idx ? null : idx)}
+                          className={`${styles.barColumn} ${isSelected ? styles.barColumnActive : ""}`}
+                          title={`${m} 2026: ₹${formatCurrency(val)} — Click to inspect bills`}
+                        >
+                          {val > 0 && (
+                            <span style={{ fontSize: "10px", fontWeight: 700, marginBottom: "4px", color: isSelected ? "#00a2ed" : "inherit" }}>
+                              {val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}
+                            </span>
+                          )}
+                          <div 
+                            data-bar="true"
+                            style={{ 
+                              width: "100%", 
+                              height: `${val > 0 ? pct : 4}%`, 
+                              backgroundColor: isSelected ? "#00a2ed" : (barColors[idx] || "#00a2ed"), 
+                              borderRadius: "3px 3px 0 0",
+                              transition: "all 0.15s ease"
+                            }} 
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Month Labels */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "8px", marginTop: "6px", textAlign: "center", fontSize: "11px", opacity: 0.75, fontWeight: 600 }}>
+                    {monthlySales2026.months.map((m, idx) => (
+                      <div 
+                        key={m} 
+                        onClick={() => setSelectedMonthIndex(selectedMonthIndex === idx ? null : idx)}
+                        style={{ 
+                          cursor: "pointer", 
+                          color: selectedMonthIndex === idx ? "#00a2ed" : "inherit",
+                          fontWeight: selectedMonthIndex === idx ? 800 : 600
+                        }}
+                      >
+                        {m}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Month Drilldown Inspection Panel */}
+              {selectedMonthIndex !== null && (
+                <div className={styles.drilldownPanel}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <h3 style={{ fontSize: "13.5px", fontWeight: 700, margin: 0, color: "#00a2ed" }}>
+                        📅 {monthlySales2026.months[selectedMonthIndex]} 2026 Invoices Breakdown
+                      </h3>
+                      <span style={{ fontSize: "11px", background: "rgba(0, 162, 237, 0.1)", color: "#00a2ed", padding: "2px 8px", borderRadius: "10px", fontWeight: 700 }}>
+                        {selectedMonthInvoices.length} Bills • Net: ₹{formatCurrency(monthlySales2026.totals[selectedMonthIndex])}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMonthIndex(null)}
+                      className={styles.toolBtn}
+                      style={{ padding: "3px 8px", fontSize: "11px" }}
+                    >
+                      <X size={12} /> Clear
+                    </button>
+                  </div>
+
+                  <div className={styles.tableWrapper} style={{ maxHeight: "240px" }}>
                     <table className={styles.table}>
                       <thead>
                         <tr>
                           <th>Doc #</th>
                           <th>Date</th>
                           <th>Customer</th>
-                          <th>Phone</th>
                           <th>Items Invoiced</th>
                           <th>Payment Tender</th>
                           <th>Status</th>
@@ -1363,21 +1719,20 @@ export default function AroniumBillingConsole({
                             <td><strong>{inv.docNumber}</strong></td>
                             <td>{formatDate(inv.date)}</td>
                             <td>{inv.customerName}</td>
-                            <td>{inv.customerPhone || "---"}</td>
                             <td style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {inv.items.map((it: any) => `${it.name} (${it.quantity})`).join(", ")}
                             </td>
                             <td>{inv.paymentMethod}</td>
                             <td>
-                              <span className={`${styles.statusBadge} ${inv.status === "Paid" ? styles.statusPaid : styles.statusPartial}`}>
+                              <span className={inv.kind === "REFUND" ? styles.badgeRefund : styles.badgePaid}>
                                 {inv.status}
                               </span>
                             </td>
-                            <td style={{ textAlign: "right", fontWeight: 700, color: "#10b981" }}>
-                              ₹{formatCurrency(inv.amount)}
+                            <td style={{ textAlign: "right", fontWeight: 700, color: inv.amount < 0 ? "#ef4444" : "#10b981" }}>
+                              {inv.amount < 0 ? `-₹${formatCurrency(Math.abs(inv.amount))}` : `₹${formatCurrency(inv.amount)}`}
                             </td>
                             <td>
-                              <Link href={`/billing/doc/invoice/${inv.rawId}`} className={styles.toolBtn} style={{ padding: "3px 8px", fontSize: "11px" }}>
+                              <Link href={inv.viewUrl} className={styles.toolBtn} style={{ padding: "2px 6px", fontSize: "11px" }}>
                                 View
                               </Link>
                             </td>
@@ -1386,399 +1741,579 @@ export default function AroniumBillingConsole({
                       </tbody>
                     </table>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Periodic Reports Grid */}
-          <div className={styles.periodicGrid}>
-            {/* Top Products */}
-            <div className={styles.panelCard} style={{ padding: "16px" }}>
-              <h3 style={{ fontSize: "14px", fontWeight: 700, margin: "0 0 12px 0", color: "#00a2ed" }}>
-                Top Products by Revenue
-              </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {products.slice(0, 5).map((p, idx) => (
-                  <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "13px", padding: "6px 0", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontWeight: 700, opacity: 0.6, width: "16px" }}>{idx + 1}</span>
-                      <span>{p.name}</span>
-                    </div>
-                    <span style={{ fontWeight: 700, color: "#22c55e" }}>₹{formatCurrency(p.sellingPrice)}</span>
-                  </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
 
-            {/* Top Customers */}
-            <div className={styles.panelCard} style={{ padding: "16px" }}>
-              <h3 style={{ fontSize: "14px", fontWeight: 700, margin: "0 0 12px 0", color: "#00a2ed" }}>
-                Top Customers (Lead Clients)
-              </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {customers.slice(0, 5).map((c, idx) => (
-                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "13px", padding: "6px 0", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{c.company || c.name}</div>
-                      <div style={{ fontSize: "11px", opacity: 0.65 }}>Code: TN-{c.customerNumber || c.aroniumCode || c.id.slice(-4)}</div>
-                    </div>
-                    <Link href={`/customers/${c.id}`} className={styles.toolBtn} style={{ padding: "2px 8px", fontSize: "11px" }}>
-                      View
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Bottom Section: Periodic Reports (Screenshot 5 Replica) */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <h3 style={{ fontSize: "14px", fontWeight: 700, margin: 0 }}>
+                    Periodic Reports ({formatDate(periodicStartDate)} - {formatDate(periodicEndDate)})
+                  </h3>
+                </div>
 
-            {/* Total Sales Financial Overview */}
-            <div className={styles.panelCard} style={{ padding: "16px" }}>
-              <h3 style={{ fontSize: "14px", fontWeight: 700, margin: "0 0 12px 0", color: "#00a2ed" }}>
-                Total Sales &amp; Collections
-              </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                  <span>Total Invoiced Volume:</span>
-                  <strong style={{ color: "#00a2ed" }}>₹{formatCurrency(metrics.totalBilled)}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                  <span>Total Collected to Date:</span>
-                  <strong style={{ color: "#22c55e" }}>₹{formatCurrency(metrics.totalCollected)}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                  <span>Outstanding Receivables / Due:</span>
-                  <strong style={{ color: metrics.totalDue > 0 ? "#ef4444" : "inherit" }}>₹{formatCurrency(metrics.totalDue)}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", borderTop: "1px solid rgba(148, 163, 184, 0.15)", paddingTop: "8px" }}>
-                  <span>Active Quotations:</span>
-                  <strong>{metrics.activeQuotes}</strong>
-                </div>
-              </div>
-            </div>
-
-            {/* Integrated Live Deal & Sales Pipeline Card */}
-            <div className={styles.panelCard} style={{ padding: "16px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h3 style={{ fontSize: "14px", fontWeight: 700, margin: 0, color: "#10b981", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <TrendingUp size={16} /> Live Deal &amp; Sales Pipeline
-                </h3>
-                <Link href="/sales" style={{ fontSize: "11px", color: "#10b981", fontWeight: 700, textDecoration: "none" }}>
-                  Open Hub →
-                </Link>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                  <span>Active Client Projects:</span>
-                  <strong style={{ color: "#00a2ed" }}>{projects.filter(p => p.status !== "COMPLETED").length}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                  <span>Active Deal Quotations:</span>
-                  <strong style={{ color: "#6366f1" }}>{metrics.activeQuotes}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                  <span>Total Sales Force Users:</span>
-                  <strong>{users.filter(u => u.role === "SALES").length || users.length}</strong>
-                </div>
-                <div style={{ display: "flex", gap: "6px", marginTop: "4px", borderTop: "1px solid rgba(148, 163, 184, 0.15)", paddingTop: "10px" }}>
-                  <Link href="/sales?tab=quotations" className={styles.toolBtn} style={{ flex: 1, justifyContent: "center", fontSize: "11px", padding: "5px 8px", background: "rgba(16, 185, 129, 0.1)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.3)" }}>
-                    Review Quotes
-                  </Link>
-                  <Link href="/sales?tab=invoices" className={styles.toolBtn} style={{ flex: 1, justifyContent: "center", fontSize: "11px", padding: "5px 8px", background: "rgba(0, 162, 237, 0.1)", color: "#00a2ed", border: "1px solid rgba(0, 162, 237, 0.3)" }}>
-                    Review Invoices
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================= */}
-      {/* VIEW 4: MANAGEMENT • PRODUCTS (Matching Aronium Image 4)   */}
-      {/* ========================================================= */}
-      {activeView === "PRODUCTS" && (
-        <div className={styles.productsModuleLayout}>
-          {/* Action Toolbar */}
-          <div className={styles.actionToolbar}>
-            <button
-              type="button"
-              onClick={() => router.refresh()}
-              className={styles.toolBtn}
-              title="Refresh Products"
-            >
-              <RefreshCcw size={14} /> Refresh
-            </button>
-            <Link
-              href="/inventory/new"
-              className={styles.toolBtn}
-              style={{ background: "#00a2ed", color: "#ffffff", fontWeight: 700 }}
-            >
-              <Plus size={14} /> + New product
-            </Link>
-            <Link
-              href={selectedProductId ? `/inventory/${selectedProductId}/edit` : "#"}
-              className={`${styles.toolBtn} ${!selectedProductId ? styles.toolBtnDisabled : ""}`}
-            >
-              <Edit3 size={14} /> Edit product
-            </Link>
-            <button
-              type="button"
-              onClick={handleDeleteProduct}
-              disabled={!selectedProductId || isDeletingProduct}
-              className={`${styles.toolBtn} ${!selectedProductId ? styles.toolBtnDisabled : ""}`}
-              style={{ color: selectedProductId ? "#ef4444" : "inherit" }}
-            >
-              <Trash2 size={14} /> {isDeletingProduct ? "Deleting..." : "Delete product"}
-            </button>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className={styles.toolBtn}
-            >
-              <Printer size={14} /> Print
-            </button>
-            <button
-              type="button"
-              onClick={handleExportProductsCSV}
-              className={styles.toolBtn}
-            >
-              <Download size={14} /> Export CSV
-            </button>
-          </div>
-
-          {/* Group Tree & Products Split */}
-          <div className={styles.productsSplit}>
-            {/* Left Group Tree Panel */}
-            <div className={`${styles.panelCard} ${styles.groupTreePanel}`}>
-              <div className={styles.groupTreeHeader}>
-                <Layers size={13} color="#00a2ed" />
-                <span style={{ fontWeight: 700, fontSize: "12px", textTransform: "uppercase" }}>Categories</span>
-              </div>
-              <div className={styles.groupTreeList}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedProductGroup(null)}
-                  className={`${styles.groupTreeItem} ${selectedProductGroup === null ? styles.groupTreeItemActive : ""}`}
-                >
-                  📁 All Products ({products.length})
-                </button>
-                {productGroups.map(grp => {
-                  const count = products.filter(p => (p.category || "General") === grp).length;
-                  return (
-                    <button
-                      key={grp}
-                      type="button"
-                      onClick={() => setSelectedProductGroup(grp)}
-                      className={`${styles.groupTreeItem} ${selectedProductGroup === grp ? styles.groupTreeItemActive : ""}`}
-                    >
-                      📂 {grp} ({count})
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Right Products Table Area */}
-            <div className={styles.productsTableArea}>
-              <div className={styles.productsSubBar}>
-                <div className={styles.productSearchWrapper}>
-                  <Search size={14} className={styles.searchIcon} />
+                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                   <input
-                    type="text"
-                    placeholder="Search product name, barcode, SKU..."
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
+                    type="date"
+                    value={periodicStartDate}
+                    onChange={(e) => setPeriodicStartDate(e.target.value)}
                     className={styles.inputField}
-                    style={{ paddingLeft: "30px" }}
+                    style={{ width: "135px" }}
                   />
-                  {productSearch && (
-                    <button
-                      type="button"
-                      onClick={() => setProductSearch("")}
-                      style={{ position: "absolute", right: "8px", top: "7px", background: "none", border: "none", color: "inherit", cursor: "pointer" }}
-                    >
-                      <X size={14} />
-                    </button>
+                  <span>-</span>
+                  <input
+                    type="date"
+                    value={periodicEndDate}
+                    onChange={(e) => setPeriodicEndDate(e.target.value)}
+                    className={styles.inputField}
+                    style={{ width: "135px" }}
+                  />
+                </div>
+              </div>
+
+              {/* 4 Periodic Grid Cards (Top Products, Hourly Sales, Top Groups, Top Customers) */}
+              <div className={styles.periodicGrid}>
+                {/* 1. Top Products */}
+                <div className={`${styles.panelCard} ${styles.periodicCard}`}>
+                  <h4 className={styles.periodicCardTitle}>Top Products</h4>
+                  {periodicData.topProducts.length === 0 ? (
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.5, fontSize: "12px" }}>
+                      No data to display
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {periodicData.topProducts.map((p, idx) => (
+                        <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", padding: "4px 0", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                          <span style={{ fontWeight: 600 }}>{idx + 1}. {p.name} ({p.qty})</span>
+                          <span style={{ fontWeight: 700, color: "#00a2ed" }}>₹{formatCurrency(p.rev)}</span>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
-                <div style={{ fontSize: "12px", fontWeight: 700, color: "#00a2ed" }}>
-                  Products count: {filteredProducts.length}
+
+                {/* 2. Hourly Sales */}
+                <div className={`${styles.panelCard} ${styles.periodicCard}`}>
+                  <h4 className={styles.periodicCardTitle}>Hourly Sales</h4>
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.5, fontSize: "12px" }}>
+                    No data to display in selected period
+                  </div>
+                </div>
+
+                {/* 3. Top Product Groups */}
+                <div className={`${styles.panelCard} ${styles.periodicCard}`}>
+                  <h4 className={styles.periodicCardTitle}>Top Product Groups</h4>
+                  {periodicData.topGroups.length === 0 ? (
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.5, fontSize: "12px" }}>
+                      No data to display
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {periodicData.topGroups.map((g, idx) => (
+                        <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", padding: "4px 0", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                          <span style={{ fontWeight: 600 }}>📁 {g.group} ({g.count} items)</span>
+                          <span style={{ fontWeight: 700, color: "#22c55e" }}>₹{formatCurrency(g.rev)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. Top Customers */}
+                <div className={`${styles.panelCard} ${styles.periodicCard}`}>
+                  <h4 className={styles.periodicCardTitle}>Top Customers (Lead Customers)</h4>
+                  {periodicData.topCustomers.length === 0 ? (
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.5, fontSize: "12px" }}>
+                      No data to display
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {periodicData.topCustomers.map((c, idx) => (
+                        <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", padding: "4px 0", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{c.name}</div>
+                            <div style={{ fontSize: "10.5px", opacity: 0.65 }}>Code: {c.code}</div>
+                          </div>
+                          <span style={{ fontWeight: 700, color: "#00a2ed" }}>₹{formatCurrency(c.rev)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* VIEW 4: MANAGEMENT • PRODUCTS (Screenshot 4 Replica)       */}
+        {/* ========================================================= */}
+        {activeView === "PRODUCTS" && (
+          <div className={styles.productsModuleLayout}>
+            {/* Action Toolbar matching Screenshot 4 */}
+            <div className={styles.actionToolbar}>
+              <button
+                type="button"
+                onClick={() => router.refresh()}
+                className={styles.toolBtn}
+                title="Refresh Products"
+              >
+                <RefreshCcw size={13} /> Refresh
+              </button>
+              <Link
+                href="/inventory/new"
+                className={styles.toolBtn}
+                style={{ background: "#00a2ed", color: "#ffffff", fontWeight: 700 }}
+              >
+                <Plus size={13} /> New product
+              </Link>
+              <Link
+                href={selectedProductId ? `/inventory/${selectedProductId}/edit` : "#"}
+                className={`${styles.toolBtn} ${!selectedProductId ? styles.toolBtnDisabled : ""}`}
+              >
+                <Edit3 size={13} /> Edit product
+              </Link>
+              <button
+                type="button"
+                onClick={handleDeleteProduct}
+                disabled={!selectedProductId || isDeletingProduct}
+                className={`${styles.toolBtn} ${!selectedProductId ? styles.toolBtnDisabled : ""}`}
+                style={{ color: selectedProductId ? "#ef4444" : "inherit" }}
+              >
+                <Trash2 size={13} /> {isDeletingProduct ? "Deleting..." : "Delete product"}
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className={styles.toolBtn}
+              >
+                <Printer size={13} /> Print
+              </button>
+              <button
+                type="button"
+                onClick={handleExportProductsCSV}
+                className={styles.toolBtn}
+              >
+                <Download size={13} /> Export
+              </button>
+            </div>
+
+            {/* Group Tree & Products Split (Screenshot 4) */}
+            <div className={styles.productsSplit}>
+              {/* Left Group Tree Panel */}
+              <div className={`${styles.panelCard} ${styles.groupTreePanel}`}>
+                <div className={styles.groupTreeHeader}>
+                  <Layers size={13} color="#00a2ed" />
+                  <span style={{ fontWeight: 700, fontSize: "11.5px", textTransform: "uppercase" }}>Categories</span>
+                </div>
+                <div className={styles.groupTreeList}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProductGroup(null)}
+                    className={`${styles.groupTreeItem} ${selectedProductGroup === null ? styles.groupTreeItemActive : ""}`}
+                  >
+                    📁 Products ({products.length})
+                  </button>
+                  {productGroups.map(grp => {
+                    const count = products.filter(p => (p.category || "General") === grp).length;
+                    return (
+                      <button
+                        key={grp}
+                        type="button"
+                        onClick={() => setSelectedProductGroup(grp)}
+                        className={`${styles.groupTreeItem} ${selectedProductGroup === grp ? styles.groupTreeItemActive : ""}`}
+                      >
+                        📂 {grp} ({count})
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Products Table */}
-              <div className={styles.tableWrapper} style={{ maxHeight: "calc(100vh - 250px)" }}>
+              {/* Right Products Table Area */}
+              <div className={styles.productsTableArea}>
+                <div className={styles.productsSubBar}>
+                  <div className={styles.productSearchWrapper}>
+                    <Search size={14} className={styles.searchIcon} />
+                    <input
+                      type="text"
+                      placeholder="Product name, barcode, code..."
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className={styles.inputField}
+                      style={{ paddingLeft: "30px" }}
+                    />
+                    {productSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setProductSearch("")}
+                        style={{ position: "absolute", right: "8px", top: "7px", background: "none", border: "none", color: "inherit", cursor: "pointer" }}
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#00a2ed" }}>
+                    Products count: {filteredProducts.length}
+                  </div>
+                </div>
+
+                {/* Products Table (Screenshot 4 Columns) */}
+                <div className={styles.tableWrapper} style={{ maxHeight: "calc(100vh - 220px)" }}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: "80px" }}>Code</th>
+                        <th>Name</th>
+                        <th>Group</th>
+                        <th>Barcode</th>
+                        <th style={{ textAlign: "right" }}>Cost</th>
+                        <th style={{ textAlign: "right" }}>Sale price...</th>
+                        <th style={{ textAlign: "center" }}>Taxes</th>
+                        <th style={{ textAlign: "right" }}>Sale price</th>
+                        <th style={{ textAlign: "center" }}>Active</th>
+                        <th>Unit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProducts.length === 0 ? (
+                        <tr>
+                          <td colSpan={10} style={{ textAlign: "center", padding: "30px", opacity: 0.6 }}>
+                            No products found in this category.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredProducts.map((p, idx) => {
+                          const isSelected = selectedProductId === p.id;
+                          const taxPct = Number(p.taxRate || 18);
+                          const exclPrice = Number(p.sellingPrice || 0) / (1 + taxPct / 100);
+                          const code = p.sku || p.aroniumId || `8${80 + idx}`;
+
+                          return (
+                            <tr
+                              key={p.id}
+                              onClick={() => setSelectedProductId(p.id)}
+                              onDoubleClick={() => router.push(`/inventory/${p.id}/edit`)}
+                              className={isSelected ? styles.selectedRow : ""}
+                              style={{ cursor: "pointer" }}
+                            >
+                              <td style={{ fontFamily: "monospace", fontWeight: 600 }}>{code}</td>
+                              <td style={{ fontWeight: 600 }}>
+                                {p.name}
+                                {p.isService && (
+                                  <span style={{ marginLeft: "6px", fontSize: "10px", padding: "1px 5px", borderRadius: "3px", background: "#3b82f6", color: "#fff", fontWeight: 700 }}>
+                                    SERVICE
+                                  </span>
+                                )}
+                              </td>
+                              <td>{p.category || "General"}</td>
+                              <td style={{ fontFamily: "monospace", opacity: 0.8 }}>{p.barcode || "---"}</td>
+                              <td style={{ textAlign: "right", fontFamily: "monospace" }}>₹{formatCurrency(p.purchasePrice)}</td>
+                              <td style={{ textAlign: "right", fontFamily: "monospace" }}>₹{formatCurrency(exclPrice)}</td>
+                              <td style={{ textAlign: "center" }}>{taxPct}%</td>
+                              <td style={{ textAlign: "right", fontWeight: 700, fontFamily: "monospace", color: "#00a2ed" }}>₹{formatCurrency(p.sellingPrice)}</td>
+                              <td style={{ textAlign: "center", color: "#10b981", fontWeight: 700 }}>✓</td>
+                              <td style={{ textTransform: "uppercase", fontSize: "11px", fontWeight: 600 }}>
+                                {p.unit || (p.isService ? "SOFTWARE" : "PCS")}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* VIEW 5: STOCK MODULE                                      */}
+        {/* ========================================================= */}
+        {activeView === "STOCK" && (
+          <div style={{ padding: "16px 20px" }}>
+            <div className={styles.panelCard} style={{ padding: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                <div>
+                  <h3 style={{ fontSize: "15px", fontWeight: 700, margin: "0 0 2px 0", color: "#00a2ed" }}>
+                    Stock &amp; Warehouse Inventory
+                  </h3>
+                  <div style={{ fontSize: "12px", opacity: 0.75 }}>
+                    Real-time stock valuation and inventory tracking
+                  </div>
+                </div>
+                <Link href="/inventory" className={styles.toolBtn} style={{ background: "#00a2ed", color: "#fff" }}>
+                  Open Full Inventory →
+                </Link>
+              </div>
+
+              <div className={styles.tableWrapper} style={{ maxHeight: "calc(100vh - 220px)" }}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
-                      <th style={{ width: "80px" }}>Code</th>
-                      <th>Name</th>
+                      <th>SKU / Code</th>
+                      <th>Product / Service</th>
                       <th>Group</th>
-                      <th>Barcode</th>
-                      <th style={{ textAlign: "right" }}>Cost</th>
-                      <th style={{ textAlign: "right" }}>Sale price (excl.)</th>
-                      <th style={{ textAlign: "center" }}>Taxes</th>
-                      <th style={{ textAlign: "right" }}>Sale price</th>
-                      <th style={{ textAlign: "center" }}>Active</th>
+                      <th style={{ textAlign: "right" }}>Cost (₹)</th>
+                      <th style={{ textAlign: "center" }}>In Stock</th>
                       <th>Unit</th>
+                      <th style={{ textAlign: "right" }}>Total Valuation (₹)</th>
+                      <th style={{ textAlign: "center" }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProducts.length === 0 ? (
-                      <tr>
-                        <td colSpan={10} style={{ textAlign: "center", padding: "40px", opacity: 0.6 }}>
-                          No products found in this category.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredProducts.map((p, idx) => {
-                        const isSelected = selectedProductId === p.id;
-                        const taxPct = Number(p.taxRate || 18);
-                        const exclPrice = Number(p.sellingPrice || 0) / (1 + taxPct / 100);
-                        const code = p.sku || p.aroniumId || `PROD-${idx + 1}`;
-
-                        return (
-                          <tr
-                            key={p.id}
-                            onClick={() => setSelectedProductId(p.id)}
-                            onDoubleClick={() => router.push(`/inventory/${p.id}/edit`)}
-                            className={isSelected ? styles.selectedRow : ""}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <td style={{ fontFamily: "monospace", fontWeight: 600 }}>{code}</td>
-                            <td style={{ fontWeight: 600 }}>
-                              {p.name}
-                              {p.isService && (
-                                <span style={{ marginLeft: "6px", fontSize: "10px", padding: "1px 5px", borderRadius: "3px", background: "#3b82f6", color: "#fff", fontWeight: 700 }}>
-                                  SERVICE
-                                </span>
-                              )}
-                            </td>
-                            <td>{p.category || "General"}</td>
-                            <td style={{ fontFamily: "monospace", opacity: 0.8 }}>{p.barcode || "---"}</td>
-                            <td style={{ textAlign: "right", fontFamily: "monospace" }}>₹{formatCurrency(p.purchasePrice)}</td>
-                            <td style={{ textAlign: "right", fontFamily: "monospace" }}>₹{formatCurrency(exclPrice)}</td>
-                            <td style={{ textAlign: "center" }}>{taxPct}%</td>
-                            <td style={{ textAlign: "right", fontWeight: 700, fontFamily: "monospace", color: "#00a2ed" }}>₹{formatCurrency(p.sellingPrice)}</td>
-                            <td style={{ textAlign: "center", color: "#10b981", fontWeight: 700 }}>✓</td>
-                            <td style={{ textTransform: "uppercase", fontSize: "11px", fontWeight: 600 }}>
-                              {p.unit || (p.isService ? "SERVICE" : "PCS")}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
+                    {products.map(p => {
+                      const qty = p.currentStock || 10;
+                      const val = qty * (p.purchasePrice || 0);
+                      return (
+                        <tr key={p.id}>
+                          <td style={{ fontFamily: "monospace" }}>{p.sku || p.aroniumId || "---"}</td>
+                          <td style={{ fontWeight: 600 }}>{p.name}</td>
+                          <td>{p.category || "General"}</td>
+                          <td style={{ textAlign: "right" }}>₹{formatCurrency(p.purchasePrice)}</td>
+                          <td style={{ textAlign: "center", fontWeight: 700 }}>{p.isService ? "∞" : qty}</td>
+                          <td>{p.unit || "PCS"}</td>
+                          <td style={{ textAlign: "right", fontWeight: 700 }}>₹{formatCurrency(val)}</td>
+                          <td style={{ textAlign: "center" }}>
+                            <span className={styles.badgePaid}>In Stock</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ========================================================= */}
-      {/* EXECUTIVE PRINTABLE REPORT DOCUMENT (For Vector Print/PDF) */}
-      {/* ========================================================= */}
-      <div id="executive-printable-report" className={styles.printableReportContainer}>
-        {/* Official Letterhead Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0f172a", paddingBottom: "12px", marginBottom: "16px" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
-              <div style={{ width: "32px", height: "32px", backgroundColor: "#0f172a", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: 900, fontSize: "16px" }}>
-                TN
+        {/* ========================================================= */}
+        {/* VIEW 6: CUSTOMERS & SUPPLIERS                             */}
+        {/* ========================================================= */}
+        {activeView === "CUSTOMERS" && (
+          <div style={{ padding: "16px 20px" }}>
+            <div className={styles.panelCard} style={{ padding: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                <div>
+                  <h3 style={{ fontSize: "15px", fontWeight: 700, margin: "0 0 2px 0", color: "#00a2ed" }}>
+                    Customers &amp; Suppliers Directory ({customers.length})
+                  </h3>
+                  <div style={{ fontSize: "12px", opacity: 0.75 }}>
+                    All accounts synced from Aronium POS database
+                  </div>
+                </div>
+                <Link href="/customers" className={styles.toolBtn} style={{ background: "#00a2ed", color: "#fff" }}>
+                  Manage Accounts →
+                </Link>
               </div>
-              <div>
-                <h1 style={{ fontSize: "18px", fontWeight: 800, margin: 0, textTransform: "uppercase", letterSpacing: "0.04em", color: "#0f172a" }}>
-                  TechNext Technologies
-                </h1>
-                <div style={{ fontSize: "10px", fontWeight: 600, color: "#475569" }}>
-                  Enterprise Software, Cloud &amp; Billing Systems
+
+              <div className={styles.tableWrapper} style={{ maxHeight: "calc(100vh - 220px)" }}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: "40px" }}>#</th>
+                      <th>Customer Code</th>
+                      <th>Name / Company</th>
+                      <th>Phone</th>
+                      <th>Type</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {customers.map((c, i) => (
+                      <tr key={c.id}>
+                        <td style={{ opacity: 0.6 }}>{i + 1}</td>
+                        <td style={{ fontFamily: "monospace", fontWeight: 700, color: "#00a2ed" }}>
+                          TN-{c.customerNumber || c.aroniumCode || c.id.slice(-4)}
+                        </td>
+                        <td style={{ fontWeight: 600 }}>{c.name} {c.company ? `(${c.company})` : ""}</td>
+                        <td>{c.phone || "---"}</td>
+                        <td>Customer</td>
+                        <td>
+                          <Link href={`/customers/${c.id}`} className={styles.toolBtn} style={{ padding: "2px 8px", fontSize: "11px" }}>
+                            View Account
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* VIEW 7: PAYMENT TYPES                                     */}
+        {/* ========================================================= */}
+        {activeView === "PAYMENT_TYPES" && (
+          <div style={{ padding: "16px 20px" }}>
+            <div className={styles.panelCard} style={{ padding: "16px" }}>
+              <h3 style={{ fontSize: "15px", fontWeight: 700, margin: "0 0 12px 0", color: "#00a2ed" }}>
+                Configured Payment Tender Types
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
+                {[
+                  { name: "UPI PAYMENT", desc: "Instant QR / GooglePay / PhonePe", active: true },
+                  { name: "CASH", desc: "Physical Cash Currency", active: true },
+                  { name: "BANK TRANSFER (NEFT/IMPS)", desc: "Direct Account Settlement", active: true },
+                  { name: "SPLIT MULTI-DATE SCHEDULE", desc: "Custom Milestone Installments", active: true },
+                  { name: "CARD / POS", desc: "Debit / Credit Terminal", active: true },
+                ].map(pt => (
+                  <div key={pt.name} style={{ border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "6px", padding: "14px" }}>
+                    <div style={{ fontWeight: 700, fontSize: "13px" }}>{pt.name}</div>
+                    <div style={{ fontSize: "11.5px", opacity: 0.7, margin: "4px 0 8px 0" }}>{pt.desc}</div>
+                    <span className={styles.badgePaid}>Active</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* VIEW 8: TAX RATES                                         */}
+        {/* ========================================================= */}
+        {activeView === "TAX_RATES" && (
+          <div style={{ padding: "16px 20px" }}>
+            <div className={styles.panelCard} style={{ padding: "16px" }}>
+              <h3 style={{ fontSize: "15px", fontWeight: 700, margin: "0 0 12px 0", color: "#00a2ed" }}>
+                Official Tax Rates (GST India)
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px" }}>
+                {[
+                  { name: "GST 18%", rate: "18.00%", cgst: "9%", sgst: "9%", desc: "Software, IT Services, SaaS" },
+                  { name: "GST 12%", rate: "12.00%", cgst: "6%", sgst: "6%", desc: "Hardware & Peripheral Goods" },
+                  { name: "GST 5%", rate: "5.00%", cgst: "2.5%", sgst: "2.5%", desc: "Specified Essential Goods" },
+                  { name: "GST 0% / Exempt", rate: "0.00%", cgst: "0%", sgst: "0%", desc: "Export / Non-taxable" },
+                ].map(tx => (
+                  <div key={tx.name} style={{ border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "6px", padding: "14px" }}>
+                    <div style={{ fontWeight: 700, fontSize: "14px", color: "#00a2ed" }}>{tx.name}</div>
+                    <div style={{ fontSize: "12px", margin: "4px 0" }}>CGST: {tx.cgst} | SGST: {tx.sgst}</div>
+                    <div style={{ fontSize: "11px", opacity: 0.7 }}>{tx.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* VIEW 9: MY COMPANY                                        */}
+        {/* ========================================================= */}
+        {activeView === "MY_COMPANY" && (
+          <div style={{ padding: "16px 20px" }}>
+            <div className={styles.panelCard} style={{ padding: "20px", maxWidth: "600px" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: 800, margin: "0 0 14px 0", color: "#00a2ed" }}>
+                Company Profile &amp; Letterhead
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px" }}>
+                <div><strong>Company Name:</strong> TechNext Technologies Private Limited</div>
+                <div><strong>Registered Address:</strong> Door No. 4/487, Pulpally, Wayanad, Kerala - 673579, India</div>
+                <div><strong>Official Email:</strong> technexttechnologies@gmail.com</div>
+                <div><strong>Contact Phone:</strong> +91 85906 74531</div>
+                <div><strong>Website:</strong> technexttechnologies.in</div>
+                <div><strong>ERP Database:</strong> PostgreSQL &amp; Aronium POS Synchronized</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Fallback for PROMOTIONS, SECURITY, COUNTRIES */}
+        {["PROMOTIONS", "SECURITY", "COUNTRIES"].includes(activeView) && (
+          <div style={{ padding: "16px 20px" }}>
+            <div className={styles.panelCard} style={{ padding: "24px", textAlign: "center" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#00a2ed" }}>
+                {currentViewTitle}
+              </h3>
+              <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "6px" }}>
+                System configuration is managed by enterprise admin policy.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* EXECUTIVE PRINTABLE REPORT DOCUMENT (For Vector Print/PDF) */}
+        {/* ========================================================= */}
+        <div id="executive-printable-report" className={styles.printableReportContainer}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0f172a", paddingBottom: "12px", marginBottom: "16px" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+                <div style={{ width: "32px", height: "32px", backgroundColor: "#0f172a", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: 900, fontSize: "16px" }}>
+                  TN
+                </div>
+                <div>
+                  <h1 style={{ fontSize: "18px", fontWeight: 800, margin: 0, textTransform: "uppercase", letterSpacing: "0.04em", color: "#0f172a" }}>
+                    TechNext Technologies
+                  </h1>
+                  <div style={{ fontSize: "10px", fontWeight: 600, color: "#475569" }}>
+                    Enterprise Software, Cloud &amp; Billing Systems
+                  </div>
                 </div>
               </div>
+              <div style={{ fontSize: "9pt", color: "#334155", lineHeight: 1.4 }}>
+                Door No. 4/487, Pulpally, Wayanad, Kerala - 673579, India<br />
+                Email: technexttechnologies@gmail.com | Phone: +91 85906 74531
+              </div>
             </div>
-            <div style={{ fontSize: "9pt", color: "#334155", lineHeight: 1.4 }}>
-              Door No. 4/487, Pulpally, Wayanad, Kerala - 673579, India<br />
-              Email: technexttechnologies@gmail.com | Phone: +91 85906 74531
+
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                {generatedReportData ? generatedReportData.title : "Financial Audit Report"}
+              </div>
+              <div style={{ fontSize: "9pt", color: "#475569", marginTop: "4px" }}>
+                <strong>Period:</strong> {repStartDate || "All Time"} to {repEndDate || "Present"}<br />
+                <strong>Scope:</strong> Strictly Invoices Only (Estimates Excluded)<br />
+                <strong>Document Ref:</strong> TN-REP-2026-{Date.now().toString().slice(-4)}<br />
+                <strong>Generated:</strong> {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </div>
             </div>
           </div>
 
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {generatedReportData ? generatedReportData.title : "Financial Audit Report"}
-            </div>
-            <div style={{ fontSize: "9pt", color: "#475569", marginTop: "4px" }}>
-              <strong>Period:</strong> {repStartDate || "All Time"} to {repEndDate || "Present"}<br />
-              <strong>Scope:</strong> Strictly Invoices Only (Estimates Excluded)<br />
-              <strong>Document Ref:</strong> TN-REP-2026-{Date.now().toString().slice(-4)}<br />
-              <strong>Generated:</strong> {new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-            </div>
-          </div>
-        </div>
-
-        {/* Executive Summary 4-KPI Row */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "16px" }}>
-          <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", background: "#f8fafc" }}>
-            <div style={{ fontSize: "8pt", textTransform: "uppercase", color: "#64748b", fontWeight: 700 }}>Invoices In Scope</div>
-            <div style={{ fontSize: "14pt", fontWeight: 800, color: "#0f172a" }}>{generatedReportData?.rows.length || 0}</div>
-          </div>
-          <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", background: "#f8fafc" }}>
-            <div style={{ fontSize: "8pt", textTransform: "uppercase", color: "#64748b", fontWeight: 700 }}>Total Net Invoiced</div>
-            <div style={{ fontSize: "14pt", fontWeight: 800, color: "#0284c7" }}>₹{formatCurrency(generatedReportData?.totalSum || 0)}</div>
-          </div>
-          <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", background: "#f8fafc" }}>
-            <div style={{ fontSize: "8pt", textTransform: "uppercase", color: "#64748b", fontWeight: 700 }}>Total Collected</div>
-            <div style={{ fontSize: "14pt", fontWeight: 800, color: "#10b981" }}>₹{formatCurrency(generatedReportData?.totalPaid || 0)}</div>
-          </div>
-          <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", background: "#f8fafc" }}>
-            <div style={{ fontSize: "8pt", textTransform: "uppercase", color: "#64748b", fontWeight: 700 }}>Outstanding Balance Due</div>
-            <div style={{ fontSize: "14pt", fontWeight: 800, color: (generatedReportData?.totalDue || 0) > 0 ? "#ef4444" : "#0f172a" }}>
-              ₹{formatCurrency(generatedReportData?.totalDue || 0)}
-            </div>
-          </div>
-        </div>
-
-        {/* High-Density Vector Tabular Data */}
-        <table className={styles.printTable}>
-          <thead>
-            <tr>
-              {generatedReportData?.headers.map((h, idx) => (
-                <th key={idx}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {generatedReportData?.rows.map((row, rIdx) => (
-              <tr key={rIdx}>
-                {row.map((cell: any, cIdx: number) => (
-                  <td key={cIdx} style={{ textAlign: String(cell).startsWith("₹") ? "right" : "left" }}>
-                    {cell}
-                  </td>
+          <table className={styles.printTable}>
+            <thead>
+              <tr>
+                {generatedReportData?.headers.map((h, idx) => (
+                  <th key={idx}>{h}</th>
                 ))}
               </tr>
-            ))}
-            {/* Grand Totals Summary Row */}
-            <tr style={{ fontWeight: 800, backgroundColor: "#f1f5f9", borderTop: "2px solid #0f172a" }}>
-              <td colSpan={Math.max(1, (generatedReportData?.headers.length || 3) - 3)}>GRAND TOTAL (Invoices Only)</td>
-              <td style={{ textAlign: "right", color: "#0284c7" }}>₹{formatCurrency(generatedReportData?.totalSum || 0)}</td>
-              <td style={{ textAlign: "right", color: "#10b981" }}>₹{formatCurrency(generatedReportData?.totalPaid || 0)}</td>
-              <td style={{ textAlign: "right", color: (generatedReportData?.totalDue || 0) > 0 ? "#ef4444" : "#0f172a" }}>₹{formatCurrency(generatedReportData?.totalDue || 0)}</td>
-            </tr>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {generatedReportData?.rows.map((row, rIdx) => (
+                <tr key={rIdx}>
+                  {row.map((cell: any, cIdx: number) => (
+                    <td key={cIdx} style={{ textAlign: String(cell).startsWith("₹") ? "right" : "left" }}>
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              <tr style={{ fontWeight: 800, backgroundColor: "#f1f5f9", borderTop: "2px solid #0f172a" }}>
+                <td colSpan={Math.max(1, (generatedReportData?.headers.length || 3) - 3)}>GRAND TOTAL (Invoices Only)</td>
+                <td style={{ textAlign: "right", color: "#0284c7" }}>₹{formatCurrency(generatedReportData?.totalSum || 0)}</td>
+                <td style={{ textAlign: "right", color: "#10b981" }}>₹{formatCurrency(generatedReportData?.totalPaid || 0)}</td>
+                <td style={{ textAlign: "right", color: (generatedReportData?.totalDue || 0) > 0 ? "#ef4444" : "#0f172a" }}>₹{formatCurrency(generatedReportData?.totalDue || 0)}</td>
+              </tr>
+            </tbody>
+          </table>
 
-        {/* Sign-off & Audit Certification Footer */}
-        <div style={{ marginTop: "24px", paddingTop: "12px", borderTop: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "flex-end", fontSize: "8pt", color: "#64748b" }}>
-          <div>
-            <div>This is an official computer-generated statement from TechNext Enterprise ERP.</div>
-            <div>Verified by Accounts &amp; Financial Auditing Division • Page 1 of 1</div>
-          </div>
-          <div style={{ textAlign: "center", minWidth: "160px" }}>
-            <div style={{ borderBottom: "1px dashed #94a3b8", height: "30px", marginBottom: "4px" }} />
-            <div style={{ fontWeight: 700, color: "#0f172a" }}>Authorized Signatory</div>
-            <div>TechNext Technologies</div>
+          <div style={{ marginTop: "24px", paddingTop: "12px", borderTop: "1px solid #cbd5e1", display: "flex", justifyContent: "space-between", alignItems: "flex-end", fontSize: "8pt", color: "#64748b" }}>
+            <div>
+              <div>This is an official computer-generated statement from TechNext Enterprise ERP.</div>
+              <div>Verified by Accounts &amp; Financial Auditing Division • Page 1 of 1</div>
+            </div>
+            <div style={{ textAlign: "center", minWidth: "160px" }}>
+              <div style={{ borderBottom: "1px dashed #94a3b8", height: "30px", marginBottom: "4px" }} />
+              <div style={{ fontWeight: 700, color: "#0f172a" }}>Authorized Signatory</div>
+              <div>TechNext Technologies</div>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
