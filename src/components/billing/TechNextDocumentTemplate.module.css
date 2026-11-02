@@ -1,0 +1,533 @@
+.pageWrapper {
+  min-height: 100vh;
+  background-color: #f1f5f9;
+  padding: 40px 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #111827;
+}
+
+/* Screen Action Bar */
+.actionBar {
+  max-width: 860px;
+  margin: 0 auto 24px auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #ffffff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.typeSwitcher {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.typeBtn {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.typeBtnActive {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btnPrint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btnPrint:hover {
+  background: #334155;
+}
+
+.btnWhatsApp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #25d366;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.btnWhatsApp:hover {
+  opacity: 0.9;
+}
+
+.btnBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.btnBack:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* Document Container - Pixel-Perfect A4 representation */
+.documentSheet {
+  max-width: 860px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 48px 56px;
+  color: #000000;
+  line-height: 1.4;
+  position: relative;
+  border-radius: 2px;
+}
+
+/* Header */
+.docHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.titleCompanyBlock {
+  flex: 1;
+}
+
+.docTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+}
+
+.companyName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 2px 0;
+  text-transform: uppercase;
+}
+
+.companyLine {
+  font-size: 13px;
+  color: #000000;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.companyEmailRow {
+  display: flex;
+  font-size: 13px;
+  color: #000000;
+  margin-top: 4px;
+}
+
+.companyEmailLabel {
+  width: 90px;
+}
+
+.logoBlock {
+  text-align: right;
+}
+
+.logoImg {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+}
+
+.headerDivider {
+  border: none;
+  border-top: 1px solid #000000;
+  margin: 14px 0 20px 0;
+}
+
+/* Two-column info grid */
+.infoGrid {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+
+.billToCol {
+  flex: 1;
+  max-width: 55%;
+}
+
+.billToTitle {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.clientName {
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.clientAddress {
+  color: #000000;
+  margin-bottom: 2px;
+}
+
+.clientRow {
+  display: flex;
+  margin-top: 2px;
+}
+
+.clientLabel {
+  width: 60px;
+  color: #000000;
+}
+
+.metaCol {
+  width: 320px;
+}
+
+.metaTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.metaTable td {
+  padding: 2px 0;
+  vertical-align: top;
+}
+
+.metaLabelCol {
+  width: 120px;
+  color: #000000;
+}
+
+.metaValCol {
+  font-weight: 500;
+  color: #000000;
+}
+
+.metaStatusPaid {
+  font-weight: 700;
+  color: #000000;
+}
+
+/* Line Items Table */
+.itemsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-size: 13px;
+  border: 1px solid #000000;
+}
+
+.itemsTable th {
+  border: 1px solid #000000;
+  padding: 6px 10px;
+  font-weight: 700;
+  background: #ffffff;
+  color: #000000;
+}
+
+.itemsTable td {
+  border: 1px solid #000000;
+  padding: 6px 10px;
+  vertical-align: top;
+  color: #000000;
+}
+
+.colIdx {
+  width: 35px;
+  text-align: center;
+}
+
+.colItem {
+  text-align: left;
+}
+
+.colQty {
+  width: 70px;
+  text-align: center;
+}
+
+.colPrice {
+  width: 100px;
+  text-align: right;
+}
+
+.colTax {
+  width: 65px;
+  text-align: center;
+}
+
+.colDiscount {
+  width: 90px;
+  text-align: right;
+}
+
+.colTotal {
+  width: 100px;
+  text-align: right;
+}
+
+.itemName {
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.itemDesc {
+  font-size: 11px;
+  color: #4b5563;
+  margin: 2px 0 0 0;
+}
+
+/* Totals Summary Section */
+.summaryContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  width: 250px;
+  padding: 3px 0;
+  color: #000000;
+}
+
+.discountVal {
+  color: #000000;
+  font-weight: 600;
+}
+
+.totalBox {
+  display: flex;
+  justify-content: space-between;
+  width: 250px;
+  border: 1px solid #000000;
+  padding: 6px 10px;
+  margin: 6px 0 10px 0;
+  font-size: 14px;
+  font-weight: 800;
+  background: #ffffff;
+}
+
+.paymentDetailsBlock {
+  width: 250px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.payRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 1px 0;
+}
+
+.payRowBold {
+  display: flex;
+  justify-content: space-between;
+  padding: 1px 0;
+  font-weight: 700;
+}
+
+/* Scope & Notes */
+.scopeBlock {
+  margin-bottom: 24px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #000000;
+}
+
+.scopeParagraph {
+  margin: 0 0 10px 0;
+}
+
+/* Signatures (for Order Form / Payment Form) */
+.signatureSection {
+  display: flex;
+  justify-content: space-between;
+  margin: 30px 0 24px 0;
+  padding-top: 16px;
+}
+
+.signatureBox {
+  width: 260px;
+  text-align: center;
+}
+
+.signatureLine {
+  border-top: 1px solid #000000;
+  margin-top: 48px;
+  margin-bottom: 6px;
+}
+
+.signatureTitle {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.signatureSub {
+  font-size: 11px;
+  color: #4b5563;
+}
+
+/* Footer & Policies */
+.docFooter {
+  border-top: 1px solid #000000;
+  padding-top: 16px;
+  margin-top: 24px;
+}
+
+.footerThanks {
+  font-size: 13px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+}
+
+.footerCompany {
+  font-size: 13px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 4px 0;
+}
+
+.footerTagline {
+  font-size: 12px;
+  color: #000000;
+  margin: 0 0 10px 0;
+}
+
+.footerBar {
+  font-size: 11px;
+  color: #000000;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+}
+
+.policyGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #000000;
+}
+
+.policyTitle {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.policyList {
+  margin: 0;
+  padding-left: 14px;
+}
+
+.policyList li {
+  margin-bottom: 3px;
+}
+
+.pageNumberFooter {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  font-size: 11px;
+  color: #6b7280;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 8px;
+}
+
+/* Print Stylesheet - Exact A4 output with NO browser chrome */
+@media print {
+  body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .pageWrapper {
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .actionBar {
+    display: none !important;
+  }
+
+  .documentSheet {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 20mm 15mm !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Prevent page breaks inside sensitive areas */
+  .itemsTable,
+  .summaryContainer,
+  .signatureSection,
+  .docFooter {
+    page-break-inside: avoid;
+  }
+}

@@ -12,7 +12,7 @@ import {
   Megaphone, LayoutDashboard, CreditCard, Monitor, Repeat, 
   Folder, PieChart, X, UserCheck, Clock, CalendarCheck, 
   Shield, TrendingUp, UserPlus, ShieldCheck, MessageSquare,
-  Package, History, BarChart3
+  Package, History, BarChart3, Plus
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
@@ -100,6 +100,9 @@ export default function Sidebar({ user }: { user: any }) {
                 <p className={styles.navSectionTitle} style={{ color: "#10B981" }}>Sales Operations Hub</p>
                 <Link href="/sales" className={`${styles.navItem} ${pathname === '/sales' ? styles.active : ''}`}>
                   <TrendingUp size={20} /> Sales Operations Hub
+                </Link>
+                <Link href="/billing" className={`${styles.navItem} ${pathname.startsWith('/billing') ? styles.active : ''}`}>
+                  <Receipt size={20} /> Billing &amp; Invoices
                 </Link>
                 <Link href="/quotation-requests" className={`${styles.navItem} ${pathname.startsWith("/quotation-requests") ? styles.active : ""}`}>
                   <FileSignature size={20} /> Quotation Requests
@@ -195,6 +198,20 @@ export default function Sidebar({ user }: { user: any }) {
                 </Link>
                 <Link href="/inventory/reports" className={`${styles.navItem} ${pathname === '/inventory/reports' ? styles.active : ''}`}>
                   <BarChart3 size={20} /> Inventory Valuation
+                </Link>
+              </div>
+
+              {/* Billing & Invoicing */}
+              <div className={styles.navSection}>
+                <p className={styles.navSectionTitle} style={{ color: "#4F46E5" }}>Billing & Invoicing</p>
+                <Link href="/billing" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
+                  <Receipt size={20} /> Billing &amp; Bills Hub
+                </Link>
+                <Link href="/billing/new?type=invoice" className={`${styles.navItem} ${pathname.startsWith('/billing/new') ? styles.active : ''}`}>
+                  <Plus size={20} /> Generate New Bill
+                </Link>
+                <Link href="/payments" className={`${styles.navItem} ${pathname.startsWith('/payments') ? styles.active : ''}`}>
+                  <IndianRupee size={20} /> Outstanding Payments
                 </Link>
               </div>
 

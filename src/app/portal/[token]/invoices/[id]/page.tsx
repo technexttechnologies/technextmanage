@@ -67,6 +67,16 @@ export default async function InvoicePortalPage({ params }: { params: Promise<{ 
           </div>
 
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <a 
+              href={`/request/invoice/${invoice.id}`}
+              target="_blank" 
+              rel="noreferrer"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#0f172a', color: '#ffffff', border: 'none', padding: '16px 24px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', textDecoration: 'none' }}
+            >
+              <Receipt size={18} />
+              View &amp; Print Official Bill
+            </a>
+
             {invoice.pdfUrl && (
               <a 
                 href={formatPdfUrl(invoice.pdfUrl)} 
