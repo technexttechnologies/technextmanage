@@ -24,14 +24,12 @@ function acquireLock() {
   if (fs.existsSync(LOCK_FILE)) {
     try {
       const pid = parseInt(fs.readFileSync(LOCK_FILE, 'utf8').trim(), 10);
-      // Check if process with this PID is still running
       if (pid && !isNaN(pid)) {
         try {
           process.kill(pid, 0); // throws error if process does not exist
           console.log(`[INFO] Aronium Sync Agent is already running (PID: ${pid}). Exiting duplicate instance.`);
           process.exit(0);
         } catch {
-          // Process not running, stale lock file
           console.log(`[INFO] Removing stale lock file from previous PID ${pid}.`);
         }
       }
@@ -68,7 +66,7 @@ process.on('SIGTERM', () => { releaseLock(); process.exit(0); });
 acquireLock();
 
 console.log("\n========================================================");
-console.log("🚀 TechNext Aronium POS Bidirectional Cloud Sync Engine");
+console.log("🚀 TechNext Aronium POS Full-Data Cloud Sync Engine");
 console.log("========================================================");
 console.log(`📁 Local Database: ${ARONIUM_DB_PATH}`);
 console.log(`🌐 Cloud Endpoint: ${VERCEL_APP_URL}`);
@@ -83,7 +81,7 @@ async function performSync() {
   isSyncing = true;
   
   const startTime = Date.now();
-  console.log(`[${new Date().toLocaleTimeString()}] Starting Bidirectional Sync...`);
+  console.log(`[${new Date().toLocaleTimeString()}] Starting Full Bidirectional Sync...`);
   
   if (!fs.existsSync(ARONIUM_DB_PATH)) {
     console.error(`❌ Error: Could not find Aronium database at ${ARONIUM_DB_PATH}`);
@@ -91,7 +89,7 @@ async function performSync() {
     return;
   }
 
-  // Open SQLite database in READWRITE mode so we can pull CRM customers into Aronium
+  // Open SQLite database in READWRITE mode
   const db = new sqlite3.Database(ARONIUM_DB_PATH, sqlite3.OPEN_READWRITE, (err) => {
     if (err) {
       console.error("❌ SQLite Connection Error:", err.message);
@@ -138,7 +136,6 @@ async function performSync() {
           for (const c of pendingCustomers) {
             if (!c.name) continue;
 
-            // Check if customer already exists in Aronium by Name, Phone, or Code
             const existing = await queryDB(
               `SELECT Id, Name, PhoneNumber, Code FROM Customer 
                WHERE Name = ? OR (PhoneNumber IS NOT NULL AND PhoneNumber != '' AND PhoneNumber != '0000000000' AND PhoneNumber = ?)
@@ -150,7 +147,6 @@ async function performSync() {
 
             if (existing && existing.length > 0) {
               aroniumId = existing[0].Id;
-              // Update code/details if needed
               await runDB(
                 `UPDATE Customer SET 
                    Code = COALESCE(?, Code), 
@@ -163,7 +159,6 @@ async function performSync() {
               );
               console.log(`  🔗 Matched & Updated existing Aronium Customer #${aroniumId}: "${c.name}"`);
             } else {
-              // Insert new customer into Aronium
               const insertRes = await runDB(
                 `INSERT INTO Customer (
                    Name, Code, PhoneNumber, Email, Address, 
@@ -220,48 +215,108 @@ async function performSync() {
       WHERE IsSupplier = 1
     `);
 
-    // 3. Fetch Products with Current Stock & Barcode
+    // 3. Fetch Products with Group & Measurement Units
     const products = await queryDB(`
       SELECT 
-        p.Id, p.Name, p.Code, p.Price, p.Cost,
+        p.Id, p.Name, p.Code, p.Price, p.Cost, p.MeasurementUnit,
+        COALESCE(pg.Name, 'General') as GroupName,
         COALESCE(s.Quantity, 0) as CurrentStock,
         b.Value as Barcode
       FROM Product p
+      LEFT JOIN ProductGroup pg ON p.ProductGroupId = pg.Id
       LEFT JOIN Stock s ON p.Id = s.ProductId
       LEFT JOIN Barcode b ON p.Id = b.ProductId
       GROUP BY p.Id
     `);
 
-    // 4. Fetch Sales with Payment Method & Customer Name
-    const sales = await queryDB(`
+    // Helper: Fetch Items for a document
+    const getDocItems = async (docId) => {
+      return await queryDB(`
+        SELECT di.*, p.Name as ProductName, p.Code as ProductCode, p.MeasurementUnit
+        FROM DocumentItem di
+        LEFT JOIN Product p ON di.ProductId = p.Id
+        WHERE di.DocumentId = ?
+      `, [docId]);
+    };
+
+    // Helper: Fetch Payments for a document
+    const getDocPayments = async (docId) => {
+      return await queryDB(`
+        SELECT p.*, pt.Name as PaymentTypeName
+        FROM Payment p
+        LEFT JOIN PaymentType pt ON p.PaymentTypeId = pt.Id
+        WHERE p.DocumentId = ?
+        ORDER BY p.Date ASC
+      `, [docId]);
+    };
+
+    // 4. Fetch Sales with Items & Payments
+    const salesRaw = await queryDB(`
       SELECT 
         d.Id, d.Number, d.Date, d.Total, d.CustomerId, d.Discount, d.PaidStatus,
-        COALESCE(pt.Name, 'CASH') as PaymentMethod,
         c.Name as CustomerName
       FROM Document d
-      LEFT JOIN Payment p ON d.Id = p.DocumentId
-      LEFT JOIN PaymentType pt ON p.PaymentTypeId = pt.Id
       LEFT JOIN Customer c ON d.CustomerId = c.Id
       WHERE d.DocumentTypeId = 2
-      GROUP BY d.Id
       ORDER BY d.Date DESC
     `);
 
-    // 5. Fetch Purchases with Vendor Name
-    const purchases = await queryDB(`
+    const sales = [];
+    for (const s of salesRaw) {
+      const items = await getDocItems(s.Id);
+      const payments = await getDocPayments(s.Id);
+      const paymentMethod = payments.length > 1 ? 'SPLIT / MULTI-DATE' : (payments[0]?.PaymentTypeName || 'CASH');
+      sales.push({
+        ...s,
+        PaymentMethod: paymentMethod,
+        items,
+        payments
+      });
+    }
+
+    // 5. Fetch Proformas (Quotations) with Items
+    const proformasRaw = await queryDB(`
+      SELECT 
+        d.Id, d.Number, d.Date, d.Total, d.CustomerId, d.Discount, d.PaidStatus,
+        c.Name as CustomerName
+      FROM Document d
+      LEFT JOIN Customer c ON d.CustomerId = c.Id
+      WHERE d.DocumentTypeId = 7
+      ORDER BY d.Date DESC
+    `);
+
+    const proformas = [];
+    for (const pf of proformasRaw) {
+      const items = await getDocItems(pf.Id);
+      proformas.push({
+        ...pf,
+        items
+      });
+    }
+
+    // 6. Fetch Purchases with Vendor Name & Items
+    const purchasesRaw = await queryDB(`
       SELECT 
         d.Id, d.Number, d.Date, d.Total, d.CustomerId,
         c.Name as VendorName
       FROM Document d
       LEFT JOIN Customer c ON d.CustomerId = c.Id
       WHERE d.DocumentTypeId = 1
-      GROUP BY d.Id
       ORDER BY d.Date DESC
     `);
 
-    console.log(`[PUSH] Local Catalog: ${customers.length} Customers, ${suppliers.length} Vendors, ${products.length} Products, ${sales.length} Sales, ${purchases.length} Purchases.`);
+    const purchases = [];
+    for (const p of purchasesRaw) {
+      const items = await getDocItems(p.Id);
+      purchases.push({
+        ...p,
+        items
+      });
+    }
+
+    console.log(`[PUSH] Local Catalog: ${customers.length} Customers, ${suppliers.length} Vendors, ${products.length} Products, ${sales.length} Sales (with items & payments), ${proformas.length} Proformas (Quotes), ${purchases.length} Purchases.`);
     
-    const payload = { customers, suppliers, products, sales, purchases };
+    const payload = { customers, suppliers, products, sales, purchases, proformas };
 
     const response = await fetch(`${VERCEL_APP_URL}/api/erp/aronium/cloud-sync`, {
       method: "POST",
@@ -277,7 +332,7 @@ async function performSync() {
     if (response.ok) {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
       console.log(`✅ [SUCCESS] Cloud Sync completed in ${elapsed}s!`);
-      console.log(`📊 Cloud Updated: ${result.salesCount} Sales, ${result.purchasesCount} Purchases, ${result.productsCount} Products, ${result.customersCount} Customers, ${result.vendorsCount} Vendors.`);
+      console.log(`📊 Cloud Updated: ${result.salesCount} Invoices, ${result.proformasCount || 0} Quotations, ${result.purchasesCount} Purchases, ${result.productsCount} Products, ${result.customersCount} Customers, ${result.vendorsCount} Vendors.`);
     } else {
       console.error("❌ Cloud Error:", result.error || response.statusText);
     }
@@ -285,12 +340,13 @@ async function performSync() {
   } catch (error) {
     console.error("❌ Fatal Sync Error:", error.message || error);
   } finally {
-    db.close();
     isSyncing = false;
-    if (isOnce) {
-      console.log("[INFO] Single-pass sync completed. Exiting.");
-      process.exit(0);
-    }
+    db.close((err) => {
+      if (err) console.error("Error closing db:", err.message);
+      if (isOnce) {
+        console.log("[INFO] Single-pass sync completed.");
+      }
+    });
   }
 }
 
@@ -299,17 +355,16 @@ performSync();
 
 // If not in single-pass mode, set up file watcher and timer
 if (!isOnce) {
-  // Watch Aronium SQLite database for changes
   try {
     fs.watch(ARONIUM_DB_PATH, (eventType) => {
       if (eventType === 'change') {
         if (Date.now() - lastSelfWriteTime < 8000) {
-          return; // Skip changes triggered by our own sync agent writing to SQLite
+          return;
         }
         clearTimeout(syncTimeout);
         syncTimeout = setTimeout(() => {
           performSync();
-        }, 2500); // 2.5s debounce to allow SQLite commit to finish
+        }, 2500);
       }
     });
     console.log(`👀 Actively watching ${ARONIUM_DB_PATH} for real-time sales & updates.`);
