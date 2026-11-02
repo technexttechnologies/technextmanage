@@ -16,7 +16,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
       notes: { orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }] },
       milestones: { orderBy: { dueDate: 'asc' } },
       hardware: { orderBy: { createdAt: 'desc' } },
-      tasks: true
+      tasks: true,
+      invoiceRequests: {
+        include: { customer: true },
+        orderBy: { createdAt: "desc" }
+      }
     }
   });
 

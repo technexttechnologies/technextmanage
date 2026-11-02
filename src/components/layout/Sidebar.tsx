@@ -201,11 +201,11 @@ export default function Sidebar({ user }: { user: any }) {
                 </Link>
               </div>
 
-              {/* Billing & Invoicing */}
+              {/* Billing & POS Management */}
               <div className={styles.navSection}>
-                <p className={styles.navSectionTitle} style={{ color: "#4F46E5" }}>Billing & Invoicing</p>
+                <p className={styles.navSectionTitle} style={{ color: "#00a2ed" }}>Aronium Management &amp; Billing</p>
                 <Link href="/billing" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
-                  <Receipt size={20} /> Billing &amp; Bills Hub
+                  <Receipt size={20} /> Management Console
                 </Link>
                 <Link href="/billing/new?type=invoice" className={`${styles.navItem} ${pathname.startsWith('/billing/new') ? styles.active : ''}`}>
                   <Plus size={20} /> Generate New Bill

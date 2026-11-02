@@ -9,17 +9,29 @@ import BillingDocumentForm from "./BillingDocumentForm";
 export default async function NewBillingDocumentPage({
   searchParams
 }: {
-  searchParams: Promise<{ type?: string; customerId?: string }>;
+  searchParams: Promise<{ type?: string; customerId?: string; projectId?: string }>;
 }) {
-  const { type = "invoice", customerId } = await searchParams;
+  const { type = "invoice", customerId, projectId } = await searchParams;
 
-  const [customers, products] = await Promise.all([
+  const [customers, products, allProjects] = await Promise.all([
     prisma.customer.findMany({
       orderBy: { name: "asc" },
       include: { projects: true }
     }),
     prisma.erpProduct.findMany({
       orderBy: { name: "asc" }
+    }),
+    prisma.project.findMany({
+      orderBy: { updatedAt: "desc" },
+      select: { 
+        id: true, 
+        name: true, 
+        status: true, 
+        customerId: true, 
+        type: true, 
+        estimatedBudget: true, 
+        customer: { select: { id: true, name: true } } 
+      }
     })
   ]);
 
@@ -49,8 +61,10 @@ export default async function NewBillingDocumentPage({
         <BillingDocumentForm 
           customers={customers} 
           products={products}
+          allProjects={allProjects}
           defaultType={type}
           defaultCustomerId={customerId}
+          defaultProjectId={projectId}
         />
       </div>
     </div>

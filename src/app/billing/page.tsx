@@ -1,13 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
-import { Receipt, Plus, FileText, ClipboardList } from "lucide-react";
-import styles from "./page.module.css";
-import BillingDashboardClient from "./BillingDashboardClient";
+import AroniumBillingConsole from "./AroniumBillingConsole";
 
 export default async function BillingHubPage() {
-  const [invoices, quotations] = await Promise.all([
+  const [invoices, quotations, products, customers, users, projects] = await Promise.all([
     prisma.invoiceRequest.findMany({
       include: {
         customer: true,
@@ -21,6 +18,30 @@ export default async function BillingHubPage() {
         items: true,
       },
       orderBy: { createdAt: "desc" },
+    }),
+    prisma.erpProduct.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, sku: true, sellingPrice: true, purchasePrice: true, category: true, isService: true }
+    }),
+    prisma.customer.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, company: true, customerNumber: true, aroniumCode: true, phone: true }
+    }),
+    prisma.user.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, role: true }
+    }),
+    prisma.project.findMany({
+      orderBy: { updatedAt: "desc" },
+      select: { 
+        id: true, 
+        name: true, 
+        status: true, 
+        type: true, 
+        estimatedBudget: true, 
+        customerId: true, 
+        customer: { select: { id: true, name: true } } 
+      }
     })
   ]);
 
@@ -43,48 +64,14 @@ export default async function BillingHubPage() {
   ).length;
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <div>
-          <h1 className={styles.title} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <Receipt size={32} color="#4F46E5" />
-            Billing &amp; Invoicing Suite
-          </h1>
-          <p className={styles.subtitle}>
-            Enterprise billing software for generating official Invoices, Order Forms, Quotations, and Payment Receipts matching the Aronium bill template.
-          </p>
-        </div>
-
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          <Link 
-            href="/billing/new?type=invoice" 
-            className="btn-primary" 
-            style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
-          >
-            <Plus size={16} /> New Invoice Bill
-          </Link>
-          <Link 
-            href="/billing/new?type=quotation" 
-            className="btn-secondary" 
-            style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
-          >
-            <FileText size={16} /> New Quotation
-          </Link>
-          <Link 
-            href="/billing/new?type=order" 
-            className="btn-secondary" 
-            style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
-          >
-            <ClipboardList size={16} /> New Order Form
-          </Link>
-        </div>
-      </header>
-
-      <BillingDashboardClient 
-        invoices={invoices} 
-        quotations={quotations} 
-        metrics={{ totalBilled, totalCollected, totalDue, activeQuotes }} 
-      />
-    </div>
+    <AroniumBillingConsole 
+      invoices={invoices} 
+      quotations={quotations}
+      products={products}
+      customers={customers}
+      users={users}
+      projects={projects}
+      metrics={{ totalBilled, totalCollected, totalDue, activeQuotes }} 
+    />
   );
 }

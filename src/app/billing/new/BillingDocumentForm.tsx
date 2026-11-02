@@ -40,15 +40,19 @@ interface LineItem {
 export default function BillingDocumentForm({
   customers = [],
   products = [],
+  allProjects = [],
   defaultType = "invoice",
   defaultCustomerId,
+  defaultProjectId,
   initialDocument,
   isEdit = false,
 }: {
   customers: any[];
   products?: any[];
+  allProjects?: any[];
   defaultType?: string;
   defaultCustomerId?: string;
+  defaultProjectId?: string;
   initialDocument?: any;
   isEdit?: boolean;
 }) {
@@ -65,12 +69,21 @@ export default function BillingDocumentForm({
     initialDocument?.documentType ? normalizeType(initialDocument.documentType) : normalizeType(defaultType)
   );
 
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(
-    initialDocument?.customerId || defaultCustomerId || (customers[0]?.id || "")
-  );
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(
-    initialDocument?.projectId || ""
-  );
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(() => {
+    if (initialDocument?.projectId) return initialDocument.projectId;
+    if (defaultProjectId) return defaultProjectId;
+    return "";
+  });
+
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(() => {
+    if (initialDocument?.customerId) return initialDocument.customerId;
+    if (defaultCustomerId) return defaultCustomerId;
+    if (defaultProjectId && allProjects.length > 0) {
+      const match = allProjects.find((p: any) => p.id === defaultProjectId);
+      if (match?.customerId) return match.customerId;
+    }
+    return customers[0]?.id || "";
+  });
 
   // Document Number generators
   const getRandomNumber = (prefix: string) => `${prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -239,6 +252,16 @@ export default function BillingDocumentForm({
   };
 
   const selectedCustomer = customerList.find(c => c.id === selectedCustomerId);
+
+  const customerProjects = allProjects.length > 0 
+    ? allProjects.filter((p: any) => p.customerId === selectedCustomerId)
+    : selectedCustomer?.projects || [];
+
+  const customerActiveProjects = customerProjects.filter((p: any) => p.status !== "COMPLETED");
+  const customerCompletedProjects = customerProjects.filter((p: any) => p.status === "COMPLETED");
+  const otherActiveProjects = allProjects.filter((p: any) => p.customerId !== selectedCustomerId && p.status !== "COMPLETED");
+
+  const selectedProject = allProjects.find((p: any) => p.id === selectedProjectId) || customerProjects.find((p: any) => p.id === selectedProjectId);
 
   // Quick Customer Creation Handler
   const handleQuickCustomerSubmit = async (e: React.FormEvent) => {
@@ -512,20 +535,66 @@ export default function BillingDocumentForm({
           </div>
 
           <div className={styles.inputGroup}>
-            <label htmlFor="projectId">Related Project (Optional)</label>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label htmlFor="projectId">Active Related Project</label>
+              {selectedProject && (
+                <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: selectedProject.status === "COMPLETED" ? "#F1F5F9" : "#DCFCE7", color: selectedProject.status === "COMPLETED" ? "#64748B" : "#166534" }}>
+                  {selectedProject.status.replace(/_/g, " ")}
+                </span>
+              )}
+            </div>
             <select 
               id="projectId" 
               name="projectId"
               value={selectedProjectId}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
+              onChange={(e) => {
+                const pId = e.target.value;
+                setSelectedProjectId(pId);
+                if (pId) {
+                  const match = allProjects.find((p: any) => p.id === pId) || customerProjects.find((p: any) => p.id === pId);
+                  if (match?.customerId && match.customerId !== selectedCustomerId) {
+                    setSelectedCustomerId(match.customerId);
+                  }
+                }
+              }}
             >
               <option value="">-- None / General Billing --</option>
-              {selectedCustomer?.projects?.map((p: any) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
+              {customerActiveProjects.length > 0 && (
+                <optgroup label={`Active Projects for ${selectedCustomer?.name || 'Selected Client'}`}>
+                  {customerActiveProjects.map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      [{p.status.replace(/_/g, " ")}] {p.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {customerCompletedProjects.length > 0 && (
+                <optgroup label="Completed Client Projects">
+                  {customerCompletedProjects.map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      [COMPLETED] {p.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {otherActiveProjects.length > 0 && (
+                <optgroup label="Other Active Company Projects (Auto-selects Client)">
+                  {otherActiveProjects.map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      [{p.status.replace(/_/g, " ")}] {p.name} — {p.customer?.name || "Client"}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
+            {selectedProject && (
+              <div style={{ marginTop: "4px", fontSize: "12px", color: "var(--text-muted)", display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                <span>Type: <strong>{selectedProject.type || "General"}</strong></span>
+                {selectedProject.estimatedBudget && (
+                  <span>Budget: <strong>₹{selectedProject.estimatedBudget.toLocaleString("en-IN")}</strong></span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className={styles.inputGroup}>

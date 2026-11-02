@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { MessageCircle, Copy, ExternalLink, Pin, Trash2, CheckCircle, Star, Send, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { MessageCircle, Copy, ExternalLink, Pin, Trash2, CheckCircle, Star, Send, CheckCircle2, Receipt, Plus, FileText } from "lucide-react";
 import styles from "./page.module.css";
 import { 
   updateProjectStatus, 
@@ -403,6 +404,110 @@ technext`;
               <Copy size={15} /> {linkCopied ? "Link Copied!" : "Copy Tracking Link"}
             </button>
           </div>
+        </div>
+
+        {/* Project Invoices & Billing Suite Card */}
+        <div className={styles.card} style={{ borderLeft: '4px solid #00a2ed' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Receipt size={18} color="#00a2ed" />
+              <h2 className={styles.cardHeader} style={{ margin: 0 }}>Project Invoices &amp; Billing</h2>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <Link 
+                href={`/billing/new?type=invoice&customerId=${project.customerId || ''}&projectId=${project.id}`}
+                className="btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '12px' }}
+              >
+                <Plus size={13} /> Bill Project
+              </Link>
+              <Link 
+                href={`/billing/new?type=quotation&customerId=${project.customerId || ''}&projectId=${project.id}`}
+                className="btn-secondary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '12px' }}
+              >
+                <FileText size={13} /> Quote
+              </Link>
+            </div>
+          </div>
+
+          {/* Project Financial Summary */}
+          {project.invoiceRequests && project.invoiceRequests.length > 0 ? (
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', padding: '10px', background: '#F8FAFC', borderRadius: '6px', marginBottom: '14px', fontSize: '12px' }}>
+                <div>
+                  <span style={{ color: '#64748B', display: 'block' }}>Total Invoiced</span>
+                  <strong style={{ fontSize: '14px', color: '#0F172A' }}>
+                    ₹{project.invoiceRequests.reduce((sum: number, inv: any) => sum + (inv.amountRequested || 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </strong>
+                </div>
+                <div>
+                  <span style={{ color: '#64748B', display: 'block' }}>Total Collected</span>
+                  <strong style={{ fontSize: '14px', color: '#166534' }}>
+                    ₹{project.invoiceRequests.reduce((sum: number, inv: any) => {
+                      const sData = (inv.structuredData as any) || {};
+                      const isPaid = inv.status === "PAID" || sData.paymentStatus === "Paid";
+                      return sum + (isPaid ? (sData.paidAmount || inv.amountRequested) : 0);
+                    }, 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </strong>
+                </div>
+                <div>
+                  <span style={{ color: '#64748B', display: 'block' }}>Balance Due</span>
+                  <strong style={{ fontSize: '14px', color: '#DC2626' }}>
+                    ₹{Math.max(0, 
+                      project.invoiceRequests.reduce((sum: number, inv: any) => sum + (inv.amountRequested || 0), 0) -
+                      project.invoiceRequests.reduce((sum: number, inv: any) => {
+                        const sData = (inv.structuredData as any) || {};
+                        const isPaid = inv.status === "PAID" || sData.paymentStatus === "Paid";
+                        return sum + (isPaid ? (sData.paidAmount || inv.amountRequested) : 0);
+                      }, 0)
+                    ).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </strong>
+                </div>
+              </div>
+
+              {/* Invoices List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {project.invoiceRequests.map((inv: any) => {
+                  const sData = (inv.structuredData as any) || {};
+                  const isPaid = inv.status === "PAID" || sData.paymentStatus === "Paid";
+                  const docNum = sData.documentNumber || inv.aroniumInvoiceNo || `26-200-${inv.id.slice(-6).toUpperCase()}`;
+                  return (
+                    <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', border: '1px solid #E2E8F0', borderRadius: '6px', fontSize: '13px' }}>
+                      <div>
+                        <Link href={`/billing/doc/invoice/${inv.id}`} style={{ fontWeight: 700, color: '#00a2ed', textDecoration: 'none' }}>
+                          #{docNum}
+                        </Link>
+                        <div style={{ fontSize: '11px', color: '#64748B' }}>
+                          {new Date(sData.date || inv.createdAt).toLocaleDateString()} • {inv.notes || "Professional Tech Services"}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontWeight: 700 }}>₹{inv.amountRequested.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        <span style={{ 
+                          fontSize: '11px', 
+                          fontWeight: 700, 
+                          padding: '2px 6px', 
+                          borderRadius: '4px',
+                          background: isPaid ? '#DCFCE7' : '#FEF3C7',
+                          color: isPaid ? '#166534' : '#92400E'
+                        }}>
+                          {isPaid ? "Paid" : "Pending"}
+                        </span>
+                        <Link href={`/billing/doc/invoice/${inv.id}`} className="btn-secondary" style={{ padding: '2px 8px', fontSize: '11px' }}>
+                          View
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>
+              No billing documents linked yet. Click &quot;Bill Project&quot; above to create an official invoice bill for this project.
+            </p>
+          )}
         </div>
 
         {(project.licenseKey || project.softwareVersion || project.machineId) && (

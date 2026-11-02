@@ -15,13 +15,25 @@ export default async function EditBillingDocumentPage({
   const { type, id } = await params;
   const normalizedType = type.toLowerCase();
 
-  const [customers, products] = await Promise.all([
+  const [customers, products, allProjects] = await Promise.all([
     prisma.customer.findMany({
       orderBy: { name: "asc" },
       include: { projects: true }
     }),
     prisma.erpProduct.findMany({
       orderBy: { name: "asc" }
+    }),
+    prisma.project.findMany({
+      orderBy: { updatedAt: "desc" },
+      select: { 
+        id: true, 
+        name: true, 
+        status: true, 
+        customerId: true, 
+        type: true, 
+        estimatedBudget: true, 
+        customer: { select: { id: true, name: true } } 
+      }
     })
   ]);
 
@@ -86,6 +98,7 @@ export default async function EditBillingDocumentPage({
           <BillingDocumentForm 
             customers={customers} 
             products={products}
+            allProjects={allProjects}
             defaultType="quotation"
             initialDocument={initialDocument}
             isEdit={true}
@@ -116,6 +129,7 @@ export default async function EditBillingDocumentPage({
     paymentType: sData.paymentType || (sData.paymentMethod?.includes("SPLIT") ? "SPLIT" : sData.paymentMethod?.includes("CREDIT") ? "CREDIT" : "FULL"),
     paymentStatus: sData.paymentStatus || (invoice.status === "PAID" ? "Paid" : "Pending"),
     paymentMethod: sData.paymentMethod || "UPI PAYMENT",
+    paymentSchedule: sData.paymentSchedule,
     splitBreakdown: sData.splitBreakdown,
     creditDueDate: sData.creditDueDate,
     creditTerms: sData.creditTerms,
@@ -164,6 +178,7 @@ export default async function EditBillingDocumentPage({
         <BillingDocumentForm 
           customers={customers} 
           products={products}
+          allProjects={allProjects}
           defaultType={type}
           initialDocument={initialDocument}
           isEdit={true}

@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Building2, Phone, Mail, MapPin, Edit, FileText, ShoppingCart, RefreshCw, PhoneCall, ShieldCheck, MessageCircle, Package, Globe, Server, Lock, AlertCircle, Clock, KeyRound, Star } from "lucide-react";
+import { ArrowLeft, Building2, Phone, Mail, MapPin, Edit, FileText, ShoppingCart, RefreshCw, PhoneCall, ShieldCheck, MessageCircle, Package, Globe, Server, Lock, AlertCircle, Clock, KeyRound, Star, Receipt } from "lucide-react";
 import { getWhatsAppLink, waTemplates } from "@/lib/whatsappTemplates";
 import styles from "./page.module.css";
 import EditCustomerButton from "./EditCustomerButton";
@@ -379,6 +379,95 @@ export default async function CustomerDetailsPage({
               <div className={styles.notesSection}>
                 <h3>Notes</h3>
                 <p>{customer.notes}</p>
+              </div>
+            )}
+          </section>
+
+          {/* Invoices & Official Bills Section */}
+          <section className={styles.card} style={{ borderLeft: '4px solid #00a2ed' }}>
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionTitle}>
+                <Receipt size={20} color="#00a2ed" />
+                <h2>Invoices &amp; Bills ({customer.invoiceRequests.length})</h2>
+              </div>
+              <Link href={`/billing/new?type=invoice&customerId=${customer.id}`} className="btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                + New Invoice Bill
+              </Link>
+            </div>
+
+            {customer.invoiceRequests.length === 0 ? (
+              <p className={styles.emptyText}>No invoices generated for this client yet.</p>
+            ) : (
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', padding: '10px 14px', background: '#F8FAFC', borderRadius: '6px', marginBottom: '14px', fontSize: '13px' }}>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '11px', textTransform: 'uppercase' }}>Total Billed</span>
+                    <strong style={{ fontSize: '15px', color: '#0F172A' }}>
+                      ₹{customer.invoiceRequests.reduce((sum, inv) => {
+                        const sData = (inv.structuredData as any) || {};
+                        return sum + (sData.totalAmount || inv.amountRequested || 0);
+                      }, 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '11px', textTransform: 'uppercase' }}>Collected</span>
+                    <strong style={{ fontSize: '15px', color: '#166534' }}>
+                      ₹{customer.invoiceRequests.reduce((sum, inv) => {
+                        const sData = (inv.structuredData as any) || {};
+                        const isPaid = inv.status === "PAID" || sData.paymentStatus === "Paid";
+                        return sum + (isPaid ? (sData.paidAmount || inv.amountRequested) : 0);
+                      }, 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '11px', textTransform: 'uppercase' }}>Balance Due</span>
+                    <strong style={{ fontSize: '15px', color: '#DC2626' }}>
+                      ₹{Math.max(0, 
+                        customer.invoiceRequests.reduce((sum, inv) => {
+                          const sData = (inv.structuredData as any) || {};
+                          return sum + (sData.totalAmount || inv.amountRequested || 0);
+                        }, 0) -
+                        customer.invoiceRequests.reduce((sum, inv) => {
+                          const sData = (inv.structuredData as any) || {};
+                          const isPaid = inv.status === "PAID" || sData.paymentStatus === "Paid";
+                          return sum + (isPaid ? (sData.paidAmount || inv.amountRequested) : 0);
+                        }, 0)
+                      ).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className={styles.list}>
+                  {customer.invoiceRequests.map(inv => {
+                    const sData = (inv.structuredData as any) || {};
+                    const isPaid = inv.status === "PAID" || sData.paymentStatus === "Paid";
+                    const docNum = sData.documentNumber || inv.aroniumInvoiceNo || `26-200-${inv.id.slice(-6).toUpperCase()}`;
+                    return (
+                      <div key={inv.id} className={styles.listItem}>
+                        <div>
+                          <div className={styles.itemTitle}>
+                            <Link href={`/billing/doc/invoice/${inv.id}`} style={{ color: '#00a2ed', textDecoration: 'none', fontWeight: 700 }}>
+                              #{docNum}
+                            </Link>
+                          </div>
+                          <div className={styles.itemMeta}>
+                            <span>Date: {new Date(sData.date || inv.createdAt).toLocaleDateString()}</span>
+                            <span>Method: {sData.paymentMethod || "UPI"}</span>
+                            <span className={`${styles.statusPill} ${isPaid ? styles.active : styles.pending}`}>
+                              {isPaid ? "Paid" : "Pending"}
+                            </span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span className={styles.amount}>₹{inv.amountRequested.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          <Link href={`/billing/doc/invoice/${inv.id}`} className="btn-secondary" style={{ padding: '4px 8px', fontSize: '12px' }}>
+                            View Bill
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </section>

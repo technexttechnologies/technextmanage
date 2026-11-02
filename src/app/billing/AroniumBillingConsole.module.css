@@ -1,0 +1,440 @@
+/* Aronium POS & ERP Management Console Stylesheet */
+
+/* Root Layout Container */
+.consoleContainer {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  transition: all 0.2s ease;
+  padding: 0;
+  margin: 0;
+}
+
+/* Theme: Aronium Dark Mode (Authentic Charcoal & Cyan) */
+.darkTheme {
+  background-color: #181e24;
+  color: #e2e8f0;
+}
+
+.darkTheme .topNav {
+  background-color: #101418;
+  border-bottom: 1px solid #232c34;
+}
+
+.darkTheme .panelCard {
+  background-color: #202930;
+  border: 1px solid #2a3742;
+}
+
+.darkTheme .filterBar {
+  background-color: #1c232a;
+  border: 1px solid #2a3742;
+}
+
+.darkTheme .inputField,
+.darkTheme .selectField {
+  background-color: #14191e;
+  border: 1px solid #2d3b47;
+  color: #f8fafc;
+}
+
+.darkTheme .tableWrapper {
+  background-color: #1c242c;
+  border: 1px solid #2a3742;
+}
+
+.darkTheme .table thead tr {
+  background-color: #25313a;
+  border-bottom: 2px solid #00a2ed;
+  color: #cbd5e1;
+}
+
+.darkTheme .table tbody tr {
+  border-bottom: 1px solid #25313a;
+  color: #e2e8f0;
+}
+
+.darkTheme .table tbody tr:hover {
+  background-color: #25313c;
+}
+
+.darkTheme .selectedRow {
+  background-color: #0b3954 !important;
+  border-left: 3px solid #00a2ed !important;
+}
+
+/* Theme: Executive Minimal Light */
+.lightTheme {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.lightTheme .topNav {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.lightTheme .panelCard {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.lightTheme .filterBar {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.lightTheme .inputField,
+.lightTheme .selectField {
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+.lightTheme .tableWrapper {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.lightTheme .table thead tr {
+  background-color: #f1f5f9;
+  border-bottom: 2px solid #00a2ed;
+  color: #334155;
+}
+
+.lightTheme .table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  color: #0f172a;
+}
+
+.lightTheme .table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.lightTheme .selectedRow {
+  background-color: #e0f2fe !important;
+  border-left: 3px solid #00a2ed !important;
+}
+
+/* Header & Breadcrumb Bar */
+.topNav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.breadcrumbGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.breadcrumbTitle {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.tabPillGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tabPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+  opacity: 0.75;
+  transition: all 0.15s;
+}
+
+.tabPill:hover {
+  opacity: 1;
+}
+
+.tabPillActive {
+  background-color: #00a2ed !important;
+  color: #ffffff !important;
+  opacity: 1;
+}
+
+.themeToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: transparent;
+  color: inherit;
+}
+
+/* Toolbar & Sub-action row */
+.actionToolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  flex-wrap: wrap;
+}
+
+.toolBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+
+.toolBtn:hover {
+  background-color: rgba(0, 162, 237, 0.15);
+  color: #00a2ed;
+}
+
+.toolBtnDisabled {
+  opacity: 0.4;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* Comprehensive Filter Bar */
+.filterBar {
+  padding: 14px 20px;
+  margin: 12px 20px;
+  border-radius: 6px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.filterItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filterLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.75;
+}
+
+.inputField,
+.selectField {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  outline: none;
+  width: 100%;
+}
+
+.btnSearch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: #00a2ed;
+  color: #ffffff;
+  padding: 7px 14px;
+  border-radius: 4px;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btnClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: transparent;
+  color: inherit;
+  padding: 7px 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Master-Detail Split Table Views */
+.splitPaneContainer {
+  padding: 0 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.paneHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.paneTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #00a2ed;
+}
+
+.tableWrapper {
+  border-radius: 4px;
+  overflow-x: auto;
+  max-height: 380px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.table th {
+  padding: 8px 12px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+/* Status Badges */
+.badgePaid {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #166534;
+  color: #dcfce7;
+}
+
+.badgePending {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #854d0e;
+  color: #fef9c3;
+}
+
+.badgePartial {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #1e40af;
+  color: #dbeafe;
+}
+
+/* Reporting Module Styles */
+.reportingLayout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.reportSideList {
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.reportItemBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reportItemBtn:hover {
+  background-color: rgba(0, 162, 237, 0.15);
+  color: #00a2ed;
+}
+
+.reportItemBtnActive {
+  background-color: #00a2ed !important;
+  color: #ffffff !important;
+}
+
+.reportMainPanel {
+  border-radius: 6px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Dashboard Module Styles */
+.dashboardGrid {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.monthlyChartCard {
+  border-radius: 6px;
+  padding: 20px;
+}
+
+.periodicGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .reportingLayout {
+    grid-template-columns: 1fr;
+  }
+  .filterBar {
+    grid-template-columns: 1fr 1fr;
+  }
+}
