@@ -430,8 +430,99 @@
   gap: 16px;
 }
 
+/* Products Module Styles matching Aronium Products Screenshot */
+.productsModuleLayout {
+  display: flex;
+  flex-direction: column;
+}
+
+.productsSplit {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 16px;
+  padding: 14px 20px 24px 20px;
+}
+
+.groupTreePanel {
+  border-radius: 6px;
+  padding: 12px;
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+}
+
+.groupTreeHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.groupTreeList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.groupTreeItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.groupTreeItem:hover {
+  background-color: rgba(0, 162, 237, 0.15);
+  color: #00a2ed;
+}
+
+.groupTreeItemActive {
+  background-color: #00a2ed !important;
+  color: #ffffff !important;
+}
+
+.productsTableArea {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.productsSubBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.productSearchWrapper {
+  position: relative;
+  max-width: 360px;
+  width: 100%;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 9px;
+  top: 8px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 @media (max-width: 900px) {
   .reportingLayout {
+    grid-template-columns: 1fr;
+  }
+  .productsSplit {
     grid-template-columns: 1fr;
   }
   .filterBar {

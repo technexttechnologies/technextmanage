@@ -9,6 +9,8 @@ import {
   UserPlus, Shield, TrendingUp, Settings, ArrowRight, UserCheck, Award
 } from "lucide-react";
 import Link from "next/link";
+import ExecutiveDashboardWrapper from "@/components/dashboard/ExecutiveDashboardWrapper";
+import AroniumBillingConsole from "./billing/AroniumBillingConsole";
 
 export default async function Dashboard() {
   const session = await getSession();
@@ -51,7 +53,13 @@ export default async function Dashboard() {
     totalPendingInvoices,
     totalProducts,
     lowStockProducts,
-    inventoryItems
+    inventoryItems,
+    aroniumInvoices,
+    aroniumQuotations,
+    aroniumProducts,
+    aroniumCustomers,
+    aroniumUsers,
+    aroniumProjects
   ] = await Promise.all([
     prisma.customer.count({ where: { status: { not: "INACTIVE" } } }),
     prisma.domainRegistration.count({ where: { status: "ACTIVE" } }),
@@ -88,9 +96,73 @@ export default async function Dashboard() {
     prisma.erpProduct.count(),
     prisma.erpProduct.count({ where: { isLowStock: true } }),
     prisma.erpProduct.findMany({ select: { currentStock: true, purchasePrice: true } }),
+    // Aronium Suite queries
+    prisma.invoiceRequest.findMany({
+      include: { customer: true, project: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.quotation.findMany({
+      include: { customer: true, items: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.erpProduct.findMany({
+      orderBy: { name: "asc" },
+      select: { 
+        id: true, 
+        aroniumId: true,
+        name: true, 
+        sku: true, 
+        barcode: true,
+        sellingPrice: true, 
+        purchasePrice: true, 
+        category: true, 
+        unit: true,
+        taxRate: true,
+        currentStock: true,
+        isService: true 
+      }
+    }),
+    prisma.customer.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, company: true, customerNumber: true, aroniumCode: true, phone: true }
+    }),
+    prisma.user.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, role: true }
+    }),
+    prisma.project.findMany({
+      orderBy: { updatedAt: "desc" },
+      select: { 
+        id: true, 
+        name: true, 
+        status: true, 
+        type: true, 
+        estimatedBudget: true, 
+        customerId: true, 
+        customer: { select: { id: true, name: true } } 
+      }
+    })
   ]);
 
   const totalInventoryValuation = inventoryItems.reduce((acc, p) => acc + Math.max(0, p.currentStock * p.purchasePrice), 0);
+
+  // Aronium Metrics
+  const totalBilled = aroniumInvoices.reduce((sum, inv) => {
+    const sData = (inv.structuredData as any) || {};
+    return sum + (sData.totalAmount || inv.amountRequested || 0);
+  }, 0);
+
+  const totalCollected = aroniumInvoices.reduce((sum, inv) => {
+    const sData = (inv.structuredData as any) || {};
+    const isPaid = inv.status === "PAID" || sData.paymentStatus === "Paid";
+    return sum + (isPaid ? (sData.paidAmount || sData.totalAmount || inv.amountRequested || 0) : 0);
+  }, 0);
+
+  const totalDue = Math.max(0, totalBilled - totalCollected);
+
+  const activeQuotes = aroniumQuotations.filter(
+    q => q.status !== "REJECTED" && q.status !== "CONVERTED"
+  ).length;
 
   // Project Status Overview
   const projectStatusCounts = projects.reduce((acc, curr) => {
@@ -115,7 +187,24 @@ export default async function Dashboard() {
   const maxRev = Math.max(...revenueData.map(d => d.amount));
 
   return (
-    <div className={styles.dashboardContainer}>
+    <ExecutiveDashboardWrapper
+      totalBilled={totalBilled}
+      totalCollected={totalCollected}
+      totalDue={totalDue}
+      aroniumConsole={
+        <AroniumBillingConsole 
+          invoices={aroniumInvoices} 
+          quotations={aroniumQuotations}
+          products={aroniumProducts}
+          customers={aroniumCustomers}
+          users={aroniumUsers}
+          projects={aroniumProjects}
+          metrics={{ totalBilled, totalCollected, totalDue, activeQuotes }}
+          initialTab="DASHBOARD"
+        />
+      }
+      crmDashboard={
+        <div className={styles.dashboardContainer}>
       {/* Super Admin / Admin Header Banner */}
       <header className={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
@@ -537,5 +626,7 @@ export default async function Dashboard() {
         </div>
       </div>
     </div>
+      }
+    />
   );
 }

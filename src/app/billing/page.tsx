@@ -3,7 +3,15 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import AroniumBillingConsole from "./AroniumBillingConsole";
 
-export default async function BillingHubPage() {
+export default async function BillingHubPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string; [key: string]: string | undefined }> | { tab?: string; [key: string]: string | undefined };
+}) {
+  const resolvedParams = searchParams ? await Promise.resolve(searchParams) : {};
+  const rawTab = (resolvedParams.tab?.toUpperCase() || "DOCUMENTS") as any;
+  const initialTab = ["DOCUMENTS", "REPORTING", "DASHBOARD", "PRODUCTS"].includes(rawTab) ? rawTab : "DOCUMENTS";
+
   const [invoices, quotations, products, customers, users, projects] = await Promise.all([
     prisma.invoiceRequest.findMany({
       include: {
@@ -21,7 +29,20 @@ export default async function BillingHubPage() {
     }),
     prisma.erpProduct.findMany({
       orderBy: { name: "asc" },
-      select: { id: true, name: true, sku: true, sellingPrice: true, purchasePrice: true, category: true, isService: true }
+      select: { 
+        id: true, 
+        aroniumId: true,
+        name: true, 
+        sku: true, 
+        barcode: true,
+        sellingPrice: true, 
+        purchasePrice: true, 
+        category: true, 
+        unit: true,
+        taxRate: true,
+        currentStock: true,
+        isService: true 
+      }
     }),
     prisma.customer.findMany({
       orderBy: { name: "asc" },
@@ -71,7 +92,8 @@ export default async function BillingHubPage() {
       customers={customers}
       users={users}
       projects={projects}
-      metrics={{ totalBilled, totalCollected, totalDue, activeQuotes }} 
+      metrics={{ totalBilled, totalCollected, totalDue, activeQuotes }}
+      initialTab={initialTab}
     />
   );
 }

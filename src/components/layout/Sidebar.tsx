@@ -201,11 +201,20 @@ export default function Sidebar({ user }: { user: any }) {
                 </Link>
               </div>
 
-              {/* Billing & POS Management */}
+              {/* Aronium Management Suite */}
               <div className={styles.navSection}>
-                <p className={styles.navSectionTitle} style={{ color: "#00a2ed" }}>Aronium Management &amp; Billing</p>
-                <Link href="/billing" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
-                  <Receipt size={20} /> Management Console
+                <p className={styles.navSectionTitle} style={{ color: "#00a2ed", fontWeight: 700 }}>Aronium Management Suite</p>
+                <Link href="/billing?tab=dashboard" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
+                  <TrendingUp size={20} color="#00a2ed" /> Management • Dashboard
+                </Link>
+                <Link href="/billing?tab=documents" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
+                  <Receipt size={20} color="#00a2ed" /> Management • Documents
+                </Link>
+                <Link href="/billing?tab=products" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
+                  <Package size={20} color="#00a2ed" /> Management • Products
+                </Link>
+                <Link href="/billing?tab=reporting" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
+                  <BarChart3 size={20} color="#00a2ed" /> Management • Reporting
                 </Link>
                 <Link href="/billing/new?type=invoice" className={`${styles.navItem} ${pathname.startsWith('/billing/new') ? styles.active : ''}`}>
                   <Plus size={20} /> Generate New Bill

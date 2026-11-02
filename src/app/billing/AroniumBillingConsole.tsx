@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import styles from "./AroniumBillingConsole.module.css";
 import { convertQuotationToInvoice, deleteBillingDocument } from "./actions";
+import { deleteProduct } from "@/app/inventory/actions";
 
 interface Props {
   invoices: any[];
@@ -50,6 +51,7 @@ interface Props {
     totalDue: number;
     activeQuotes: number;
   };
+  initialTab?: "DOCUMENTS" | "REPORTING" | "DASHBOARD" | "PRODUCTS";
 }
 
 export default function AroniumBillingConsole({
@@ -60,12 +62,19 @@ export default function AroniumBillingConsole({
   users = [],
   projects = [],
   metrics,
+  initialTab = "DOCUMENTS",
 }: Props) {
   const router = useRouter();
 
-  // Navigation View: DOCUMENTS, REPORTING, or DASHBOARD
-  const [activeView, setActiveView] = useState<"DOCUMENTS" | "REPORTING" | "DASHBOARD">("DOCUMENTS");
+  // Navigation View: DOCUMENTS, REPORTING, DASHBOARD, or PRODUCTS
+  const [activeView, setActiveView] = useState<"DOCUMENTS" | "REPORTING" | "DASHBOARD" | "PRODUCTS">(initialTab);
   
+  // Products Module State
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [productSearch, setProductSearch] = useState("");
+  const [selectedProductGroup, setSelectedProductGroup] = useState<string | null>(null);
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false);
+
   // Theme State: DARK (authentic Aronium charcoal) or LIGHT
   const [theme, setTheme] = useState<"DARK" | "LIGHT">("DARK");
 
@@ -73,6 +82,14 @@ export default function AroniumBillingConsole({
     const saved = localStorage.getItem("aronium_theme");
     if (saved === "LIGHT" || saved === "DARK") {
       setTheme(saved);
+    }
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab")?.toUpperCase();
+      if (tabParam === "DOCUMENTS" || tabParam === "REPORTING" || tabParam === "DASHBOARD" || tabParam === "PRODUCTS") {
+        setActiveView(tabParam as any);
+      }
     }
   }, []);
 
@@ -98,6 +115,75 @@ export default function AroniumBillingConsole({
       month: "short",
       year: "numeric"
     });
+  };
+
+  // Products Management Logic (Aronium Products Image 4)
+  const productGroups = useMemo(() => {
+    return Array.from(new Set(products.map(p => p.category || "General"))).filter(Boolean).sort();
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      if (selectedProductGroup && (p.category || "General") !== selectedProductGroup) {
+        return false;
+      }
+      if (productSearch.trim()) {
+        const q = productSearch.toLowerCase();
+        return (
+          p.name?.toLowerCase().includes(q) ||
+          p.sku?.toLowerCase().includes(q) ||
+          p.barcode?.toLowerCase().includes(q) ||
+          p.category?.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [products, selectedProductGroup, productSearch]);
+
+  const handleDeleteProduct = async () => {
+    if (!selectedProductId) return;
+    const prod = products.find(p => p.id === selectedProductId);
+    const confirmMsg = `Are you sure you want to delete product "${prod?.name || selectedProductId}"?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsDeletingProduct(true);
+    try {
+      const res = await deleteProduct(selectedProductId);
+      if (res.success) {
+        setSelectedProductId(null);
+        router.refresh();
+      } else {
+        alert(res.error || "Failed to delete product.");
+      }
+    } catch (err: any) {
+      alert(err.message || "An error occurred.");
+    } finally {
+      setIsDeletingProduct(false);
+    }
+  };
+
+  const handleExportProductsCSV = () => {
+    const headers = ["Code/SKU", "Name", "Category", "Barcode", "Cost Price", "Tax %", "Sale Price", "Unit", "Is Service"];
+    const rows = filteredProducts.map(p => [
+      p.sku || p.aroniumId || p.id,
+      `"${(p.name || '').replace(/"/g, '""')}"`,
+      `"${(p.category || 'General').replace(/"/g, '""')}"`,
+      `"${p.barcode || ''}"`,
+      p.purchasePrice || 0,
+      p.taxRate || 18,
+      p.sellingPrice || 0,
+      p.unit || (p.isService ? 'SERVICE' : 'PCS'),
+      p.isService ? 'YES' : 'NO'
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `aronium_products_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // 1. Normalize All Documents into Unified Records
@@ -539,11 +625,18 @@ export default function AroniumBillingConsole({
           <span style={{ color: "#00a2ed", fontWeight: 700 }}>Management</span>
           <span style={{ opacity: 0.5 }}>•</span>
           <span className={styles.breadcrumbTitle}>
-            {activeView === "DOCUMENTS" ? "Documents" : activeView === "REPORTING" ? "Reporting" : "Dashboard"}
+            {activeView === "DOCUMENTS" ? "Documents" : activeView === "REPORTING" ? "Reporting" : activeView === "PRODUCTS" ? "Products" : "Dashboard"}
           </span>
         </div>
 
         <div className={styles.tabPillGroup}>
+          <button
+            type="button"
+            onClick={() => setActiveView("DASHBOARD")}
+            className={`${styles.tabPill} ${activeView === "DASHBOARD" ? styles.tabPillActive : ""}`}
+          >
+            <TrendingUp size={14} /> Dashboard
+          </button>
           <button
             type="button"
             onClick={() => setActiveView("DOCUMENTS")}
@@ -553,25 +646,18 @@ export default function AroniumBillingConsole({
           </button>
           <button
             type="button"
+            onClick={() => setActiveView("PRODUCTS")}
+            className={`${styles.tabPill} ${activeView === "PRODUCTS" ? styles.tabPillActive : ""}`}
+          >
+            <Package size={14} /> Products
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveView("REPORTING")}
             className={`${styles.tabPill} ${activeView === "REPORTING" ? styles.tabPillActive : ""}`}
           >
             <BarChart3 size={14} /> Reporting
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveView("DASHBOARD")}
-            className={`${styles.tabPill} ${activeView === "DASHBOARD" ? styles.tabPillActive : ""}`}
-          >
-            <TrendingUp size={14} /> Dashboard
-          </button>
-          <Link
-            href="/inventory"
-            className={styles.tabPill}
-            style={{ textDecoration: "none" }}
-          >
-            <Package size={14} /> Products
-          </Link>
           <Link
             href="/customers"
             className={styles.tabPill}
@@ -1230,6 +1316,189 @@ export default function AroniumBillingConsole({
                   <span>Active Quotations:</span>
                   <strong>{metrics.activeQuotes}</strong>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* VIEW 4: MANAGEMENT • PRODUCTS (Matching Aronium Image 4)   */}
+      {/* ========================================================= */}
+      {activeView === "PRODUCTS" && (
+        <div className={styles.productsModuleLayout}>
+          {/* Action Toolbar */}
+          <div className={styles.actionToolbar}>
+            <button
+              type="button"
+              onClick={() => router.refresh()}
+              className={styles.toolBtn}
+              title="Refresh Products"
+            >
+              <RefreshCcw size={14} /> Refresh
+            </button>
+            <Link
+              href="/inventory/new"
+              className={styles.toolBtn}
+              style={{ background: "#00a2ed", color: "#ffffff", fontWeight: 700 }}
+            >
+              <Plus size={14} /> + New product
+            </Link>
+            <Link
+              href={selectedProductId ? `/inventory/${selectedProductId}/edit` : "#"}
+              className={`${styles.toolBtn} ${!selectedProductId ? styles.toolBtnDisabled : ""}`}
+            >
+              <Edit3 size={14} /> Edit product
+            </Link>
+            <button
+              type="button"
+              onClick={handleDeleteProduct}
+              disabled={!selectedProductId || isDeletingProduct}
+              className={`${styles.toolBtn} ${!selectedProductId ? styles.toolBtnDisabled : ""}`}
+              style={{ color: selectedProductId ? "#ef4444" : "inherit" }}
+            >
+              <Trash2 size={14} /> {isDeletingProduct ? "Deleting..." : "Delete product"}
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className={styles.toolBtn}
+            >
+              <Printer size={14} /> Print
+            </button>
+            <button
+              type="button"
+              onClick={handleExportProductsCSV}
+              className={styles.toolBtn}
+            >
+              <Download size={14} /> Export CSV
+            </button>
+          </div>
+
+          {/* Group Tree & Products Split */}
+          <div className={styles.productsSplit}>
+            {/* Left Group Tree Panel */}
+            <div className={`${styles.panelCard} ${styles.groupTreePanel}`}>
+              <div className={styles.groupTreeHeader}>
+                <Layers size={13} color="#00a2ed" />
+                <span style={{ fontWeight: 700, fontSize: "12px", textTransform: "uppercase" }}>Categories</span>
+              </div>
+              <div className={styles.groupTreeList}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProductGroup(null)}
+                  className={`${styles.groupTreeItem} ${selectedProductGroup === null ? styles.groupTreeItemActive : ""}`}
+                >
+                  📁 All Products ({products.length})
+                </button>
+                {productGroups.map(grp => {
+                  const count = products.filter(p => (p.category || "General") === grp).length;
+                  return (
+                    <button
+                      key={grp}
+                      type="button"
+                      onClick={() => setSelectedProductGroup(grp)}
+                      className={`${styles.groupTreeItem} ${selectedProductGroup === grp ? styles.groupTreeItemActive : ""}`}
+                    >
+                      📂 {grp} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right Products Table Area */}
+            <div className={styles.productsTableArea}>
+              <div className={styles.productsSubBar}>
+                <div className={styles.productSearchWrapper}>
+                  <Search size={14} className={styles.searchIcon} />
+                  <input
+                    type="text"
+                    placeholder="Search product name, barcode, SKU..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className={styles.inputField}
+                    style={{ paddingLeft: "30px" }}
+                  />
+                  {productSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setProductSearch("")}
+                      style={{ position: "absolute", right: "8px", top: "7px", background: "none", border: "none", color: "inherit", cursor: "pointer" }}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                <div style={{ fontSize: "12px", fontWeight: 700, color: "#00a2ed" }}>
+                  Products count: {filteredProducts.length}
+                </div>
+              </div>
+
+              {/* Products Table */}
+              <div className={styles.tableWrapper} style={{ maxHeight: "calc(100vh - 250px)" }}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: "80px" }}>Code</th>
+                      <th>Name</th>
+                      <th>Group</th>
+                      <th>Barcode</th>
+                      <th style={{ textAlign: "right" }}>Cost</th>
+                      <th style={{ textAlign: "right" }}>Sale price (excl.)</th>
+                      <th style={{ textAlign: "center" }}>Taxes</th>
+                      <th style={{ textAlign: "right" }}>Sale price</th>
+                      <th style={{ textAlign: "center" }}>Active</th>
+                      <th>Unit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredProducts.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} style={{ textAlign: "center", padding: "40px", opacity: 0.6 }}>
+                          No products found in this category.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredProducts.map((p, idx) => {
+                        const isSelected = selectedProductId === p.id;
+                        const taxPct = Number(p.taxRate || 18);
+                        const exclPrice = Number(p.sellingPrice || 0) / (1 + taxPct / 100);
+                        const code = p.sku || p.aroniumId || `PROD-${idx + 1}`;
+
+                        return (
+                          <tr
+                            key={p.id}
+                            onClick={() => setSelectedProductId(p.id)}
+                            onDoubleClick={() => router.push(`/inventory/${p.id}/edit`)}
+                            className={isSelected ? styles.selectedRow : ""}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <td style={{ fontFamily: "monospace", fontWeight: 600 }}>{code}</td>
+                            <td style={{ fontWeight: 600 }}>
+                              {p.name}
+                              {p.isService && (
+                                <span style={{ marginLeft: "6px", fontSize: "10px", padding: "1px 5px", borderRadius: "3px", background: "#3b82f6", color: "#fff", fontWeight: 700 }}>
+                                  SERVICE
+                                </span>
+                              )}
+                            </td>
+                            <td>{p.category || "General"}</td>
+                            <td style={{ fontFamily: "monospace", opacity: 0.8 }}>{p.barcode || "---"}</td>
+                            <td style={{ textAlign: "right", fontFamily: "monospace" }}>₹{formatCurrency(p.purchasePrice)}</td>
+                            <td style={{ textAlign: "right", fontFamily: "monospace" }}>₹{formatCurrency(exclPrice)}</td>
+                            <td style={{ textAlign: "center" }}>{taxPct}%</td>
+                            <td style={{ textAlign: "right", fontWeight: 700, fontFamily: "monospace", color: "#00a2ed" }}>₹{formatCurrency(p.sellingPrice)}</td>
+                            <td style={{ textAlign: "center", color: "#10b981", fontWeight: 700 }}>✓</td>
+                            <td style={{ textTransform: "uppercase", fontSize: "11px", fontWeight: 600 }}>
+                              {p.unit || (p.isService ? "SERVICE" : "PCS")}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
