@@ -48,7 +48,10 @@ export default async function Dashboard() {
     activeStaffToday,
     pendingClientAccessCount,
     totalPendingQuotes,
-    totalPendingInvoices
+    totalPendingInvoices,
+    totalProducts,
+    lowStockProducts,
+    inventoryItems
   ] = await Promise.all([
     prisma.customer.count({ where: { status: { not: "INACTIVE" } } }),
     prisma.domainRegistration.count({ where: { status: "ACTIVE" } }),
@@ -82,7 +85,12 @@ export default async function Dashboard() {
     prisma.clientAccessRequest.count({ where: { status: "PENDING" } }),
     prisma.quotationRequest.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
     prisma.invoiceRequest.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } }),
+    prisma.erpProduct.count(),
+    prisma.erpProduct.count({ where: { isLowStock: true } }),
+    prisma.erpProduct.findMany({ select: { currentStock: true, purchasePrice: true } }),
   ]);
+
+  const totalInventoryValuation = inventoryItems.reduce((acc, p) => acc + Math.max(0, p.currentStock * p.purchasePrice), 0);
 
   // Project Status Overview
   const projectStatusCounts = projects.reduce((acc, curr) => {
@@ -347,10 +355,39 @@ export default async function Dashboard() {
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Across all teams</span>
           </div>
         </div>
+
+        {/* Inventory Metric Card */}
+        <Link href="/inventory" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className={styles.metricCard} style={{ cursor: 'pointer', transition: 'transform 0.15s' }}>
+            <div className={`${styles.iconWrapper} ${styles.green}`}>
+              <Package size={24} />
+            </div>
+            <div className={styles.metricInfo}>
+              <h3>Inventory Valuation</h3>
+              <p className={styles.metricValue}>₹{totalInventoryValuation.toLocaleString("en-IN")}</p>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                {totalProducts} SKUs • {lowStockProducts > 0 ? `⚠️ ${lowStockProducts} Low Stock` : "Stock Healthy"}
+              </span>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Action required alerts */}
       <div className={styles.alertsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+        {lowStockProducts > 0 && (
+          <div className={`${styles.alertCard} ${styles.warningAlert}`}>
+            <div className={styles.alertHeader}>
+              <Package size={20} />
+              <h3>Low Stock Warning</h3>
+              <span className={styles.badge}>{lowStockProducts}</span>
+            </div>
+            <p>{lowStockProducts} inventory item{lowStockProducts > 1 ? "s are" : " is"} below the minimum reorder threshold.</p>
+            <Link href="/inventory" className="btn-primary" style={{marginTop: '12px', background: '#D97706', borderColor: '#D97706'}}>
+              Review Inventory Restock
+            </Link>
+          </div>
+        )}
         <div className={`${styles.alertCard} ${styles.warningAlert}`}>
           <div className={styles.alertHeader}>
             <PhoneCall size={20} />

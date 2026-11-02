@@ -7,10 +7,15 @@ import Link from "next/link";
 import InvoiceRequestForm from "./InvoiceRequestForm";
 
 export default async function NewInvoiceRequestPage() {
-  const customers = await prisma.customer.findMany({
-    orderBy: { name: "asc" },
-    include: { projects: true }
-  });
+  const [customers, products] = await Promise.all([
+    prisma.customer.findMany({
+      orderBy: { name: "asc" },
+      include: { projects: true }
+    }),
+    prisma.erpProduct.findMany({
+      orderBy: { name: "asc" }
+    })
+  ]);
 
   return (
     <div className={styles.container}>
@@ -21,12 +26,12 @@ export default async function NewInvoiceRequestPage() {
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>New Invoice Request</h1>
-          <p className={styles.subtitle}>Submit a request to the admin team to generate an official invoice in Aronium.</p>
+          <p className={styles.subtitle}>Submit a request to generate an official invoice in Aronium or link directly to inventory stock.</p>
         </div>
       </header>
 
       <div className={styles.card}>
-        <InvoiceRequestForm customers={customers} />
+        <InvoiceRequestForm customers={customers} products={products} />
       </div>
     </div>
   );

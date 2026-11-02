@@ -11,7 +11,8 @@ import {
   Receipt, HeadphonesIcon, Calendar, MonitorPlay, IndianRupee, 
   Megaphone, LayoutDashboard, CreditCard, Monitor, Repeat, 
   Folder, PieChart, X, UserCheck, Clock, CalendarCheck, 
-  Shield, TrendingUp, UserPlus, ShieldCheck, MessageSquare 
+  Shield, TrendingUp, UserPlus, ShieldCheck, MessageSquare,
+  Package, History, BarChart3
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
@@ -112,6 +113,9 @@ export default function Sidebar({ user }: { user: any }) {
                 <Link href="/packages" className={`${styles.navItem} ${pathname.startsWith('/packages') ? styles.active : ''}`}>
                   <RefreshCw size={20} /> Service Packages
                 </Link>
+                <Link href="/inventory" className={`${styles.navItem} ${pathname.startsWith('/inventory') ? styles.active : ''}`}>
+                  <Package size={20} /> Products & Stock Catalog
+                </Link>
               </div>
 
               <div className={styles.navSection}>
@@ -177,6 +181,20 @@ export default function Sidebar({ user }: { user: any }) {
                 </Link>
                 <Link href="/reseller" className={`${styles.navItem} ${pathname.startsWith('/reseller') ? styles.active : ''}`}>
                   <MonitorPlay size={20} /> Reseller Dashboard
+                </Link>
+              </div>
+
+              {/* Inventory & Supply */}
+              <div className={styles.navSection}>
+                <p className={styles.navSectionTitle} style={{ color: "#10B981" }}>Inventory & Products</p>
+                <Link href="/inventory" className={`${styles.navItem} ${pathname === '/inventory' ? styles.active : ''}`}>
+                  <Package size={20} /> Stock & Products
+                </Link>
+                <Link href="/inventory/movements" className={`${styles.navItem} ${pathname === '/inventory/movements' ? styles.active : ''}`}>
+                  <History size={20} /> Stock Movements & Log
+                </Link>
+                <Link href="/inventory/reports" className={`${styles.navItem} ${pathname === '/inventory/reports' ? styles.active : ''}`}>
+                  <BarChart3 size={20} /> Inventory Valuation
                 </Link>
               </div>
 

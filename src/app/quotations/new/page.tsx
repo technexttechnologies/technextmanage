@@ -6,9 +6,10 @@ import styles from "../../projects/new/page.module.css";
 import QuotationForm from "./QuotationForm";
 
 export default async function NewQuotationPage() {
-  const customers = await prisma.customer.findMany({
-    orderBy: { name: "asc" }
-  });
+  const [customers, products] = await Promise.all([
+    prisma.customer.findMany({ orderBy: { name: "asc" } }),
+    prisma.erpProduct.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   return (
     <div className={styles.container}>
@@ -20,7 +21,7 @@ export default async function NewQuotationPage() {
         <h1 className={styles.title}>Create Quotation Reference</h1>
       </header>
 
-      <QuotationForm customers={customers} />
+      <QuotationForm customers={customers} products={products} />
     </div>
   );
 }

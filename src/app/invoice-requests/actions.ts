@@ -22,6 +22,19 @@ export async function createInvoiceRequest(formData: FormData) {
   const subtotalStr = formData.get("subtotal") as string;
   const subtotal = parseFloat(subtotalStr || "0");
   const notes = formData.get("notes") as string;
+  const itemsJson = formData.get("itemsJson") as string;
+
+  let structuredData: any = null;
+  if (itemsJson) {
+    try {
+      const parsedItems = JSON.parse(itemsJson);
+      if (Array.isArray(parsedItems) && parsedItems.length > 0) {
+        structuredData = { items: parsedItems };
+      }
+    } catch {
+      // ignore parsing error
+    }
+  }
 
   const gstPercentage = 0;
   const amountRequested = parseFloat(subtotal.toFixed(2));
@@ -38,6 +51,7 @@ export async function createInvoiceRequest(formData: FormData) {
       gstPercentage,
       amountRequested,
       notes: notes || null,
+      structuredData: structuredData || null,
       requestedById: session.userId as string,
       status: "SUBMITTED"
     },
@@ -101,6 +115,54 @@ export async function updateInvoiceStatus(formData: FormData) {
       details: `Admin changed status to ${status}.`
     }
   });
+
+  // Deduct stock if invoice is marked PAID and has inventory items
+  if (status === "PAID" && request.structuredData) {
+    try {
+      const data = request.structuredData as any;
+      if (data?.items && Array.isArray(data.items) && !data.stockDeducted) {
+        for (const item of data.items) {
+          if (item.productId && item.quantity > 0) {
+            const product = await prisma.erpProduct.findUnique({
+              where: { id: item.productId }
+            });
+            if (product) {
+              const prevStock = product.currentStock;
+              const newStock = Math.max(0, prevStock - item.quantity);
+              await prisma.erpProduct.update({
+                where: { id: item.productId },
+                data: { currentStock: newStock }
+              });
+              await prisma.stockMovement.create({
+                data: {
+                  productId: item.productId,
+                  type: "OUT",
+                  quantity: item.quantity,
+                  previousStock: prevStock,
+                  newStock: newStock,
+                  reason: `Fulfilled via Invoice Request #${request.aroniumInvoiceNo || request.id.slice(-6).toUpperCase()}`,
+                  referenceNo: request.aroniumInvoiceNo || request.id,
+                  createdById: session.userId as string
+                }
+              });
+            }
+          }
+        }
+        await prisma.invoiceRequest.update({
+          where: { id },
+          data: {
+            structuredData: {
+              ...data,
+              stockDeducted: true,
+              stockDeductedAt: new Date().toISOString()
+            }
+          }
+        });
+      }
+    } catch (invErr) {
+      console.error("[Inventory Stock Deduction Error on Invoice Payment]", invErr);
+    }
+  }
 
   // Send payment confirmation if PAID
   if (status === "PAID" && request.customer.email) {

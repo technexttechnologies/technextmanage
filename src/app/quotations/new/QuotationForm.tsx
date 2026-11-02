@@ -6,7 +6,7 @@ import { Save, UploadCloud, Loader2, Plus, Trash2 } from "lucide-react";
 import styles from "../../projects/new/page.module.css";
 import { createQuotation } from "../actions";
 
-export default function QuotationForm({ customers }: { customers: any[] }) {
+export default function QuotationForm({ customers, products = [] }: { customers: any[]; products?: any[] }) {
   const [isParsing, setIsParsing] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -146,6 +146,31 @@ export default function QuotationForm({ customers }: { customers: any[] }) {
         {items.map((item, index) => (
           <div key={index} style={{ border: '1px solid var(--surface-border)', padding: '16px', borderRadius: '8px', marginBottom: '16px', position: 'relative' }}>
             <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: 'var(--danger-color)', cursor: 'pointer' }}><Trash2 size={16}/></button>
+            
+            {products.length > 0 && (
+              <div style={{ marginBottom: '12px', maxWidth: '340px' }}>
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    const selected = products.find(p => p.id === e.target.value);
+                    if (selected) {
+                      handleItemChange(index, 'name', selected.name);
+                      handleItemChange(index, 'price', selected.sellingPrice);
+                      handleItemChange(index, 'description', selected.description || `${selected.category || 'General'} - SKU: ${selected.sku || 'N/A'}`);
+                    }
+                  }}
+                  style={{ width: '100%', padding: '6px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--surface-border)', background: 'var(--surface-background)', color: 'var(--text-primary)' }}
+                >
+                  <option value="">📦 Autofill from Inventory Item...</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} (Stock: {p.currentStock} {p.unit || 'Pcs'} • ₹{p.sellingPrice})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className={styles.grid2} style={{ marginBottom: '12px' }}>
               <div className={styles.inputGroup} style={{margin: 0}}>
                 <label>Service Name</label>

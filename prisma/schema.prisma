@@ -63,6 +63,7 @@ model User {
   erpMailsSent       ErpMail[]    @relation("ErpMailSent")
   erpEventsCreated   ErpEvent[]   @relation("ErpEventCreated")
   erpDocsUploaded    ErpDocument[] @relation("ErpDocumentUploaded")
+  stockMovements     StockMovement[]
 }
 
 model Customer {
@@ -871,19 +872,40 @@ model AroniumConfig {
 
 model ErpProduct {
   id            String   @id @default(cuid())
-  aroniumId     String   @unique
+  aroniumId     String?  @unique
   name          String
   sku           String?
   barcode       String?
   category      String?
   brand         String?
+  unit          String   @default("Pcs") // Pcs, Box, Kg, Nos, Set, Meter
+  hsnCode       String?  // HSN/SAC code for GST
+  taxRate       Float    @default(18) // GST percentage
+  description   String?  @db.Text
+  location      String?  // Warehouse/Rack/Shelf
   purchasePrice Float    @default(0)
   sellingPrice  Float    @default(0)
   currentStock  Float    @default(0)
   reorderLevel  Float    @default(0)
   isLowStock    Boolean  @default(false)
+  stockMovements StockMovement[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model StockMovement {
+  id            String      @id @default(cuid())
+  productId     String
+  product       ErpProduct  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type          String      // IN (Restock/Purchase), OUT (Sale/Dispatched), ADJUSTMENT (Correction), DAMAGE (Scrap)
+  quantity      Float
+  previousStock Float
+  newStock      Float
+  reason        String?
+  referenceNo   String?     // e.g. INV-1002, PO-5001, MANUAL-ADJ
+  createdById   String?
+  createdBy     User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime    @default(now())
 }
 
 model ErpSale {

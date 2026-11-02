@@ -95,6 +95,45 @@ export default async function InvoiceRequestDetails({ params }: { params: Promis
                   {request.notes}
                 </div>
               </div>
+              {(() => {
+                const sData = request.structuredData as any;
+                const itemsList = sData?.items && Array.isArray(sData.items) ? sData.items : null;
+                if (!itemsList || itemsList.length === 0) return null;
+                return (
+                  <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <label style={{ margin: 0 }}>Itemized Breakdown & Inventory Sync</label>
+                      {sData?.stockDeducted && (
+                        <span style={{ fontSize: '12px', background: '#D1FAE5', color: '#065F46', padding: '3px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                          ✓ Stock Deducted from Inventory
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ overflowX: 'auto', border: '1px solid var(--surface-border)', borderRadius: 'var(--radius-md)' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                        <thead>
+                          <tr style={{ background: 'var(--surface-background)', borderBottom: '1px solid var(--surface-border)', textAlign: 'left' }}>
+                            <th style={{ padding: '8px 12px' }}>Item Description</th>
+                            <th style={{ padding: '8px 12px', textAlign: 'center' }}>Qty</th>
+                            <th style={{ padding: '8px 12px', textAlign: 'right' }}>Price</th>
+                            <th style={{ padding: '8px 12px', textAlign: 'right' }}>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {itemsList.map((it: any, i: number) => (
+                            <tr key={i} style={{ borderBottom: '1px solid var(--surface-border)' }}>
+                              <td style={{ padding: '8px 12px', fontWeight: 500 }}>{it.name || it.description}</td>
+                              <td style={{ padding: '8px 12px', textAlign: 'center' }}>{it.quantity || 1}</td>
+                              <td style={{ padding: '8px 12px', textAlign: 'right' }}>₹{Number(it.price || it.unitPrice || 0).toFixed(2)}</td>
+                              <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600 }}>₹{Number(it.total || 0).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 

@@ -1,7 +1,8 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { PieChart, Download, FileText, IndianRupee, Users, Monitor, Repeat } from "lucide-react";
+import { PieChart, Download, FileText, IndianRupee, Users, Monitor, Repeat, Package } from "lucide-react";
+import Link from "next/link";
 import styles from "../dashboard/page.module.css";
 import ReportExportHeader from "@/components/erp/ReportExportHeader";
 
@@ -94,6 +95,16 @@ export default async function ReportsPage() {
                 <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Complete inventory of company assets.</p>
               </div>
               <button className="btn-secondary" style={{ padding: '6px 12px' }}><Download size={14} /></button>
+            </div>
+
+            <div style={{ border: '1px solid var(--surface-border)', padding: '16px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '15px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}><Package size={16} /> Product Inventory & Valuation</h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Real-time stock valuation, unit costs, and reorder alerts.</p>
+              </div>
+              <Link href="/inventory/reports" className="btn-secondary" style={{ padding: '6px 12px', fontSize: '13px', textDecoration: 'none' }}>
+                Open Report →
+              </Link>
             </div>
 
             <div style={{ border: '1px solid var(--surface-border)', padding: '16px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
