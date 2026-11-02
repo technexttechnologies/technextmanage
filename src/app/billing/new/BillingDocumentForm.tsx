@@ -16,7 +16,8 @@ import {
   X, 
   Loader2, 
   Layers, 
-  Calendar 
+  Calendar,
+  RotateCcw 
 } from "lucide-react";
 import styles from "../page.module.css";
 import { 
@@ -60,6 +61,7 @@ export default function BillingDocumentForm({
 }) {
   const normalizeType = (t: string) => {
     const lower = t.toLowerCase();
+    if (lower.includes("refund") || lower.includes("credit") || lower.includes("return")) return "REFUND";
     if (lower.includes("quote")) return "QUOTATION";
     if (lower.includes("order")) return "ORDER_FORM";
     if (lower.includes("pay") || lower.includes("receipt")) return "PAYMENT_RECEIPT";
@@ -268,6 +270,7 @@ export default function BillingDocumentForm({
       else if (newType === "QUOTATION") setDocumentNumber(getRandomNumber("Q-2026"));
       else if (newType === "ORDER_FORM") setDocumentNumber(getRandomNumber("ORD-2026"));
       else if (newType === "PAYMENT_RECEIPT") setDocumentNumber(getRandomNumber("REC-2026"));
+      else if (newType === "REFUND") setDocumentNumber(getRandomNumber("26-220"));
     }
   };
 
@@ -502,6 +505,26 @@ export default function BillingDocumentForm({
             >
               <CreditCard size={18} /> Payment Receipt
             </button>
+            <button
+              type="button"
+              onClick={() => handleTypeChange("REFUND")}
+              style={{
+                padding: "12px",
+                borderRadius: "8px",
+                border: documentType === "REFUND" ? "2px solid #EF4444" : "1px solid var(--surface-border)",
+                background: documentType === "REFUND" ? "#FEF2F2" : "var(--surface-background)",
+                color: documentType === "REFUND" ? "#EF4444" : "var(--text-primary)",
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                justifyContent: "center",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <RotateCcw size={18} /> Credit Note / Refund
+            </button>
           </div>
         </div>
 
@@ -621,7 +644,8 @@ export default function BillingDocumentForm({
             <label htmlFor="documentNumber">
               {documentType === "INVOICE" ? "Invoice Number *" :
                documentType === "QUOTATION" ? "Quotation Number *" :
-               documentType === "ORDER_FORM" ? "Order Number *" : "Receipt Number *"}
+               documentType === "ORDER_FORM" ? "Order Number *" :
+               documentType === "REFUND" ? "Credit Note / Refund Number *" : "Receipt Number *"}
             </label>
             <input 
               type="text" 

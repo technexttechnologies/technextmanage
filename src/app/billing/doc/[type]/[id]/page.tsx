@@ -87,6 +87,7 @@ export default async function BillingDocumentViewerPage({
   let resolvedDocType: BillingDocType = "INVOICE";
   if (normalizedType.includes("order")) resolvedDocType = "ORDER_FORM";
   else if (normalizedType.includes("payment") || normalizedType.includes("receipt")) resolvedDocType = "PAYMENT_RECEIPT";
+  else if (normalizedType.includes("refund")) resolvedDocType = "REFUND";
   else if (structured.documentType) resolvedDocType = structured.documentType;
 
   // Build items array

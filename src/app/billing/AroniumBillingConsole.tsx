@@ -45,11 +45,13 @@ import {
   Boxes,
   HelpCircle,
   Folder,
-  FolderOpen
+  FolderOpen,
+  RotateCcw
 } from "lucide-react";
 import styles from "./AroniumBillingConsole.module.css";
-import { convertQuotationToInvoice, deleteBillingDocument } from "./actions";
+import { convertQuotationToInvoice, deleteBillingDocument, processReturnAndRefund } from "./actions";
 import { deleteProduct } from "@/app/inventory/actions";
+import { generateReportVectorPdf } from "@/lib/vectorPdfGenerator";
 
 interface Props {
   invoices: any[];
@@ -92,6 +94,86 @@ export default function AroniumBillingConsole({
   const [productSearch, setProductSearch] = useState("");
   const [selectedProductGroup, setSelectedProductGroup] = useState<string | null>(null);
   const [isDeletingProduct, setIsDeletingProduct] = useState(false);
+
+  // Return & Refund Workflow State
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundDoc, setRefundDoc] = useState<any | null>(null);
+  const [refundMode, setRefundMode] = useState<"FULL" | "PARTIAL">("FULL");
+  const [refundAmount, setRefundAmount] = useState<number>(0);
+  const [refundMethod, setRefundMethod] = useState("UPI REVERSAL");
+  const [refundReason, setRefundReason] = useState("");
+  const [refundItems, setRefundItems] = useState<any[]>([]);
+  const [isProcessingRefund, setIsProcessingRefund] = useState(false);
+
+  const openRefundModal = (doc: any) => {
+    setRefundDoc(doc);
+    setRefundMode("FULL");
+    setRefundAmount(Math.abs(doc.amount));
+    setRefundReason("");
+    setRefundMethod("UPI REVERSAL");
+    setRefundItems((doc.items || []).map((it: any) => ({
+      ...it,
+      selected: true,
+      returnQty: it.quantity || 1
+    })));
+    setShowRefundModal(true);
+  };
+
+  const handleRefundItemToggle = (idx: number) => {
+    const next = [...refundItems];
+    next[idx].selected = !next[idx].selected;
+    setRefundItems(next);
+    const sum = next.filter(it => it.selected).reduce((acc, it) => acc + (Number(it.returnQty || 1) * Number(it.unitPrice || it.priceBeforeTax || 0)), 0);
+    setRefundAmount(sum);
+  };
+
+  const handleRefundQtyChange = (idx: number, qty: number) => {
+    const next = [...refundItems];
+    const maxQty = next[idx].quantity || 1;
+    next[idx].returnQty = Math.max(1, Math.min(maxQty, qty));
+    setRefundItems(next);
+    const sum = next.filter(it => it.selected).reduce((acc, it) => acc + (Number(it.returnQty || 1) * Number(it.unitPrice || it.priceBeforeTax || 0)), 0);
+    setRefundAmount(sum);
+  };
+
+  const handleProcessRefundSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!refundDoc) return;
+    if (refundAmount <= 0) {
+      alert("Please enter a valid refund amount greater than 0.");
+      return;
+    }
+
+    setIsProcessingRefund(true);
+    try {
+      const selectedItemsToReturn = refundItems
+        .filter(it => refundMode === "FULL" || it.selected)
+        .map(it => ({
+          name: it.name,
+          code: it.code,
+          quantity: it.returnQty || it.quantity || 1,
+          unitPrice: it.unitPrice || it.priceBeforeTax || 0,
+          total: (it.returnQty || it.quantity || 1) * (it.unitPrice || it.priceBeforeTax || 0)
+        }));
+
+      const fd = new FormData();
+      fd.append("originalDocId", refundDoc.id);
+      fd.append("refundAmount", String(refundAmount));
+      fd.append("refundMethod", refundMethod);
+      fd.append("reason", refundReason.trim() || "Customer return & refund request");
+      fd.append("returnItemsJson", JSON.stringify(selectedItemsToReturn));
+
+      const res = await processReturnAndRefund(fd);
+      if (res && res.success) {
+        setShowRefundModal(false);
+        router.refresh();
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to process refund");
+    } finally {
+      setIsProcessingRefund(false);
+    }
+  };
 
   // Interactive Active Graph Drilldown State
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null);
@@ -886,9 +968,11 @@ export default function AroniumBillingConsole({
       <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ""}`}>
         <div>
           <div className={styles.sidebarHeader}>
-            <div style={{ width: "24px", height: "24px", borderRadius: "4px", backgroundColor: "#00a2ed", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: 900, fontSize: "13px" }}>
-              TN
-            </div>
+            <img
+              src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png"
+              alt="TechNext"
+              style={{ height: "24px", maxWidth: "32px", objectFit: "contain" }}
+            />
             {!sidebarCollapsed && (
               <div className={styles.sidebarTitle}>
                 Management
@@ -1006,9 +1090,10 @@ export default function AroniumBillingConsole({
                 type="button"
                 disabled={!selectedDoc}
                 onClick={() => {
-                  if (selectedDoc) window.open(selectedDoc.viewUrl, "_blank");
+                  if (selectedDoc) window.open(`${selectedDoc.viewUrl}?download=pdf`, "_blank");
                 }}
                 className={`${styles.toolBtn} ${!selectedDoc ? styles.toolBtnDisabled : ""}`}
+                title="Download 100% Vector PDF"
               >
                 <FileDown size={13} /> Save as PDF
               </button>
@@ -1022,6 +1107,21 @@ export default function AroniumBillingConsole({
                 className={`${styles.toolBtn} ${!selectedDoc ? styles.toolBtnDisabled : ""}`}
               >
                 <Edit3 size={13} /> Edit
+              </button>
+
+              <button
+                type="button"
+                disabled={!selectedDoc || selectedDoc.kind === "REFUND"}
+                onClick={() => {
+                  if (selectedDoc && selectedDoc.kind !== "REFUND") {
+                    openRefundModal(selectedDoc);
+                  }
+                }}
+                className={`${styles.toolBtn} ${(!selectedDoc || selectedDoc.kind === "REFUND") ? styles.toolBtnDisabled : ""}`}
+                style={{ color: (!selectedDoc || selectedDoc.kind === "REFUND") ? undefined : "#ef4444" }}
+                title="Process official Return or issue Credit Note / Refund"
+              >
+                <RotateCcw size={13} /> Return / Refund
               </button>
 
               {selectedDoc && (
@@ -1531,10 +1631,19 @@ export default function AroniumBillingConsole({
 
                   <button
                     type="button"
-                    onClick={() => window.print()}
+                    onClick={() => {
+                      if (generatedReportData) {
+                        generateReportVectorPdf(
+                          generatedReportData,
+                          `${repStartDate || "All Time"} to ${repEndDate || "Present"}`
+                        );
+                      } else {
+                        window.print();
+                      }
+                    }}
                     className={styles.toolBtn}
                     style={{ borderColor: "#ef4444", color: "#ef4444", padding: "6px 14px" }}
-                    title="Export PDF Document"
+                    title="Export 100% Vector PDF Report"
                   >
                     <FileDown size={13} /> PDF
                   </button>
@@ -1543,13 +1652,30 @@ export default function AroniumBillingConsole({
 
               {/* Generated Report Table Output */}
               {generatedReportData && (
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                    <h3 style={{ fontSize: "13.5px", fontWeight: 700, margin: 0, color: "#00a2ed" }}>
-                      {generatedReportData.title}
-                    </h3>
-                    <div style={{ fontSize: "12px", fontWeight: 700 }}>
-                      Total Volume: <span style={{ color: "#22c55e" }}>₹{formatCurrency(generatedReportData.totalSum || 0)}</span>
+                <div style={{ marginTop: "12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", padding: "10px 14px", backgroundColor: theme === "DARK" ? "#0f172a" : "#f8fafc", borderRadius: "6px", border: theme === "DARK" ? "1px solid #334155" : "1px solid #e2e8f0" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <img
+                        src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png"
+                        alt="TechNext"
+                        style={{ height: "24px", objectFit: "contain" }}
+                      />
+                      <div>
+                        <h3 style={{ fontSize: "14px", fontWeight: 700, margin: 0, color: "#00a2ed" }}>
+                          {generatedReportData.title}
+                        </h3>
+                        <div style={{ fontSize: "11px", opacity: 0.7 }}>
+                          Scope: Strictly Invoices Only • Certified Enterprise Audit
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: "12px", fontWeight: 700 }}>
+                        Total Net Volume: <span style={{ color: "#22c55e" }}>₹{formatCurrency(generatedReportData.totalSum || 0)}</span>
+                      </div>
+                      <div style={{ fontSize: "11px", opacity: 0.75 }}>
+                        Collected: ₹{formatCurrency(generatedReportData.totalPaid || 0)} | Due: ₹{formatCurrency(generatedReportData.totalDue || 0)}
+                      </div>
                     </div>
                   </div>
 
@@ -2243,9 +2369,11 @@ export default function AroniumBillingConsole({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0f172a", paddingBottom: "12px", marginBottom: "16px" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
-                <div style={{ width: "32px", height: "32px", backgroundColor: "#0f172a", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: 900, fontSize: "16px" }}>
-                  TN
-                </div>
+                <img
+                  src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png"
+                  alt="TechNext Technologies"
+                  style={{ height: "36px", objectFit: "contain" }}
+                />
                 <div>
                   <h1 style={{ fontSize: "18px", fontWeight: 800, margin: 0, textTransform: "uppercase", letterSpacing: "0.04em", color: "#0f172a" }}>
                     TechNext Technologies
@@ -2313,6 +2441,292 @@ export default function AroniumBillingConsole({
             </div>
           </div>
         </div>
+
+        {/* ========================================================= */}
+        {/* OFFICIAL RETURN & REFUND WORKFLOW MODAL                   */}
+        {/* ========================================================= */}
+        {showRefundModal && refundDoc && (
+          <div style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.65)",
+            backdropFilter: "blur(4px)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px"
+          }}>
+            <div style={{
+              backgroundColor: theme === "DARK" ? "#1e293b" : "#ffffff",
+              color: theme === "DARK" ? "#f8fafc" : "#0f172a",
+              borderRadius: "12px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2)",
+              border: theme === "DARK" ? "1px solid #334155" : "1px solid #e2e8f0",
+              maxWidth: "680px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              padding: "24px"
+            }}>
+              {/* Modal Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: theme === "DARK" ? "1px solid #334155" : "1px solid #e2e8f0", paddingBottom: "14px", marginBottom: "18px" }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ backgroundColor: "#fee2e2", color: "#dc2626", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                      <RotateCcw size={12} /> Credit Note
+                    </span>
+                    <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 700 }}>
+                      Process Return &amp; Issue Refund
+                    </h3>
+                  </div>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "12.5px", opacity: 0.75 }}>
+                    Original Document #{refundDoc.docNumber} • Customer: <strong>{refundDoc.customerName}</strong> • Original Billed: <strong>₹{formatCurrency(Math.abs(refundDoc.amount))}</strong>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowRefundModal(false)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: theme === "DARK" ? "#94a3b8" : "#64748b", padding: "4px" }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleProcessRefundSubmit}>
+                {/* 1. Refund Scope Mode */}
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 700, display: "block", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.8 }}>
+                    Return Scope
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRefundMode("FULL");
+                        setRefundAmount(Math.abs(refundDoc.amount));
+                      }}
+                      style={{
+                        padding: "10px",
+                        borderRadius: "6px",
+                        border: refundMode === "FULL" ? "2px solid #ef4444" : "1px solid #cbd5e1",
+                        backgroundColor: refundMode === "FULL" ? (theme === "DARK" ? "#450a0a" : "#fef2f2") : "transparent",
+                        color: refundMode === "FULL" ? "#ef4444" : "inherit",
+                        fontWeight: 600,
+                        fontSize: "12.5px",
+                        cursor: "pointer",
+                        textAlign: "center"
+                      }}
+                    >
+                      Full Refund / Cancellation (₹{formatCurrency(Math.abs(refundDoc.amount))})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRefundMode("PARTIAL");
+                        const sum = refundItems.filter(it => it.selected).reduce((acc, it) => acc + (Number(it.returnQty || 1) * Number(it.unitPrice || it.priceBeforeTax || 0)), 0);
+                        setRefundAmount(sum);
+                      }}
+                      style={{
+                        padding: "10px",
+                        borderRadius: "6px",
+                        border: refundMode === "PARTIAL" ? "2px solid #ef4444" : "1px solid #cbd5e1",
+                        backgroundColor: refundMode === "PARTIAL" ? (theme === "DARK" ? "#450a0a" : "#fef2f2") : "transparent",
+                        color: refundMode === "PARTIAL" ? "#ef4444" : "inherit",
+                        fontWeight: 600,
+                        fontSize: "12.5px",
+                        cursor: "pointer",
+                        textAlign: "center"
+                      }}
+                    >
+                      Partial Return (Select Items &amp; Qty)
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Itemized Return Selector (if partial) */}
+                {refundMode === "PARTIAL" && (
+                  <div style={{ marginBottom: "16px", border: theme === "DARK" ? "1px solid #334155" : "1px solid #e2e8f0", borderRadius: "8px", overflow: "hidden" }}>
+                    <div style={{ backgroundColor: theme === "DARK" ? "#0f172a" : "#f8fafc", padding: "8px 12px", fontSize: "12px", fontWeight: 700, borderBottom: theme === "DARK" ? "1px solid #334155" : "1px solid #e2e8f0" }}>
+                      Select Items to Return:
+                    </div>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                      <thead>
+                        <tr style={{ borderBottom: theme === "DARK" ? "1px solid #334155" : "1px solid #e2e8f0", opacity: 0.7 }}>
+                          <th style={{ padding: "6px 10px", width: "30px", textAlign: "center" }}></th>
+                          <th style={{ padding: "6px 10px", textAlign: "left" }}>Item</th>
+                          <th style={{ padding: "6px 10px", textAlign: "center", width: "90px" }}>Return Qty</th>
+                          <th style={{ padding: "6px 10px", textAlign: "right", width: "90px" }}>Unit (₹)</th>
+                          <th style={{ padding: "6px 10px", textAlign: "right", width: "100px" }}>Total (₹)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {refundItems.map((it, idx) => (
+                          <tr key={idx} style={{ borderBottom: theme === "DARK" ? "1px solid #334155" : "1px solid #f1f5f9" }}>
+                            <td style={{ padding: "6px 10px", textAlign: "center" }}>
+                              <input
+                                type="checkbox"
+                                checked={it.selected}
+                                onChange={() => handleRefundItemToggle(idx)}
+                                style={{ accentColor: "#ef4444" }}
+                              />
+                            </td>
+                            <td style={{ padding: "6px 10px" }}>
+                              <div style={{ fontWeight: 600 }}>{it.name}</div>
+                              <div style={{ fontSize: "11px", opacity: 0.65 }}>Code: {it.code}</div>
+                            </td>
+                            <td style={{ padding: "6px 10px", textAlign: "center" }}>
+                              <input
+                                type="number"
+                                min={1}
+                                max={it.quantity || 1}
+                                value={it.returnQty || 1}
+                                disabled={!it.selected}
+                                onChange={(e) => handleRefundQtyChange(idx, parseInt(e.target.value) || 1)}
+                                style={{
+                                  width: "55px",
+                                  padding: "3px 6px",
+                                  borderRadius: "4px",
+                                  border: "1px solid #cbd5e1",
+                                  textAlign: "center",
+                                  backgroundColor: theme === "DARK" ? "#0f172a" : "#ffffff",
+                                  color: "inherit"
+                                }}
+                              />
+                              <span style={{ fontSize: "10px", opacity: 0.6, display: "block" }}>Max: {it.quantity || 1}</span>
+                            </td>
+                            <td style={{ padding: "6px 10px", textAlign: "right" }}>
+                              ₹{formatCurrency(it.unitPrice || it.priceBeforeTax || 0)}
+                            </td>
+                            <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: 700, color: it.selected ? "#ef4444" : "inherit" }}>
+                              ₹{formatCurrency((it.returnQty || 1) * (it.unitPrice || it.priceBeforeTax || 0))}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* 3. Refund Amount & Tender Row */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
+                  <div>
+                    <label style={{ fontSize: "12px", fontWeight: 700, display: "block", marginBottom: "4px" }}>
+                      Refund Total Amount (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      value={refundAmount}
+                      onChange={(e) => setRefundAmount(parseFloat(e.target.value) || 0)}
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid #cbd5e1",
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        color: "#ef4444",
+                        backgroundColor: theme === "DARK" ? "#0f172a" : "#ffffff"
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: "12px", fontWeight: 700, display: "block", marginBottom: "4px" }}>
+                      Refund Tender Method *
+                    </label>
+                    <select
+                      value={refundMethod}
+                      onChange={(e) => setRefundMethod(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid #cbd5e1",
+                        fontSize: "13px",
+                        backgroundColor: theme === "DARK" ? "#0f172a" : "#ffffff",
+                        color: "inherit"
+                      }}
+                    >
+                      <option value="UPI REVERSAL">UPI Payment Reversal</option>
+                      <option value="CASH REFUND">Cash Tender Refund</option>
+                      <option value="BANK ACCOUNT TRANSFER">Bank Account / NEFT Transfer</option>
+                      <option value="CUSTOMER STORE CREDIT">Customer Account Store Credit</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 4. Reason / Audit Notes */}
+                <div style={{ marginBottom: "20px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 700, display: "block", marginBottom: "4px" }}>
+                    Reason / Return Internal Audit Note *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Customer cancelled service / Returned hardware unit"
+                    value={refundReason}
+                    onChange={(e) => setRefundReason(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "13px",
+                      backgroundColor: theme === "DARK" ? "#0f172a" : "#ffffff",
+                      color: "inherit"
+                    }}
+                  />
+                </div>
+
+                {/* Modal Footer Actions */}
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: theme === "DARK" ? "1px solid #334155" : "1px solid #e2e8f0", paddingTop: "14px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowRefundModal(false)}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      background: "transparent",
+                      color: "inherit",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      cursor: "pointer"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isProcessingRefund}
+                    style={{
+                      padding: "8px 20px",
+                      borderRadius: "6px",
+                      border: "none",
+                      backgroundColor: "#dc2626",
+                      color: "#ffffff",
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px"
+                    }}
+                  >
+                    <RotateCcw size={14} />
+                    {isProcessingRefund ? "Generating Credit Note..." : "Confirm Return & Issue Refund"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

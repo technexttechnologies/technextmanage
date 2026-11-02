@@ -656,3 +656,136 @@ export async function convertQuotationToInvoice(quotationId: string) {
   revalidatePath("/quotations");
   redirect(`/billing/doc/invoice/${invoice.id}`);
 }
+
+export async function processReturnAndRefund(formData: FormData) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+
+  const originalDocId = formData.get("originalDocId") as string;
+  const refundAmount = parseFloat((formData.get("refundAmount") as string) || "0");
+  const refundMethod = (formData.get("refundMethod") as string) || "UPI REVERSAL";
+  const reason = (formData.get("reason") as string) || "Customer return / cancellation";
+  const returnItemsJson = (formData.get("returnItemsJson") as string) || "[]";
+
+  if (!originalDocId || isNaN(refundAmount) || refundAmount <= 0) {
+    throw new Error("Invalid document ID or refund amount");
+  }
+
+  const parentDoc = await prisma.invoiceRequest.findUnique({
+    where: { id: originalDocId },
+    include: { customer: true, project: true }
+  });
+
+  if (!parentDoc) throw new Error("Original invoice not found");
+
+  let parsedItems: any[] = [];
+  try {
+    parsedItems = JSON.parse(returnItemsJson);
+  } catch {
+    parsedItems = [];
+  }
+
+  // Find next refund number sequence (e.g. 26-220-000003)
+  const existingRefunds = await prisma.invoiceRequest.findMany({
+    where: {
+      aroniumInvoiceNo: {
+        contains: "220-"
+      }
+    },
+    select: { aroniumInvoiceNo: true }
+  });
+
+  let maxSeq = 2;
+  existingRefunds.forEach(r => {
+    if (r.aroniumInvoiceNo) {
+      const match = r.aroniumInvoiceNo.match(/220-(\d+)/);
+      if (match && match[1]) {
+        const val = parseInt(match[1], 10);
+        if (val > maxSeq) maxSeq = val;
+      }
+    }
+  });
+
+  const nextSeqStr = String(maxSeq + 1).padStart(6, "0");
+  const refundNumber = `26-220-${nextSeqStr}`;
+  const negativeAmount = -Math.abs(refundAmount);
+
+  const refundItems = parsedItems.length > 0 
+    ? parsedItems.map((it: any) => ({
+        name: `[RETURN] ${it.name}`,
+        description: `Returned item from #${parentDoc.aroniumInvoiceNo || parentDoc.id}. Reason: ${reason}`,
+        quantity: Math.abs(Number(it.quantity) || 1),
+        unitPrice: Math.abs(Number(it.unitPrice) || 0),
+        tax: it.tax || "18%",
+        discount: "0.00",
+        total: -Math.abs(Number(it.total) || (Number(it.quantity) * Number(it.unitPrice)))
+      }))
+    : [{
+        name: `Return / Refund: ${parentDoc.notes || "Professional Tech Services"}`,
+        description: `Credit note issued against #${parentDoc.aroniumInvoiceNo || parentDoc.id}. Reason: ${reason}`,
+        quantity: 1,
+        unitPrice: Math.abs(refundAmount),
+        tax: "18%",
+        discount: "0.00",
+        total: negativeAmount
+      }];
+
+  const parentStruct = (parentDoc.structuredData as any) || {};
+
+  const structuredPayload = {
+    documentType: "REFUND",
+    documentNumber: refundNumber,
+    referenceDocument: parentDoc.aroniumInvoiceNo || parentDoc.id,
+    originalInvoiceId: parentDoc.id,
+    date: new Date().toISOString().split("T")[0],
+    dueDate: new Date().toISOString().split("T")[0],
+    paymentStatus: "Refunded",
+    paymentMethod: refundMethod,
+    bankDetails: parentStruct.bankDetails || "SOUTH INDIAN BANK\nPULPALLY",
+    items: refundItems,
+    subtotal: negativeAmount,
+    totalDiscount: 0,
+    totalAmount: negativeAmount,
+    paidAmount: negativeAmount,
+    amountDue: 0,
+    reason,
+    scopeOfWork: `Official Credit Note / Return Document issued against Invoice #${parentDoc.aroniumInvoiceNo || parentDoc.id}. Amount of ₹${refundAmount.toLocaleString("en-IN")} refunded via ${refundMethod}. Reason: ${reason}`,
+    paymentTermsNote: "Official Return & Credit Note. Processed and reconciled with enterprise accounts.",
+  };
+
+  const refundDoc = await prisma.invoiceRequest.create({
+    data: {
+      customerId: parentDoc.customerId,
+      projectId: parentDoc.projectId,
+      subtotal: negativeAmount,
+      gstPercentage: 0,
+      amountRequested: negativeAmount,
+      notes: `Official Refund #${refundNumber} against #${parentDoc.aroniumInvoiceNo || parentDoc.id}. Reason: ${reason}`,
+      status: "PAID",
+      aroniumInvoiceNo: refundNumber,
+      structuredData: structuredPayload,
+      requestedById: session.userId as string,
+      assignedAdminId: session.userId as string,
+    }
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      action: "REFUND_ISSUED",
+      entityType: "INVOICE",
+      entityId: refundDoc.id,
+      userId: session.userId as string,
+      details: `Issued Refund #${refundNumber} for ₹${refundAmount.toLocaleString("en-IN")} against #${parentDoc.aroniumInvoiceNo || parentDoc.id} (${reason})`
+    }
+  });
+
+  revalidatePath("/billing");
+  revalidatePath("/erp/reports");
+  revalidatePath("/dashboard");
+
+  return {
+    success: true,
+    refundDocId: refundDoc.id,
+    refundNumber
+  };
+}

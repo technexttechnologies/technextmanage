@@ -583,6 +583,11 @@
 }
 
 /* Print Stylesheet - Exact A4 output with NO browser chrome */
+@page {
+  size: A4 portrait;
+  margin: 8mm 10mm;
+}
+
 @media print {
   body {
     background: #ffffff !important;
@@ -595,16 +600,18 @@
   .pageWrapper {
     background: transparent !important;
     padding: 0 !important;
+    min-height: auto !important;
   }
 
-  .actionBar {
+  .actionBar,
+  .modalOverlay {
     display: none !important;
   }
 
   .documentSheet {
     border: none !important;
     box-shadow: none !important;
-    padding: 20mm 15mm !important;
+    padding: 6mm 8mm !important;
     margin: 0 !important;
     max-width: 100% !important;
     width: 100% !important;
@@ -613,6 +620,7 @@
   /* Prevent page breaks inside sensitive areas */
   .itemsTable,
   .summaryContainer,
+  .installmentSection,
   .signatureSection,
   .docFooter {
     page-break-inside: avoid;

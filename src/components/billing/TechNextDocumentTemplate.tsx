@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   Printer, 
@@ -16,12 +16,15 @@ import {
   PlusCircle,
   X,
   Calendar,
-  Layers
+  Layers,
+  Download,
+  RotateCcw
 } from "lucide-react";
 import styles from "./TechNextDocumentTemplate.module.css";
 import { deleteBillingDocument, recordDocumentPayment } from "@/app/billing/actions";
+import { generateDocumentVectorPdf } from "@/lib/vectorPdfGenerator";
 
-export type BillingDocType = "INVOICE" | "QUOTATION" | "ORDER_FORM" | "PAYMENT_RECEIPT";
+export type BillingDocType = "INVOICE" | "QUOTATION" | "ORDER_FORM" | "PAYMENT_RECEIPT" | "REFUND";
 
 export interface PaymentInstallment {
   id?: string;
@@ -115,6 +118,22 @@ export default function TechNextDocumentTemplate({
   const [payStatus, setPayStatus] = useState("PAID");
   const [isRecording, setIsRecording] = useState(false);
 
+  // Auto-trigger direct vector PDF download or browser print when passed via URL query
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("download") === "pdf") {
+        setTimeout(() => {
+          generateDocumentVectorPdf({ ...data, documentType: docType });
+        }, 400);
+      } else if (params.get("print") === "true") {
+        setTimeout(() => {
+          window.print();
+        }, 400);
+      }
+    }
+  }, [data, docType]);
+
   // Helper date formatter: dd-MMM-yyyy (e.g. 07-Oct-2026)
   const formatDate = (val?: string | Date | null) => {
     if (!val) return "---";
@@ -141,6 +160,7 @@ export default function TechNextDocumentTemplate({
     QUOTATION: "QUOTATION",
     ORDER_FORM: "ORDER FORM",
     PAYMENT_RECEIPT: "PAYMENT RECEIPT",
+    REFUND: "CREDIT NOTE / REFUND"
   };
 
   const numberLabels: Record<BillingDocType, string> = {
@@ -148,6 +168,7 @@ export default function TechNextDocumentTemplate({
     QUOTATION: "Quotation No.:",
     ORDER_FORM: "Order No.:",
     PAYMENT_RECEIPT: "Receipt No.:",
+    REFUND: "Credit Note No.:"
   };
 
   const dateLabels: Record<BillingDocType, string> = {
@@ -155,6 +176,7 @@ export default function TechNextDocumentTemplate({
     QUOTATION: "Date:",
     ORDER_FORM: "Order Date:",
     PAYMENT_RECEIPT: "Payment Date:",
+    REFUND: "Refund Date:"
   };
 
   const dueLabels: Record<BillingDocType, string> = {
@@ -162,6 +184,7 @@ export default function TechNextDocumentTemplate({
     QUOTATION: "Valid until:",
     ORDER_FORM: "Delivery due:",
     PAYMENT_RECEIPT: "Ref Invoice:",
+    REFUND: "Ref Document:"
   };
 
   const subtotal = data.subtotal !== undefined 
@@ -206,34 +229,42 @@ export default function TechNextDocumentTemplate({
 
             {showTypeSwitcher && (
               <div className={styles.typeSwitcher}>
-                <button
-                  type="button"
-                  onClick={() => setDocType("INVOICE")}
-                  className={`${styles.typeBtn} ${docType === "INVOICE" ? styles.typeBtnActive : ""}`}
-                >
-                  <Receipt size={14} /> Invoice
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDocType("QUOTATION")}
-                  className={`${styles.typeBtn} ${docType === "QUOTATION" ? styles.typeBtnActive : ""}`}
-                >
-                  <FileText size={14} /> Quotation
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDocType("ORDER_FORM")}
-                  className={`${styles.typeBtn} ${docType === "ORDER_FORM" ? styles.typeBtnActive : ""}`}
-                >
-                  <ClipboardList size={14} /> Order Form
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDocType("PAYMENT_RECEIPT")}
-                  className={`${styles.typeBtn} ${docType === "PAYMENT_RECEIPT" ? styles.typeBtnActive : ""}`}
-                >
-                  <CreditCard size={14} /> Payment Receipt
-                </button>
+                {docType === "REFUND" ? (
+                  <div className={`${styles.typeBtn} ${styles.typeBtnActive}`} style={{ color: "#ef4444", fontWeight: 700 }}>
+                    <RotateCcw size={14} /> Credit Note / Refund
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setDocType("INVOICE")}
+                      className={`${styles.typeBtn} ${docType === "INVOICE" ? styles.typeBtnActive : ""}`}
+                    >
+                      <Receipt size={14} /> Invoice
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDocType("QUOTATION")}
+                      className={`${styles.typeBtn} ${docType === "QUOTATION" ? styles.typeBtnActive : ""}`}
+                    >
+                      <FileText size={14} /> Quotation
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDocType("ORDER_FORM")}
+                      className={`${styles.typeBtn} ${docType === "ORDER_FORM" ? styles.typeBtnActive : ""}`}
+                    >
+                      <ClipboardList size={14} /> Order Form
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDocType("PAYMENT_RECEIPT")}
+                      className={`${styles.typeBtn} ${docType === "PAYMENT_RECEIPT" ? styles.typeBtnActive : ""}`}
+                    >
+                      <CreditCard size={14} /> Payment Receipt
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -291,10 +322,20 @@ export default function TechNextDocumentTemplate({
             </a>
             <button
               type="button"
+              onClick={() => generateDocumentVectorPdf({ ...data, documentType: docType })}
+              className={styles.btnPrint}
+              style={{ background: "#0284c7" }}
+              title="Download 100% Vector PDF (Crisp typography, genuine downloadable PDF document)"
+            >
+              <Download size={15} /> Save as PDF
+            </button>
+            <button
+              type="button"
               onClick={() => window.print()}
               className={styles.btnPrint}
+              title="Print via browser dialog"
             >
-              <Printer size={15} /> Print / Save PDF
+              <Printer size={15} /> Print
             </button>
           </div>
         </div>
@@ -321,6 +362,7 @@ export default function TechNextDocumentTemplate({
               src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png"
               alt="TECHNEXT TECHNOLOGIES"
               className={styles.logoImg}
+              crossOrigin="anonymous"
             />
           </div>
         </div>
