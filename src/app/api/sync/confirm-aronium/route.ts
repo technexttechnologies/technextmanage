@@ -11,38 +11,112 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { confirmations } = await req.json();
+    const body = await req.json();
+    const { 
+      confirmations, // backward compatibility
+      customerConfirmations = [],
+      supplierConfirmations = [],
+      productConfirmations = [],
+      documentConfirmations = []
+    } = body;
 
-    if (!Array.isArray(confirmations)) {
-      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    const allCustomerConfs = [...(confirmations || []), ...(customerConfirmations || [])];
+
+    let custUpdated = 0;
+    for (const conf of allCustomerConfs) {
+      if (conf.crmId && conf.aroniumId) {
+        try {
+          await prisma.customer.update({
+            where: { id: conf.crmId },
+            data: {
+              aroniumId: conf.aroniumId.toString(),
+              syncStatus: "SYNCED",
+              lastSyncDate: new Date()
+            }
+          });
+          custUpdated++;
+        } catch (e) {
+          // ignore individual update error
+        }
+      }
     }
 
-    let updated = 0;
-
-    for (const conf of confirmations) {
+    let suppUpdated = 0;
+    for (const conf of supplierConfirmations) {
       if (conf.crmId && conf.aroniumId) {
-        await prisma.customer.update({
-          where: { id: conf.crmId },
+        try {
+          await prisma.erpVendor.update({
+            where: { id: conf.crmId },
+            data: {
+              aroniumId: conf.aroniumId.toString()
+            }
+          });
+          suppUpdated++;
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+
+    let prodUpdated = 0;
+    for (const conf of productConfirmations) {
+      if (conf.crmId && conf.aroniumId) {
+        try {
+          await prisma.erpProduct.update({
+            where: { id: conf.crmId },
+            data: {
+              aroniumId: conf.aroniumId.toString()
+            }
+          });
+          prodUpdated++;
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+
+    let docUpdated = 0;
+    for (const conf of documentConfirmations) {
+      if (conf.crmId && conf.aroniumNumber) {
+        try {
+          await prisma.invoiceRequest.update({
+            where: { id: conf.crmId },
+            data: {
+              aroniumInvoiceNo: conf.aroniumNumber
+            }
+          });
+          docUpdated++;
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+
+    const totalSynced = custUpdated + suppUpdated + prodUpdated + docUpdated;
+
+    if (totalSynced > 0) {
+      try {
+        await prisma.syncLog.create({
           data: {
-            aroniumId: conf.aroniumId.toString(),
-            syncStatus: "SYNCED",
-            lastSyncDate: new Date()
+            type: "TWO_WAY_AUTO_SYNC",
+            status: "SUCCESS",
+            recordsAdded: totalSynced,
+            details: `Confirmed two-way sync: ${custUpdated} customers, ${suppUpdated} vendors, ${prodUpdated} products, ${docUpdated} documents.`
           }
         });
-        updated++;
+      } catch (logErr) {
+        // ignore log error
       }
     }
 
-    await prisma.syncLog.create({
-      data: {
-        type: "CUSTOMER_AUTO",
-        status: "SUCCESS",
-        recordsAdded: 0,
-        details: `Confirmed ${updated} customers synced from Cloud to Local POS.`
-      }
+    return NextResponse.json({
+      success: true,
+      custUpdated,
+      suppUpdated,
+      prodUpdated,
+      docUpdated,
+      totalSynced
     });
-
-    return NextResponse.json({ success: true, updated });
   } catch (error: any) {
     console.error("Confirm Aronium Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

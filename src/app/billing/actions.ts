@@ -10,6 +10,17 @@ import {
   getAppUrl 
 } from "@/lib/whatsapp";
 
+async function triggerLocalAroniumSync() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1200);
+    await fetch("http://127.0.0.1:4040/sync", { signal: controller.signal }).catch(() => {});
+    clearTimeout(timeout);
+  } catch (e) {
+    // Ignore ping failure if cloud-hosted or agent not local
+  }
+}
+
 export async function quickCreateBillingCustomer(data: {
   name: string;
   company?: string;
@@ -54,6 +65,8 @@ export async function quickCreateBillingCustomer(data: {
       status: "ACTIVE",
     }
   });
+
+  await triggerLocalAroniumSync();
 
   return {
     success: true,
@@ -297,6 +310,8 @@ export async function createBillingDocument(formData: FormData) {
   revalidatePath("/quotations");
   revalidatePath("/inventory");
 
+  await triggerLocalAroniumSync();
+
   redirect(`/billing/doc/${documentType.toLowerCase()}/${createdId}`);
 }
 
@@ -488,6 +503,8 @@ export async function updateBillingDocument(formData: FormData) {
   revalidatePath("/quotations");
   revalidatePath("/inventory");
 
+  await triggerLocalAroniumSync();
+
   redirect(`/billing/doc/${documentType.toLowerCase()}/${id}`);
 }
 
@@ -567,6 +584,8 @@ export async function recordDocumentPayment(formData: FormData) {
   revalidatePath(`/billing/doc/order_form/${documentId}`);
   revalidatePath(`/billing/doc/payment_receipt/${documentId}`);
   revalidatePath("/payments");
+
+  await triggerLocalAroniumSync();
 }
 
 export async function deleteBillingDocument(formData: FormData) {
@@ -587,6 +606,9 @@ export async function deleteBillingDocument(formData: FormData) {
   revalidatePath("/billing");
   revalidatePath("/invoice-requests");
   revalidatePath("/quotations");
+
+  await triggerLocalAroniumSync();
+
   redirect("/billing");
 }
 
@@ -654,6 +676,9 @@ export async function convertQuotationToInvoice(quotationId: string) {
 
   revalidatePath("/billing");
   revalidatePath("/quotations");
+
+  await triggerLocalAroniumSync();
+
   redirect(`/billing/doc/invoice/${invoice.id}`);
 }
 
@@ -782,6 +807,8 @@ export async function processReturnAndRefund(formData: FormData) {
   revalidatePath("/billing");
   revalidatePath("/erp/reports");
   revalidatePath("/dashboard");
+
+  await triggerLocalAroniumSync();
 
   return {
     success: true,

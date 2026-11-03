@@ -336,7 +336,8 @@ export async function POST(req: Request) {
                 subtotal: totalAmount,
                 status: isRefundDoc ? 'PAID' : (isPaid ? 'PAID' : (paidAmount > 0 ? 'PARTIALLY_PAID' : 'INVOICE_GENERATED')),
                 structuredData: structuredData,
-                notes: isRefundDoc ? `Aronium POS Refund #${invoiceNumber}` : `Aronium POS Sales Invoice #${invoiceNumber}`
+                notes: isRefundDoc ? `Aronium POS Refund #${invoiceNumber}` : `Aronium POS Sales Invoice #${invoiceNumber}`,
+                createdAt: dt
               }
             });
           } else {
@@ -350,7 +351,8 @@ export async function POST(req: Request) {
                 requestedById: adminId,
                 assignedAdminId: adminId,
                 structuredData: structuredData,
-                notes: isRefundDoc ? `Aronium POS Refund #${invoiceNumber}` : `Aronium POS Sales Invoice #${invoiceNumber}`
+                notes: isRefundDoc ? `Aronium POS Refund #${invoiceNumber}` : `Aronium POS Sales Invoice #${invoiceNumber}`,
+                createdAt: dt
               }
             });
           }
@@ -393,6 +395,7 @@ export async function POST(req: Request) {
             data: {
               customerId: customerPrisma.id,
               date: pfDate,
+              createdAt: pfDate,
               totalAmount: totalAmount,
               subtotal: subtotal,
               status: pf.PaidStatus === 2 ? 'APPROVED' : (pf.PaidStatus === 1 ? 'SENT' : 'DRAFT'),
@@ -406,6 +409,7 @@ export async function POST(req: Request) {
               quotationNumber: pf.Number,
               customerId: customerPrisma.id,
               date: pfDate,
+              createdAt: pfDate,
               totalAmount: totalAmount,
               subtotal: subtotal,
               status: pf.PaidStatus === 2 ? 'APPROVED' : (pf.PaidStatus === 1 ? 'SENT' : 'DRAFT'),
