@@ -207,6 +207,18 @@ export default function TechNextDocumentTemplate({
 
   const bankText = data.bankDetails || "SOUTH INDIAN BANK\nPULPALLY";
 
+  // Scope of Work / Deliverables lines (Matching Uploaded Generation on the left of summary)
+  const scopeLines = React.useMemo(() => {
+    let lines: string[] = [];
+    if (data.scopeOfWork) {
+      lines = data.scopeOfWork.split(/\n|;/).map(s => s.trim()).filter(Boolean);
+    }
+    if (lines.length === 0) {
+      lines = (data.items || []).filter(it => it.description && it.description !== it.name).map(it => it.description!);
+    }
+    return lines;
+  }, [data.scopeOfWork, data.items]);
+
   // WhatsApp Share URL
   const prepareWhatsAppUrl = () => {
     const phone = data.customer.phone ? data.customer.phone.replace(/\D/g, "") : "";
@@ -488,55 +500,103 @@ export default function TechNextDocumentTemplate({
           </tbody>
         </table>
 
-        {/* Calculation Summary Block */}
-        <div className={styles.summaryContainer}>
-          {totalDiscount > 0 && (
-            <div className={styles.summaryRow}>
-              <span>Discount</span>
-              <span className={styles.discountVal}>-₹{formatCurrency(totalDiscount)}</span>
-            </div>
-          )}
+        {/* Post-Table 2-Column Split Layout: Scope Deliverables on Left, Totals on Right (Matching Uploaded Generation) */}
+        <div className={styles.postTableSplit}>
+          {/* Left Column: Scope / Deliverables List */}
+          <div className={styles.postTableLeftCol}>
+            {scopeLines.length > 0 ? (
+              scopeLines.map((line, idx) => (
+                <div key={idx} className={styles.scopeItemLine}>
+                  {line.toUpperCase()}
+                </div>
+              ))
+            ) : (
+              <div style={{ color: "#4b5563", fontStyle: "italic", fontSize: "11px" }}>
+                Official digital solutions &amp; technology services.
+              </div>
+            )}
 
-          <div className={styles.totalBox}>
-            <span>{docType === "QUOTATION" ? "Total Estimate" : docType === "ORDER_FORM" ? "Total Order Value" : "Total"}</span>
-            <span>₹{formatCurrency(totalAmount)}</span>
+            {data.paymentTermsNote && !scopeLines.includes(data.paymentTermsNote) && (
+              <div style={{ marginTop: "12px", fontSize: "11px", color: "#4b5563", lineHeight: 1.45 }}>
+                {data.paymentTermsNote}
+              </div>
+            )}
           </div>
 
-          <div className={styles.paymentDetailsBlock}>
-            <div className={styles.payRow}>
-              <span>Payment method:</span>
-              <span style={{ fontWeight: 600 }}>{data.paymentMethod || "UPI PAYMENT"}</span>
-            </div>
-
-            {data.splitBreakdown && (
-              <div style={{ margin: "4px 0 6px 0", padding: "6px 8px", background: "#f8fafc", borderRadius: "4px", border: "1px solid #e2e8f0", fontSize: "12px" }}>
-                <div style={{ fontWeight: 700, color: "#3730A3", marginBottom: "2px" }}>Split Tender Details:</div>
-                {Number(data.splitBreakdown.upi) > 0 && <div className={styles.payRow}><span>• UPI:</span><span>₹{formatCurrency(data.splitBreakdown.upi)}</span></div>}
-                {Number(data.splitBreakdown.cash) > 0 && <div className={styles.payRow}><span>• Cash:</span><span>₹{formatCurrency(data.splitBreakdown.cash)}</span></div>}
-                {Number(data.splitBreakdown.bank) > 0 && <div className={styles.payRow}><span>• Bank / NEFT:</span><span>₹{formatCurrency(data.splitBreakdown.bank)}</span></div>}
-                {Number(data.splitBreakdown.cheque) > 0 && <div className={styles.payRow}><span>• Cheque / Card:</span><span>₹{formatCurrency(data.splitBreakdown.cheque)}</span></div>}
+          {/* Right Column: Total Box & Tender Payment Details */}
+          <div className={styles.postTableRightCol}>
+            {totalDiscount > 0 && (
+              <div className={styles.summaryRow}>
+                <span>Discount</span>
+                <span className={styles.discountVal}>-₹{formatCurrency(totalDiscount)}</span>
               </div>
             )}
 
-            {data.creditTerms && (
-              <div style={{ margin: "4px 0 6px 0", padding: "6px 8px", background: "#FEF3C7", borderRadius: "4px", border: "1px solid #FDE68A", fontSize: "12px", color: "#92400E" }}>
-                <div>• Credit Terms: <strong>{data.creditTerms}</strong></div>
-                {data.creditDueDate && <div>• Payment Due Date: <strong>{formatDate(data.creditDueDate)}</strong></div>}
-              </div>
-            )}
-
-            <div className={styles.payRow}>
-              <span>Paid amount:</span>
-              <span>₹{formatCurrency(paidAmount)}</span>
+            <div className={styles.totalBox}>
+              <span>{docType === "QUOTATION" ? "Total Estimate" : docType === "ORDER_FORM" ? "Total Order Value" : "Total"}</span>
+              <span>₹{formatCurrency(totalAmount)}</span>
             </div>
-            <div className={styles.payRowBold}>
-              <span>Amount due:</span>
-              <span style={{ color: amountDue > 0 ? "#DC2626" : "inherit" }}>₹{formatCurrency(amountDue)}</span>
+
+            <div className={styles.paymentDetailsBlock}>
+              <div className={styles.payRowBold}>
+                <span>Payment method:</span>
+              </div>
+
+              {data.splitBreakdown && (Number(data.splitBreakdown.upi) > 0 || Number(data.splitBreakdown.cash) > 0) ? (
+                <>
+                  {Number(data.splitBreakdown.upi) > 0 && (
+                    <div className={styles.payRow}>
+                      <span>UPI PAYMENT:</span>
+                      <span>₹{formatCurrency(data.splitBreakdown.upi)}</span>
+                    </div>
+                  )}
+                  {Number(data.splitBreakdown.cash) > 0 && (
+                    <div className={styles.payRow}>
+                      <span>CASH PAYMENT:</span>
+                      <span>₹{formatCurrency(data.splitBreakdown.cash)}</span>
+                    </div>
+                  )}
+                  {Number(data.splitBreakdown.bank) > 0 && (
+                    <div className={styles.payRow}>
+                      <span>BANK / NEFT:</span>
+                      <span>₹{formatCurrency(data.splitBreakdown.bank)}</span>
+                    </div>
+                  )}
+                  {Number(data.splitBreakdown.cheque) > 0 && (
+                    <div className={styles.payRow}>
+                      <span>CHEQUE / CARD:</span>
+                      <span>₹{formatCurrency(data.splitBreakdown.cheque)}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className={styles.payRow}>
+                  <span>{(data.paymentMethod || "UPI PAYMENT").toUpperCase().includes("UPI") ? "UPI PAYMENT:" : `${(data.paymentMethod || "CASH").toUpperCase()}:`}</span>
+                  <span>₹{formatCurrency(paidAmount || totalAmount)}</span>
+                </div>
+              )}
+
+              {data.creditTerms && (
+                <div style={{ margin: "4px 0", padding: "4px 6px", background: "#FEF3C7", borderRadius: "3px", border: "1px solid #FDE68A", fontSize: "11px", color: "#92400E" }}>
+                  <div>Credit Terms: <strong>{data.creditTerms}</strong></div>
+                  {data.creditDueDate && <div>Due Date: <strong>{formatDate(data.creditDueDate)}</strong></div>}
+                </div>
+              )}
+
+              <div className={styles.payRow}>
+                <span>Paid amount:</span>
+                <span>₹{formatCurrency(paidAmount)}</span>
+              </div>
+
+              <div className={styles.payRowBold}>
+                <span>Amount due:</span>
+                <span style={{ color: amountDue > 0 ? "#DC2626" : "inherit" }}>₹{formatCurrency(amountDue)}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Multi-Date Payment Schedule & Installment Ledger Table */}
+        {/* Multi-Date Payment Schedule & Installment Ledger Table (If present) */}
         {data.paymentSchedule && data.paymentSchedule.length > 0 && (
           <div className={styles.installmentSection}>
             <div className={styles.installmentTitle}>
@@ -573,18 +633,6 @@ export default function TechNextDocumentTemplate({
           </div>
         )}
 
-        {/* Scope of Work & Narrative Notes */}
-        <div className={styles.scopeBlock}>
-          <p className={styles.scopeParagraph}>
-            {data.scopeOfWork ||
-              "The invoice covers the agreed website development scope, including website design, development, responsive optimization, basic functionality, deployment, and related configuration as discussed with the client."}
-          </p>
-          <p className={styles.scopeParagraph}>
-            {data.paymentTermsNote ||
-              "Payment Terms: Payment is due as per the agreed quotation/payment schedule. Any additional features, revisions, third-party services, domain, hosting, or other requirements outside the agreed scope may be charged separately."}
-          </p>
-        </div>
-
         {/* Signatures for Order Forms / Payment Receipt */}
         {(docType === "ORDER_FORM" || docType === "PAYMENT_RECEIPT" || docType === "QUOTATION") && (
           <div className={styles.signatureSection}>
@@ -618,7 +666,7 @@ export default function TechNextDocumentTemplate({
             Delivering Innovative Digital Solutions with Quality, Creativity &amp; Trust.
           </div>
           <div className={styles.footerBar}>
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            ━━━━━━━━━━━━━━━━━━━━━━
           </div>
 
           <div className={styles.policyGrid}>
@@ -643,7 +691,7 @@ export default function TechNextDocumentTemplate({
 
           <div className={styles.pageNumberFooter}>
             <span>TechNext Technologies • www.technexttechnologies.in</span>
-            <span>Page 1 of 1</span>
+            <span>Page 1</span>
           </div>
         </div>
       </div>

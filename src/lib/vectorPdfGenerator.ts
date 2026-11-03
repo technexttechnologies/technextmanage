@@ -23,7 +23,7 @@ function formatDate(d: any): string {
 
 /**
  * Generates an authentic 100% Vector PDF for TechNext Invoices, Quotations, Refunds, and Orders.
- * No HTML canvas screenshots. Sharp vector typography, official logo, and precise A4 layout.
+ * Matches the uploaded executive invoice standard with crisp vector typography, official logo, and clean A4 grid.
  */
 export function generateDocumentVectorPdf(data: BillingDocumentData): void {
   const doc = new jsPDF({
@@ -37,131 +37,153 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
   const margin = 14;
   const contentWidth = pageWidth - (margin * 2);
 
-  // 1. Header with TechNext Logo
-  try {
-    doc.addImage(TECHNEXT_LOGO_BASE64, "PNG", pageWidth - margin - 48, 12, 48, 14);
-  } catch (err) {
-    console.warn("Could not render logo in PDF:", err);
-  }
-
-  // Document Title
+  // 1. Header with TechNext Logo & Company Info (Matching Uploaded Generation)
+  // Top Left: Document Title & Company Address
   const titles: Record<string, string> = {
-    INVOICE: "TAX INVOICE",
-    QUOTATION: "FORMAL QUOTATION / ESTIMATE",
-    ORDER_FORM: "OFFICIAL ORDER FORM",
-    PAYMENT_RECEIPT: "OFFICIAL PAYMENT RECEIPT",
+    INVOICE: "INVOICE",
+    QUOTATION: "QUOTATION",
+    ORDER_FORM: "ORDER FORM",
+    PAYMENT_RECEIPT: "PAYMENT RECEIPT",
     REFUND: "CREDIT NOTE / REFUND"
   };
 
   const titleText = titles[data.documentType] || data.documentType || "INVOICE";
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.setTextColor(15, 23, 42); // slate-900
+  doc.setFontSize(14);
+  doc.setTextColor(0, 0, 0);
   doc.text(titleText, margin, 18);
 
-  // Company Information
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(30, 41, 59);
-  doc.text("TECHNEXT TECHNOLOGIES", margin, 24);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(71, 85, 105);
-  doc.text("Door No. 4/487, Pulpally, Wayanad, Kerala - 673579, India", margin, 29);
-  doc.text("Email: info.technexttech@gmail.com  |  Phone: +91 85906 74531", margin, 33.5);
-
-  // Horizontal divider
-  doc.setDrawColor(203, 213, 225); // slate-300
-  doc.setLineWidth(0.4);
-  doc.line(margin, 38, pageWidth - margin, 38);
-
-  // 2. Client Info (Left) and Document Metadata (Right)
-  const metaStartY = 44;
-
-  // Left: Bill To Box
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(100, 116, 139); // slate-500
-  const billToLabel = data.documentType === "QUOTATION" ? "QUOTATION FOR:" : data.documentType === "ORDER_FORM" ? "ORDERED BY:" : data.documentType === "PAYMENT_RECEIPT" ? "RECEIVED FROM:" : "BILL TO:";
-  doc.text(billToLabel, margin, metaStartY);
-
+  // Company Name
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10.5);
-  doc.setTextColor(15, 23, 42);
-  const clientName = data.customer.company || data.customer.name || "Customer";
-  doc.text(clientName, margin, metaStartY + 5);
+  doc.setTextColor(0, 0, 0);
+  doc.text("TECHNEXT TECHNOLOGIES", margin, 24);
+
+  // Addresses & Contact
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(17, 24, 39);
+  doc.text("PULPALLY", margin, 28.5);
+  doc.text("WAYANAD,673579", margin, 33);
+  doc.text("Email:    info.technexttech@gmail.com", margin, 37.5);
+
+  // Top Right: Official TechNext Logo
+  try {
+    const logoWidth = 46;
+    const logoHeight = 12.5;
+    const logoX = pageWidth - margin - logoWidth;
+    const logoY = 15;
+    doc.addImage(TECHNEXT_LOGO_BASE64, "PNG", logoX, logoY, logoWidth, logoHeight);
+  } catch (err) {
+    console.warn("Could not render logo in PDF:", err);
+  }
+
+  // Thin Horizontal Divider
+  doc.setDrawColor(209, 213, 219); // #d1d5db
+  doc.setLineWidth(0.35);
+  doc.line(margin, 42, pageWidth - margin, 42);
+
+  // 2. Bill To & Metadata Section (2 columns)
+  const metaStartY = 48;
+
+  // Left Column: Bill to / Customer Details
+  const billToLabel = data.documentType === "QUOTATION" ? "Quotation For" : data.documentType === "ORDER_FORM" ? "Ordered By" : data.documentType === "PAYMENT_RECEIPT" ? "Received From" : "Bill to";
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(0, 0, 0);
+  doc.text(billToLabel, margin, metaStartY);
+
+  const clientName = (data.customer.company || data.customer.name || "Customer").toUpperCase();
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(0, 0, 0);
+  doc.text(clientName, margin, metaStartY + 5.5);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.setTextColor(51, 65, 85);
+  doc.setTextColor(31, 41, 55);
 
-  let currentLeftY = metaStartY + 9.5;
-  if (data.customer.address) {
-    const splitAddr = doc.splitTextToSize(data.customer.address, 85);
+  let currentLeftY = metaStartY + 10;
+  if (data.customer.address && data.customer.address.trim()) {
+    const splitAddr = doc.splitTextToSize(data.customer.address, 75);
     doc.text(splitAddr, margin, currentLeftY);
     currentLeftY += splitAddr.length * 4;
   }
   if (data.customer.phone) {
-    doc.text(`Phone: ${data.customer.phone}`, margin, currentLeftY);
+    doc.text(`Phone:    ${data.customer.phone}`, margin, currentLeftY);
     currentLeftY += 4;
   }
-  if (data.customer.email) {
-    doc.text(`Email: ${data.customer.email}`, margin, currentLeftY);
-    currentLeftY += 4;
-  }
-  const custCode = data.customer.customerNumber ? `TN-${data.customer.customerNumber}` : data.customer.aroniumCode ? `TN-${data.customer.aroniumCode}` : "TN-8779";
-  doc.text(`Client ID: ${custCode}`, margin, currentLeftY);
+  const custCode = data.customer.customerNumber ? `TN-${data.customer.customerNumber}` : data.customer.aroniumCode ? `TN-${data.customer.aroniumCode}` : (data.customer.id ? `TN-${data.customer.id.slice(-4)}` : "TN-7656");
+  doc.text(`Code:    ${custCode}`, margin, currentLeftY);
+  currentLeftY += 4;
+
   if (data.customer.gstNumber) {
+    doc.text(`GSTIN:    ${data.customer.gstNumber}`, margin, currentLeftY);
     currentLeftY += 4;
-    doc.text(`GSTIN: ${data.customer.gstNumber}`, margin, currentLeftY);
   }
 
-  // Right: Metadata Box
-  const rightColX = 120;
-  const rightColWidth = pageWidth - margin - rightColX;
+  // Right Column: Document Details & Bank Details
+  const rightColX = 115;
+  const rightValX = rightColX + 32;
 
-  // Background card for metadata
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(rightColX, metaStartY - 2, rightColWidth, 34, 1.5, 1.5, "FD");
+  const numberLabel = data.documentType === "QUOTATION" ? "Quotation No.:" : data.documentType === "ORDER_FORM" ? "Order No.:" : data.documentType === "PAYMENT_RECEIPT" ? "Receipt No.:" : "Invoice No.:";
+  const dueLabel = data.documentType === "QUOTATION" ? "Valid until:" : "Due date:";
 
-  const metaItems = [
-    { label: "Document No.:", val: data.documentNumber },
-    { label: "Document Date:", val: formatDate(data.date) },
-    { label: data.documentType === "QUOTATION" ? "Valid Until:" : "Due Date:", val: formatDate(data.dueDate || data.date) },
-    { label: "Payment Status:", val: data.paymentStatus || "Paid" },
-    { label: "Payment Mode:", val: data.paymentMethod || "UPI PAYMENT" },
+  const bankLines = (data.bankDetails || "SOUTH INDIAN BANK\nPULPALLY").split("\n").map(l => l.trim()).filter(Boolean);
+
+  const metaFields = [
+    { label: numberLabel, val: data.documentNumber, isBold: true },
+    { label: "Date:", val: formatDate(data.date), isBold: false },
+    { label: dueLabel, val: formatDate(data.dueDate || data.date), isBold: false },
+    { label: "Payment status:", val: data.paymentStatus || "Paid", isBold: true },
   ];
 
-  let metaY = metaStartY + 3.5;
-  metaItems.forEach(item => {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    doc.text(item.label, rightColX + 3, metaY);
-
-    doc.setFont("helvetica", item.label === "Document No.:" ? "bold" : "normal");
+  let metaY = metaStartY;
+  metaFields.forEach(item => {
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
-    doc.setTextColor(item.val === "Refunded" ? 220 : 15, item.val === "Refunded" ? 38 : 23, item.val === "Refunded" ? 38 : 42);
-    doc.text(item.val, rightColX + 34, metaY);
-    metaY += 5.5;
+    doc.setTextColor(31, 41, 55);
+    doc.text(item.label, rightColX, metaY);
+
+    doc.setFont("helvetica", item.isBold ? "bold" : "normal");
+    doc.setTextColor(0, 0, 0);
+    doc.text(item.val, rightValX, metaY);
+    metaY += 5;
   });
 
-  // Table Start Y
-  const tableStartY = Math.max(currentLeftY + 6, metaStartY + 36);
+  // Bank details row
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(31, 41, 55);
+  doc.text("Bank details:", rightColX, metaY);
 
-  // 3. Line Items AutoTable
-  const headers = [["#", "Item Description", "Qty", "Unit Price (₹)", "Tax Rate", "Discount", "Total (₹)"]];
-  const tableRows = (data.items || []).map((it, idx) => [
-    String(idx + 1),
-    it.name + (it.description ? `\n${it.description}` : ""),
-    String(it.quantity || 1),
-    `₹${formatCurrency(it.unitPrice)}`,
-    it.tax || "18%",
-    it.discount ? String(it.discount) : "---",
-    `₹${formatCurrency(it.total)}`
-  ]);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(0, 0, 0);
+  bankLines.forEach((bLine, bIdx) => {
+    doc.text(bLine, rightValX, metaY + (bIdx * 4));
+  });
+  const currentRightY = metaY + (bankLines.length * 4);
+
+  // 3. Line Items Table (Matching exact layout: # | Item | Quantity | Unit price | Tax | Discount | Total)
+  const tableStartY = Math.max(currentLeftY, currentRightY) + 4;
+
+  const headers = [["#", "Item", "Quantity", "Unit price", "Tax", "Discount", "Total"]];
+  const tableRows = (data.items || []).map((it, idx) => {
+    const itemName = it.name ? it.name.toUpperCase() : "ITEM";
+    const discountVal = it.discount !== undefined && it.discount !== null && it.discount !== "---"
+      ? (String(it.discount).includes("%") ? String(it.discount) : `${Number(it.discount).toFixed(2)}%`)
+      : "0.00%";
+
+    return [
+      String(idx + 1),
+      itemName + (it.description && it.description !== it.name ? `\n${it.description}` : ""),
+      String(it.quantity || 1),
+      formatCurrency(it.unitPrice),
+      it.tax && it.tax !== "---" ? it.tax : "---",
+      discountVal,
+      formatCurrency(it.total)
+    ];
+  });
 
   autoTable(doc, {
     startY: tableStartY,
@@ -170,177 +192,202 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
     body: tableRows,
     theme: "plain",
     headStyles: {
-      fillColor: [15, 23, 42],
-      textColor: [255, 255, 255],
+      fillColor: [243, 244, 246], // #f3f4f6 light grey
+      textColor: [0, 0, 0],
       fontStyle: "bold",
       fontSize: 8.5,
-      cellPadding: 3,
+      lineWidth: 0.2,
+      lineColor: [209, 213, 219],
+      cellPadding: 2.5,
     },
     bodyStyles: {
       fontSize: 8,
-      cellPadding: 3,
-      textColor: [30, 41, 59],
+      cellPadding: 2.5,
+      textColor: [0, 0, 0],
       lineWidth: 0.1,
-      lineColor: [226, 232, 240],
-    },
-    alternateRowStyles: {
-      fillColor: [248, 250, 252],
+      lineColor: [229, 231, 235],
     },
     columnStyles: {
       0: { cellWidth: 10, halign: "center" },
-      1: { cellWidth: "auto" },
-      2: { cellWidth: 14, halign: "center" },
+      1: { cellWidth: "auto", halign: "left", fontStyle: "bold" },
+      2: { cellWidth: 20, halign: "center" },
       3: { cellWidth: 26, halign: "right" },
       4: { cellWidth: 18, halign: "center" },
-      5: { cellWidth: 20, halign: "center" },
+      5: { cellWidth: 22, halign: "right" },
       6: { cellWidth: 28, halign: "right", fontStyle: "bold" },
     },
   });
 
-  const finalY = (doc as any).lastAutoTable?.finalY || tableStartY + 40;
+  const finalY = (doc as any).lastAutoTable?.finalY || tableStartY + 25;
 
-  // 4. Financial Summary Block (Right) & Bank Details (Left)
-  let bottomY = finalY + 6;
+  // 4. Post-Table Split Layout: Left Deliverables & Notes, Right Totals Box
+  const summaryBoxWidth = 72;
+  const summaryBoxX = pageWidth - margin - summaryBoxWidth;
 
-  // Left: Bank & Split Details
+  const totalAmount = Number(data.totalAmount || 0);
+  const paidAmount = Number(data.paidAmount !== undefined ? data.paidAmount : (data.paymentStatus === "Paid" ? totalAmount : 0));
+  const amountDue = Number(data.amountDue !== undefined ? data.amountDue : Math.max(0, totalAmount - paidAmount));
+  const payMethod = (data.paymentMethod || "UPI PAYMENT").toUpperCase();
+
+  // Right Side: Total Bordered Cell (Matching Uploaded Image)
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.25);
+  doc.rect(summaryBoxX, finalY + 2, summaryBoxWidth, 7, "FD");
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
-  doc.setTextColor(15, 23, 42);
-  doc.text("Official Settlement & Bank Details:", margin, bottomY + 2);
+  doc.setTextColor(0, 0, 0);
+  const totalHeading = data.documentType === "QUOTATION" ? "Total Estimate" : "Total";
+  doc.text(totalHeading, summaryBoxX + 3, finalY + 6.8);
+  doc.text(`₹${formatCurrency(totalAmount)}`, summaryBoxX + summaryBoxWidth - 3, finalY + 6.8, { align: "right" });
 
+  // Right Side: Payment Breakdown
+  let payBlockY = finalY + 14;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text("Payment method:", summaryBoxX, payBlockY);
+
+  payBlockY += 4.5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.setTextColor(51, 65, 85);
-  doc.text("Bank: South Indian Bank, Pulpally Branch", margin, bottomY + 7);
-  doc.text("Account Name: TechNext Technologies", margin, bottomY + 11.5);
-  doc.text("Account Number: 0256073000000123  |  IFSC: SIBL0000256", margin, bottomY + 16);
-  doc.text("UPI Payment: technext@upi / +91 85906 74531", margin, bottomY + 20.5);
 
-  if (data.creditTerms) {
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(180, 83, 9);
-    doc.text(`Credit Terms: ${data.creditTerms} (Due: ${formatDate(data.creditDueDate)})`, margin, bottomY + 26);
+  // If split tender details exist
+  if (data.splitBreakdown && (Number(data.splitBreakdown.upi) > 0 || Number(data.splitBreakdown.cash) > 0)) {
+    if (Number(data.splitBreakdown.upi) > 0) {
+      doc.text("UPI PAYMENT:", summaryBoxX, payBlockY);
+      doc.text(`₹${formatCurrency(Number(data.splitBreakdown.upi))}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+      payBlockY += 4;
+    }
+    if (Number(data.splitBreakdown.cash) > 0) {
+      doc.text("CASH PAYMENT:", summaryBoxX, payBlockY);
+      doc.text(`₹${formatCurrency(Number(data.splitBreakdown.cash))}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+      payBlockY += 4;
+    }
+  } else {
+    const tenderLabel = payMethod.includes("UPI") ? "UPI PAYMENT:" : `${payMethod}:`;
+    doc.text(tenderLabel, summaryBoxX, payBlockY);
+    doc.text(`₹${formatCurrency(paidAmount || totalAmount)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+    payBlockY += 4;
   }
 
-  // Right: Calculation Summary Table
-  const calcBoxX = 125;
-  const calcBoxWidth = pageWidth - margin - calcBoxX;
+  doc.text("Paid amount:", summaryBoxX, payBlockY);
+  doc.text(`₹${formatCurrency(paidAmount)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+  payBlockY += 4;
 
-  const subtotal = data.subtotal !== undefined ? data.subtotal : data.totalAmount;
-  const totalDiscount = data.totalDiscount || 0;
-  const totalAmount = data.totalAmount;
-  const paidAmount = data.paidAmount !== undefined ? data.paidAmount : (data.paymentStatus === "Paid" ? totalAmount : 0);
-  const amountDue = data.amountDue !== undefined ? data.amountDue : Math.max(0, totalAmount - paidAmount);
+  doc.setFont("helvetica", "bold");
+  doc.text("Amount due:", summaryBoxX, payBlockY);
+  doc.setTextColor(amountDue > 0 ? 220 : 0, amountDue > 0 ? 38 : 0, amountDue > 0 ? 38 : 0);
+  doc.text(`₹${formatCurrency(amountDue)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+  payBlockY += 4;
 
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(calcBoxX, bottomY - 2, calcBoxWidth, 36, 1.5, 1.5, "FD");
+  // Left Side: Scope / Deliverables / Narrative Notes (Matching exact uploaded generation)
+  let leftScopeY = finalY + 6;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(0, 0, 0);
 
-  const calcLines = [
-    { label: "Subtotal:", val: `₹${formatCurrency(subtotal)}`, bold: false },
-    { label: "Discount:", val: totalDiscount > 0 ? `-₹${formatCurrency(totalDiscount)}` : "₹0.00", bold: false },
-    { label: "Grand Total:", val: `₹${formatCurrency(totalAmount)}`, bold: true, color: [15, 23, 42] },
-    { label: "Amount Paid:", val: `₹${formatCurrency(paidAmount)}`, bold: false, color: [22, 101, 52] },
-    { label: "Balance Due:", val: `₹${formatCurrency(amountDue)}`, bold: true, color: amountDue > 0 ? [220, 38, 38] : [15, 23, 42] },
-  ];
+  // Parse lines from scopeOfWork or line items descriptions
+  let scopeLines: string[] = [];
+  if (data.scopeOfWork) {
+    scopeLines = data.scopeOfWork.split(/\n|;/).map(s => s.trim()).filter(Boolean);
+  }
+  if (scopeLines.length === 0) {
+    scopeLines = (data.items || []).filter(it => it.description && it.description !== it.name).map(it => it.description!);
+  }
 
-  let calcLineY = bottomY + 3.5;
-  calcLines.forEach(l => {
-    doc.setFont("helvetica", l.bold ? "bold" : "normal");
-    doc.setFontSize(l.bold ? 9 : 8);
-    doc.setTextColor(71, 85, 105);
-    doc.text(l.label, calcBoxX + 4, calcLineY);
-
-    if (l.color) {
-      doc.setTextColor(l.color[0], l.color[1], l.color[2]);
-    } else {
-      doc.setTextColor(15, 23, 42);
-    }
-    doc.text(l.val, calcBoxX + calcBoxWidth - 4, calcLineY, { align: "right" });
-    calcLineY += 6;
+  const maxScopeWidth = summaryBoxX - margin - 8;
+  scopeLines.slice(0, 6).forEach(line => {
+    const wrapped = doc.splitTextToSize(line.toUpperCase(), maxScopeWidth);
+    doc.text(wrapped, margin, leftScopeY);
+    leftScopeY += wrapped.length * 3.8;
   });
 
-  // 5. Payment Schedule Table (If Multi-Date installments exist)
-  let nextSectionY = bottomY + 40;
-  if (data.paymentSchedule && data.paymentSchedule.length > 0) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.setTextColor(15, 23, 42);
-    doc.text("Multi-Date Payment Schedule & Installments Ledger:", margin, nextSectionY);
-
-    const scheduleHeaders = [["#", "Payment Date", "Method", "Milestone / Reference", "Status", "Amount (₹)"]];
-    const scheduleRows = data.paymentSchedule.map((p, idx) => [
-      String(idx + 1),
-      formatDate(p.date),
-      p.method || "UPI",
-      p.reference || "Milestone installment",
-      p.status || "PAID",
-      `₹${formatCurrency(p.amount)}`
-    ]);
-
-    autoTable(doc, {
-      startY: nextSectionY + 3,
-      margin: { left: margin, right: margin },
-      head: scheduleHeaders,
-      body: scheduleRows,
-      theme: "plain",
-      headStyles: {
-        fillColor: [71, 85, 105],
-        textColor: [255, 255, 255],
-        fontSize: 7.5,
-        cellPadding: 2,
-      },
-      bodyStyles: {
-        fontSize: 7.5,
-        cellPadding: 2,
-        textColor: [30, 41, 59],
-        lineWidth: 0.1,
-        lineColor: [226, 232, 240],
-      },
-      columnStyles: {
-        0: { cellWidth: 8, halign: "center" },
-        1: { cellWidth: 26 },
-        2: { cellWidth: 24 },
-        3: { cellWidth: "auto" },
-        4: { cellWidth: 20, halign: "center" },
-        5: { cellWidth: 26, halign: "right", fontStyle: "bold" },
-      }
-    });
-
-    nextSectionY = (doc as any).lastAutoTable?.finalY || nextSectionY + 25;
+  // 5. Official Enterprise Footer & Policy Terms (Matching Uploaded Image)
+  let footerStartY = Math.max(payBlockY, leftScopeY) + 12;
+  // Ensure the footer fits on the page without awkward overflow
+  if (footerStartY < pageHeight - 78) {
+    footerStartY = pageHeight - 78;
   }
 
-  // 6. Signatures and Authorization
-  const signY = Math.min(Math.max(nextSectionY + 12, pageHeight - 46), pageHeight - 35);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(55, 65, 81);
+  doc.text("Thank You for Choosing", margin, footerStartY);
 
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.3);
-  doc.line(margin, signY, margin + 55, signY);
-  doc.line(pageWidth - margin - 55, signY, pageWidth - margin, signY);
+  footerStartY += 4.5;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(0, 0, 0);
+  doc.text("TECHNEXT TECHNOLOGIES", margin, footerStartY);
+
+  footerStartY += 4.5;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(75, 85, 99);
+  doc.text("Delivering Innovative Digital Solutions with Quality, Creativity & Trust.", margin, footerStartY);
+
+  footerStartY += 3;
+  doc.setDrawColor(209, 213, 219);
+  doc.setLineWidth(0.4);
+  doc.line(margin, footerStartY, margin + 45, footerStartY);
+
+  footerStartY += 4.5;
+
+  // Payment Terms
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(0, 0, 0);
+  doc.text("Payment Terms", margin, footerStartY);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
-  doc.setTextColor(100, 116, 139);
-  doc.text("Client Acceptance Signature", margin, signY + 4);
-  doc.text("Authorized Signatory", pageWidth - margin - 55, signY + 4);
+  doc.setTextColor(31, 41, 55);
+  const paymentTermsList = [
+    "• Kindly make the payment within the due date mentioned on the performa",
+    "• 50% advance payment is applicable for customized projects/services",
+    "• Late payments may attract additional service charges",
+    "• Payments once processed are non-refundable after project initiation",
+  ];
 
+  paymentTermsList.forEach(pt => {
+    footerStartY += 3.4;
+    doc.text(pt, margin, footerStartY);
+  });
+
+  footerStartY += 4.5;
+
+  // Support & Service
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  doc.setTextColor(15, 23, 42);
-  doc.text(clientName, margin, signY + 8);
-  doc.text("TechNext Technologies", pageWidth - margin - 55, signY + 8);
+  doc.setTextColor(0, 0, 0);
+  doc.text("Support & Service", margin, footerStartY);
 
-  // 7. Footer
-  doc.setDrawColor(226, 232, 240);
-  doc.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(31, 41, 55);
+  const supportList = [
+    "• Technical support will be provided as per the selected service package",
+    "• Any additional revisions or services beyond the agreed scope may be chargeable",
+    "• Warranty/service coverage applies only to specified products & durations",
+  ];
+
+  supportList.forEach(st => {
+    footerStartY += 3.4;
+    doc.text(st, margin, footerStartY);
+  });
+
+  // Bottom Line & TechNext Attribution
+  doc.setDrawColor(229, 231, 235);
+  doc.line(margin, pageHeight - 10, pageWidth - margin, pageHeight - 10);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
-  doc.setTextColor(148, 163, 184);
-  doc.text("TechNext Technologies • Enterprise Billing & ERP System • www.technexttechnologies.in", margin, pageHeight - 10);
-  doc.text("Page 1 of 1", pageWidth - margin, pageHeight - 10, { align: "right" });
+  doc.setTextColor(107, 114, 128);
+  doc.text("TechNext Technologies • www.technexttechnologies.in", margin, pageHeight - 6.5);
+  doc.text("Page 1", pageWidth - margin, pageHeight - 6.5, { align: "right" });
 
-  // Save the vector PDF file directly
+  // Save the crisp vector PDF directly
   const safeDocNum = (data.documentNumber || "DOC").replace(/[^a-zA-Z0-9_-]/g, "_");
   const fileName = `TechNext_${data.documentType || "DOCUMENT"}_${safeDocNum}.pdf`;
   doc.save(fileName);
