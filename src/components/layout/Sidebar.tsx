@@ -97,266 +97,160 @@ export default function Sidebar({ user }: { user: any }) {
           {isSalesStaff ? (
             <>
               <div className={styles.navSection}>
-                <p className={styles.navSectionTitle} style={{ color: "#10B981" }}>Sales Operations Hub</p>
+                <p className={styles.navSectionTitle} style={{ color: "#10B981" }}>Sales Workspace</p>
                 <Link href="/sales" className={`${styles.navItem} ${pathname === '/sales' ? styles.active : ''}`}>
-                  <TrendingUp size={20} /> Sales Operations Hub
+                  <TrendingUp size={19} /> Sales Operations Hub
                 </Link>
-                <Link href="/billing" className={`${styles.navItem} ${pathname.startsWith('/billing') ? styles.active : ''}`}>
-                  <Receipt size={20} /> Billing &amp; Invoices
-                </Link>
-                <Link href="/quotation-requests" className={`${styles.navItem} ${pathname.startsWith("/quotation-requests") ? styles.active : ""}`}>
-                  <FileSignature size={20} /> Quotation Requests
-                </Link>
-                <Link href="/invoice-requests" className={`${styles.navItem} ${pathname.startsWith("/invoice-requests") ? styles.active : ""}`}>
-                  <Receipt size={20} /> Invoice Requests
-                </Link>
-                <Link href="/projects" className={`${styles.navItem} ${pathname.startsWith('/projects') ? styles.active : ''}`}>
-                  <Briefcase size={20} /> Projects Handover
-                </Link>
-                <Link href="/packages" className={`${styles.navItem} ${pathname.startsWith('/packages') ? styles.active : ''}`}>
-                  <RefreshCw size={20} /> Service Packages
-                </Link>
-                <Link href="/inventory" className={`${styles.navItem} ${pathname.startsWith('/inventory') ? styles.active : ''}`}>
-                  <Package size={20} /> Products & Stock Catalog
+
+                {/* SINGLE SEPARATE BUTTON FOR BILLING & INVENTORY */}
+                <Link 
+                  href="/billing" 
+                  className={`${styles.suiteBtn} ${styles.suiteBtnBilling} ${pathname.startsWith('/billing') ? styles.suiteBtnBillingActive : ''}`}
+                  title="Billing & Inventory Suite"
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Receipt size={18} />
+                    <span>Billing &amp; Inventory</span>
+                  </div>
+                  <span className={styles.suiteBadge}>Suite</span>
                 </Link>
               </div>
 
               <div className={styles.navSection}>
-                <p className={styles.navSectionTitle}>Clients & Pipeline</p>
+                <p className={styles.navSectionTitle}>Clients &amp; Pipeline</p>
                 <Link href="/customers" className={`${styles.navItem} ${pathname.startsWith('/customers') ? styles.active : ''}`}>
-                  <Users size={20} /> Customer Directory
+                  <Users size={19} /> Customer Directory
                 </Link>
                 <Link href="/leads" className={`${styles.navItem} ${pathname.startsWith('/leads') ? styles.active : ''}`}>
-                  <Target size={20} /> Leads & Deals
+                  <Target size={19} /> Leads &amp; Deals
+                </Link>
+                <Link href="/projects" className={`${styles.navItem} ${pathname.startsWith('/projects') ? styles.active : ''}`}>
+                  <Briefcase size={19} /> Projects Handover
                 </Link>
                 <Link href="/enquiries" className={`${styles.navItem} ${pathname.startsWith('/enquiries') ? styles.active : ''}`}>
-                  <Globe size={20} /> Website Enquiries
+                  <Globe size={19} /> Website Enquiries
                 </Link>
                 <Link href="/follow-ups" className={`${styles.navItem} ${pathname.startsWith('/follow-ups') ? styles.active : ''}`}>
-                  <PhoneCall size={20} /> Client Follow-ups
+                  <PhoneCall size={19} /> Client Follow-ups
                 </Link>
                 <Link href="/appointments" className={`${styles.navItem} ${pathname.startsWith('/appointments') ? styles.active : ''}`}>
-                  <Calendar size={20} /> Appointments
+                  <Calendar size={19} /> Appointments
                 </Link>
                 <Link href="/tickets" className={`${styles.navItem} ${pathname.startsWith('/tickets') ? styles.active : ''}`}>
-                  <HeadphonesIcon size={20} /> Support Tickets
+                  <HeadphonesIcon size={19} /> Support Tickets
                 </Link>
               </div>
 
               <div className={styles.navSection}>
                 <p className={styles.navSectionTitle} style={{ color: "#3B82F6" }}>Staff Workspace</p>
                 <Link href="/employees/portal" className={`${styles.navItem} ${pathname.startsWith('/employees/portal') ? styles.active : ''}`}>
-                  <UserCheck size={20} /> My Work Portal & Shift
-                </Link>
-                <Link href="/employees/leaves" className={`${styles.navItem} ${pathname.startsWith('/employees/leaves') ? styles.active : ''}`}>
-                  <CalendarCheck size={20} /> My Leave Requests
+                  <UserCheck size={19} /> My Work Portal &amp; Shift
                 </Link>
               </div>
             </>
           ) : (
             /* ===================== 2. SUPER ADMIN & ADMIN NAVIGATION ===================== */
             <>
+              {/* PRIMARY CORE WORKSPACE & SEPARATE SUITE BUTTONS */}
               <div className={styles.navSection}>
-                <p className={styles.navSectionTitle}>Admin Console</p>
+                <p className={styles.navSectionTitle}>Enterprise Workspace</p>
                 <Link href="/" className={`${styles.navItem} ${pathname === '/' ? styles.active : ''}`}>
-                  <Home size={20} /> Admin Dashboard
+                  <Home size={19} /> Executive Dashboard
                 </Link>
-                <Link href="/employees" className={`${styles.navItem} ${pathname === '/employees' || pathname.startsWith('/users') ? styles.active : ''}`}>
-                  <UserPlus size={20} /> Staff Management & Add
+
+                {/* 1. SEPARATE SINGLE BUTTON FOR BILLING & INVENTORY */}
+                <Link 
+                  href="/billing" 
+                  className={`${styles.suiteBtn} ${styles.suiteBtnBilling} ${pathname.startsWith('/billing') ? styles.suiteBtnBillingActive : ''}`}
+                  title="Complete Billing & Inventory Suite (POS Terminal, Invoices, Quotations, Stock Catalog & 21 Sales Reports)"
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Receipt size={18} />
+                    <span>Billing &amp; Inventory</span>
+                  </div>
+                  <span className={styles.suiteBadge}>Suite</span>
                 </Link>
+
+                {/* 2. SEPARATE SINGLE BUTTON FOR EMPLOYEE MANAGEMENT */}
+                <Link 
+                  href="/employees" 
+                  className={`${styles.suiteBtn} ${styles.suiteBtnEmployee} ${pathname.startsWith('/employees') && !pathname.includes('/portal') ? styles.suiteBtnEmployeeActive : ''}`}
+                  title="Complete Employee Management (Staff Directory, Biometric Attendance, Shift Hours, Leaves & Departments)"
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Users size={18} />
+                    <span>Employee Management</span>
+                  </div>
+                  <span className={styles.suiteBadge}>HR Hub</span>
+                </Link>
+              </div>
+
+              {/* CRM, PIPELINE & SALES */}
+              <div className={styles.navSection}>
+                <p className={styles.navSectionTitle}>Clients &amp; Pipeline</p>
                 <Link href="/sales" className={`${styles.navItem} ${pathname.startsWith('/sales') ? styles.active : ''}`}>
-                  <TrendingUp size={20} /> Sales Operations Hub
+                  <TrendingUp size={19} /> Sales Operations Hub
                 </Link>
                 <Link href="/customers" className={`${styles.navItem} ${pathname.startsWith('/customers') ? styles.active : ''}`}>
-                  <Users size={20} /> Customers
+                  <Users size={19} /> Customers
                 </Link>
                 <Link href="/leads" className={`${styles.navItem} ${pathname.startsWith('/leads') ? styles.active : ''}`}>
-                  <Target size={20} /> Leads
-                </Link>
-                <Link href="/enquiries" className={`${styles.navItem} ${pathname.startsWith('/enquiries') ? styles.active : ''}`}>
-                  <Globe size={20} /> Website Enquiries
+                  <Target size={19} /> Leads &amp; Deals
                 </Link>
                 <Link href="/projects" className={`${styles.navItem} ${pathname.startsWith('/projects') ? styles.active : ''}`}>
-                  <Briefcase size={20} /> Projects
+                  <Briefcase size={19} /> Projects
                 </Link>
-                <Link href="/quotations" className={`${styles.navItem} ${pathname.startsWith('/quotations') ? styles.active : ''}`}>
-                  <FileSignature size={20} /> Quotations
-                </Link>
-                <Link href="/reseller" className={`${styles.navItem} ${pathname.startsWith('/reseller') ? styles.active : ''}`}>
-                  <MonitorPlay size={20} /> Reseller Dashboard
+                <Link href="/enquiries" className={`${styles.navItem} ${pathname.startsWith('/enquiries') ? styles.active : ''}`}>
+                  <Globe size={19} /> Website Enquiries
                 </Link>
               </div>
 
-              {/* Inventory & Supply */}
+              {/* DIGITAL ASSETS & HOSTING */}
               <div className={styles.navSection}>
-                <p className={styles.navSectionTitle} style={{ color: "#10B981" }}>Inventory & Products</p>
-                <Link href="/inventory" className={`${styles.navItem} ${pathname === '/inventory' ? styles.active : ''}`}>
-                  <Package size={20} /> Stock & Products
-                </Link>
-                <Link href="/inventory/movements" className={`${styles.navItem} ${pathname === '/inventory/movements' ? styles.active : ''}`}>
-                  <History size={20} /> Stock Movements & Log
-                </Link>
-                <Link href="/inventory/reports" className={`${styles.navItem} ${pathname === '/inventory/reports' ? styles.active : ''}`}>
-                  <BarChart3 size={20} /> Inventory Valuation
-                </Link>
-              </div>
-
-              {/* Executive Billing & Management Suite */}
-              <div className={styles.navSection}>
-                <p className={styles.navSectionTitle} style={{ color: "#0284c7", fontWeight: 700 }}>Executive Billing &amp; Management</p>
-                <Link href="/billing?tab=dashboard" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
-                  <TrendingUp size={20} color="#00a2ed" /> Management • Dashboard
-                </Link>
-                <Link href="/billing?tab=documents" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
-                  <Receipt size={20} color="#00a2ed" /> Management • Documents
-                </Link>
-                <Link href="/billing?tab=products" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
-                  <Package size={20} color="#00a2ed" /> Management • Products
-                </Link>
-                <Link href="/billing?tab=reporting" className={`${styles.navItem} ${pathname === '/billing' ? styles.active : ''}`}>
-                  <BarChart3 size={20} color="#00a2ed" /> Management • Reporting
-                </Link>
-                <Link href="/billing/new?type=invoice" className={`${styles.navItem} ${pathname.startsWith('/billing/new') ? styles.active : ''}`}>
-                  <Plus size={20} /> Generate New Bill
-                </Link>
-                <Link href="/payments" className={`${styles.navItem} ${pathname.startsWith('/payments') ? styles.active : ''}`}>
-                  <IndianRupee size={20} /> Outstanding Payments
-                </Link>
-              </div>
-
-              {/* Workflows */}
-              <div className={styles.navSection}>
-                <p className={styles.navSectionTitle}>Workflows & Requests</p>
-                <Link href="/sales?tab=access-requests" className={`${styles.navItem} ${pathname === '/sales' ? styles.active : ''}`}>
-                  <Shield size={20} />
-                  <span>Client Access Approvals</span>
-                </Link>
-                <Link href="/quotation-requests" className={`${styles.navItem} ${pathname.startsWith("/quotation-requests") ? styles.active : ""}`}>
-                  <FileSignature size={20} />
-                  <span>Quotation Requests</span>
-                </Link>
-                <Link href="/invoice-requests" className={`${styles.navItem} ${pathname.startsWith("/invoice-requests") ? styles.active : ""}`}>
-                  <Receipt size={20} />
-                  <span>Invoice Requests</span>
-                </Link>
-                <Link href="/employees/leaves" className={`${styles.navItem} ${pathname.startsWith('/employees/leaves') ? styles.active : ''}`}>
-                  <CalendarCheck size={20} />
-                  <span>Staff Leave Approvals</span>
-                </Link>
-              </div>
-
-              {/* Staff Management */}
-              <div className={styles.navSection}>
-                <p className={styles.navSectionTitle} style={{ color: "#3B82F6" }}>Team & Staff</p>
-                <Link href="/employees" className={`${styles.navItem} ${pathname === '/employees' ? styles.active : ''}`}>
-                  <Users size={20} /> Staff Directory
-                </Link>
-                <Link href="/employees/attendance" className={`${styles.navItem} ${pathname.startsWith('/employees/attendance') ? styles.active : ''}`}>
-                  <Clock size={20} /> Staff Attendance & Shifts
-                </Link>
-                <Link href="/settings/departments" className={`${styles.navItem} ${pathname.startsWith('/settings/departments') ? styles.active : ''}`}>
-                  <Folder size={20} /> Departments
-                </Link>
-                <Link href="/employees/portal" className={`${styles.navItem} ${pathname.startsWith('/employees/portal') ? styles.active : ''}`}>
-                  <UserCheck size={20} /> My Work Portal
-                </Link>
-              </div>
-
-              {/* Operations & Assets */}
-              <div className={styles.navSection}>
-                <p className={styles.navSectionTitle}>Operations & Assets</p>
-                <Link href="/appointments" className={`${styles.navItem} ${pathname.startsWith('/appointments') ? styles.active : ''}`}>
-                  <Calendar size={20} /> Appointments
-                </Link>
-                <Link href="/follow-ups" className={`${styles.navItem} ${pathname.startsWith('/follow-ups') ? styles.active : ''}`}>
-                  <PhoneCall size={20} /> Follow-ups
-                </Link>
-                <Link href="/renewals" className={`${styles.navItem} ${pathname.startsWith('/renewals') ? styles.active : ''}`}>
-                  <RefreshCw size={20} /> Renewals
-                </Link>
-                <Link href="/amc" className={`${styles.navItem} ${pathname.startsWith('/amc') ? styles.active : ''}`}>
-                  <RefreshCw size={20} /> AMC Management
-                </Link>
-                <Link href="/packages" className={`${styles.navItem} ${pathname.startsWith('/packages') ? styles.active : ''}`}>
-                  <Briefcase size={20} /> Service Packages
-                </Link>
+                <p className={styles.navSectionTitle}>Digital Assets &amp; Services</p>
                 <Link href="/domains" className={`${styles.navItem} ${pathname.startsWith('/domains') ? styles.active : ''}`}>
-                  <Globe size={20} /> Domains
+                  <Globe size={19} /> Domains
                 </Link>
                 <Link href="/hosting" className={`${styles.navItem} ${pathname.startsWith('/hosting') ? styles.active : ''}`}>
-                  <Database size={20} /> Hosting Accounts
+                  <Database size={19} /> Hosting Accounts
+                </Link>
+                <Link href="/renewals" className={`${styles.navItem} ${pathname.startsWith('/renewals') ? styles.active : ''}`}>
+                  <RefreshCw size={19} /> Renewals &amp; AMC
+                </Link>
+                <Link href="/packages" className={`${styles.navItem} ${pathname.startsWith('/packages') ? styles.active : ''}`}>
+                  <Briefcase size={19} /> Service Packages
+                </Link>
+              </div>
+
+              {/* CLIENT ENGAGEMENT & OPERATIONS */}
+              <div className={styles.navSection}>
+                <p className={styles.navSectionTitle}>Operations &amp; Support</p>
+                <Link href="/appointments" className={`${styles.navItem} ${pathname.startsWith('/appointments') ? styles.active : ''}`}>
+                  <Calendar size={19} /> Appointments
+                </Link>
+                <Link href="/follow-ups" className={`${styles.navItem} ${pathname.startsWith('/follow-ups') ? styles.active : ''}`}>
+                  <PhoneCall size={19} /> Follow-ups
                 </Link>
                 <Link href="/tickets" className={`${styles.navItem} ${pathname.startsWith('/tickets') ? styles.active : ''}`}>
-                  <HeadphonesIcon size={20} /> Support Tickets
+                  <HeadphonesIcon size={19} /> Support Tickets
                 </Link>
                 <Link href="/email" className={`${styles.navItem} ${pathname === "/email" ? styles.active : ""}`}>
-                  <Mail size={20} />
+                  <Mail size={19} />
                   <span>Email System</span>
                 </Link>
               </div>
 
-              {/* Integrations */}
+              {/* SYSTEM INTEGRATIONS & SETTINGS */}
               <div className={styles.navSection}>
-                <p className={styles.navSectionTitle}>Integrations</p>
-                <Link href="/aronium" className={`${styles.navItem} ${pathname.startsWith('/aronium') ? styles.active : ''}`}>
-                  <ShoppingCart size={20} /> POS &amp; Billing Sync
-                </Link>
+                <p className={styles.navSectionTitle}>Integrations &amp; Settings</p>
                 <Link href="/integration" className={`${styles.navItem} ${pathname.startsWith('/integration') ? styles.active : ''}`}>
-                  <Database size={20} /> Sync Center
-                </Link>
-                <a href="https://technextcatlog.vercel.app/admin.html" target="_blank" rel="noopener noreferrer" className={styles.navItem}>
-                  <ExternalLink size={20} /> Catalog Admin ↗
-                </a>
-              </div>
-
-              {/* ERP Operations */}
-              {isErpAccess && (
-                <div className={styles.navSection}>
-                  <p className={styles.navSectionTitle} style={{ color: '#8B5CF6' }}>Business Operations ERP</p>
-                  <Link href="/erp/dashboard" className={`${styles.navItem} ${pathname === '/erp/dashboard' ? styles.active : ''}`}>
-                    <LayoutDashboard size={20} /> Dashboard
-                  </Link>
-                  <Link href="/erp/finance" className={`${styles.navItem} ${pathname.startsWith('/erp/finance') ? styles.active : ''}`}>
-                    <IndianRupee size={20} /> Finance & Accounts
-                  </Link>
-                  <Link href="/erp/vendors" className={`${styles.navItem} ${pathname.startsWith('/erp/vendors') ? styles.active : ''}`}>
-                    <Users size={20} /> Vendor Management
-                  </Link>
-                  <Link href="/erp/assets" className={`${styles.navItem} ${pathname.startsWith('/erp/assets') ? styles.active : ''}`}>
-                    <Monitor size={20} /> Company Assets
-                  </Link>
-                  <Link href="/erp/subscriptions" className={`${styles.navItem} ${pathname.startsWith('/erp/subscriptions') ? styles.active : ''}`}>
-                    <Repeat size={20} /> Subscriptions
-                  </Link>
-                  <Link href="/erp/mail" className={`${styles.navItem} ${pathname.startsWith('/erp/mail') ? styles.active : ''}`}>
-                    <Mail size={20} /> Company Mail
-                  </Link>
-                  <Link href="/erp/calendar" className={`${styles.navItem} ${pathname.startsWith('/erp/calendar') ? styles.active : ''}`}>
-                    <Calendar size={20} /> Company Calendar
-                  </Link>
-                  <Link href="/erp/documents" className={`${styles.navItem} ${pathname.startsWith('/erp/documents') ? styles.active : ''}`}>
-                    <Folder size={20} /> Company Documents
-                  </Link>
-                  <Link href="/erp/reports" className={`${styles.navItem} ${pathname.startsWith('/erp/reports') ? styles.active : ''}`}>
-                    <PieChart size={20} /> Reports
-                  </Link>
-                </div>
-              )}
-
-              {/* System Settings */}
-              <div className={styles.navSection}>
-                <p className={styles.navSectionTitle}>System & Settings</p>
-                <Link href="/documents" className={`${styles.navItem} ${pathname.startsWith('/documents') ? styles.active : ''}`}>
-                  <FileText size={20} /> Documents
-                </Link>
-                <Link href="/campaigns" className={`${styles.navItem} ${pathname.startsWith('/campaigns') ? styles.active : ''}`}>
-                  <Megaphone size={20} /> Campaigns
+                  <Database size={19} /> Sync Center
                 </Link>
                 <Link href="/settings/whatsapp" className={`${styles.navItem} ${pathname === '/settings/whatsapp' ? styles.active : ''}`}>
-                  <MessageSquare size={20} style={{ color: "#25D366" }} /> WhatsApp Automation
+                  <MessageSquare size={19} style={{ color: "#25D366" }} /> WhatsApp Automation
                 </Link>
                 <Link href="/settings" className={`${styles.navItem} ${pathname.startsWith('/settings') && pathname !== '/settings/whatsapp' ? styles.active : ''}`}>
-                  <Settings size={20} /> System Settings
+                  <Settings size={19} /> System Settings
                 </Link>
               </div>
             </>

@@ -7,6 +7,7 @@ import {
   Briefcase, Plus, X, LogOut, Shield, Award, Building, Phone, Mail, TrendingUp 
 } from "lucide-react";
 import styles from "./portal.module.css";
+import EmployeeSuiteNav from "../EmployeeSuiteNav";
 import { clockIn, clockOut, submitLeaveRequest } from "../actions";
 
 export default function EmployeePortalClient({
@@ -95,6 +96,9 @@ export default function EmployeePortalClient({
           )}
         </div>
       </div>
+
+      {/* Unified HR Management Suite Tabs */}
+      <EmployeeSuiteNav />
 
       {/* Live Shift Widget */}
       <div className={styles.shiftCard}>

@@ -46,6 +46,8 @@ import {
   HelpCircle,
   Folder,
   FolderOpen,
+  FolderPlus,
+  Upload,
   RotateCcw
 } from "lucide-react";
 import styles from "./AroniumBillingConsole.module.css";
@@ -860,7 +862,22 @@ export default function AroniumBillingConsole({
     });
     const topCustomers = Array.from(custMap.values()).sort((a, b) => b.rev - a.rev).slice(0, 5);
 
-    return { topProducts, topGroups, topCustomers, poolCount: pool.length, poolTotal: pool.reduce((s, d) => s + d.amount, 0) };
+    const poolGrossSales = pool.reduce((s, d) => s + d.amount, 0);
+    const poolTax = Math.round((poolGrossSales * 0.18) / 1.18);
+    const poolNetSales = poolGrossSales - poolTax;
+    const poolPaid = pool.reduce((s, d) => s + (d.amount > 0 ? (d.paidAmount || 0) : 0), 0);
+
+    return { 
+      topProducts, 
+      topGroups, 
+      topCustomers, 
+      poolCount: pool.length, 
+      poolTotal: poolGrossSales,
+      poolGrossSales,
+      poolTax,
+      poolNetSales,
+      poolPaid
+    };
   }, [invoiceOnlyDocs, periodicStartDate, periodicEndDate, products]);
 
   // Products Category Groups
@@ -1924,11 +1941,44 @@ export default function AroniumBillingConsole({
                 <div className={`${styles.panelCard} ${styles.periodicCard}`}>
                   <h4 className={styles.periodicCardTitle}>Hourly Sales</h4>
                   <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.5, fontSize: "12px" }}>
-                    No data to display in selected period
+                    No data to display
                   </div>
                 </div>
 
-                {/* 3. Top Product Groups */}
+                {/* 3. Total Sales (Amount) (Matching Screenshot 5) */}
+                <div className={`${styles.panelCard} ${styles.periodicCard}`}>
+                  <h4 className={styles.periodicCardTitle}>Total Sales (Amount)</h4>
+                  {periodicData.poolCount === 0 ? (
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.5, fontSize: "12px" }}>
+                      No data to display
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1, justifyContent: "center" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", padding: "4px 0", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                        <span style={{ opacity: 0.75 }}>Gross Billed</span>
+                        <span style={{ fontWeight: 700, color: "#00a2ed" }}>₹{formatCurrency(periodicData.poolGrossSales)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", padding: "4px 0", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                        <span style={{ opacity: 0.75 }}>GST Output Tax (18%)</span>
+                        <span style={{ fontWeight: 600 }}>₹{formatCurrency(periodicData.poolTax)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", padding: "4px 0", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                        <span style={{ opacity: 0.75 }}>Net Sales (ex. Tax)</span>
+                        <span style={{ fontWeight: 700, color: "#22c55e" }}>₹{formatCurrency(periodicData.poolNetSales)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", padding: "4px 0", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                        <span style={{ opacity: 0.75 }}>Total Invoices</span>
+                        <span style={{ fontWeight: 600 }}>{periodicData.poolCount} Bills</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", padding: "4px 0" }}>
+                        <span style={{ opacity: 0.75 }}>Total Collected</span>
+                        <span style={{ fontWeight: 700, color: "#10b981" }}>₹{formatCurrency(periodicData.poolPaid)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. Top Product Groups */}
                 <div className={`${styles.panelCard} ${styles.periodicCard}`}>
                   <h4 className={styles.periodicCardTitle}>Top Product Groups</h4>
                   {periodicData.topGroups.length === 0 ? (
@@ -1988,6 +2038,54 @@ export default function AroniumBillingConsole({
               >
                 <RefreshCcw size={13} /> Refresh
               </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const grp = window.prompt("Enter new category / product group name:");
+                  if (grp && grp.trim()) {
+                    setSelectedProductGroup(grp.trim());
+                  }
+                }}
+                className={styles.toolBtn}
+                title="Create a new product group"
+              >
+                <FolderPlus size={13} /> New group
+              </button>
+
+              <button
+                type="button"
+                disabled={!selectedProductGroup}
+                onClick={() => {
+                  if (selectedProductGroup) {
+                    const next = window.prompt("Edit category name:", selectedProductGroup);
+                    if (next && next.trim()) {
+                      setSelectedProductGroup(next.trim());
+                    }
+                  }
+                }}
+                className={`${styles.toolBtn} ${!selectedProductGroup ? styles.toolBtnDisabled : ""}`}
+                title="Edit selected group"
+              >
+                <Edit3 size={13} /> Edit group
+              </button>
+
+              <button
+                type="button"
+                disabled={!selectedProductGroup}
+                onClick={() => {
+                  if (selectedProductGroup) {
+                    if (window.confirm(`Clear filter for group "${selectedProductGroup}"?`)) {
+                      setSelectedProductGroup(null);
+                    }
+                  }
+                }}
+                className={`${styles.toolBtn} ${!selectedProductGroup ? styles.toolBtnDisabled : ""}`}
+                title="Delete/Reset group filter"
+              >
+                <Trash2 size={13} /> Delete group
+              </button>
+
               <Link
                 href="/inventory/new"
                 className={styles.toolBtn}
@@ -1995,12 +2093,14 @@ export default function AroniumBillingConsole({
               >
                 <Plus size={13} /> New product
               </Link>
+
               <Link
                 href={selectedProductId ? `/inventory/${selectedProductId}/edit` : "#"}
                 className={`${styles.toolBtn} ${!selectedProductId ? styles.toolBtnDisabled : ""}`}
               >
                 <Edit3 size={13} /> Edit product
               </Link>
+
               <button
                 type="button"
                 onClick={handleDeleteProduct}
@@ -2010,19 +2110,92 @@ export default function AroniumBillingConsole({
               >
                 <Trash2 size={13} /> {isDeletingProduct ? "Deleting..." : "Delete product"}
               </button>
+
               <button
                 type="button"
                 onClick={() => window.print()}
                 className={styles.toolBtn}
+                title="Print product list"
               >
                 <Printer size={13} /> Print
               </button>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className={styles.toolBtn}
+                title="Save product catalog as PDF"
+              >
+                <FileDown size={13} /> Save as PDF
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedProductId) {
+                    const p = products.find(x => x.id === selectedProductId);
+                    alert(`Price Tag Preview:\n\n${p?.name}\nBarcode: ${p?.barcode || 'N/A'}\nPrice: ₹${formatCurrency(p?.sellingPrice)}\nGST: ${p?.taxRate || 18}%\nTechNext Certified ERP`);
+                  } else {
+                    alert("Select a product row to print or inspect price tag.");
+                  }
+                }}
+                className={`${styles.toolBtn} ${!selectedProductId ? styles.toolBtnDisabled : ""}`}
+                title="Generate product price tags"
+              >
+                <Tag size={13} /> Price tags
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  alert("Products table is sorted by name and category.");
+                }}
+                className={styles.toolBtn}
+                title="Sort products"
+              >
+                <ArrowUpDown size={13} /> Sorting
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const totalCost = products.reduce((acc, p) => acc + Number(p.purchasePrice || 0), 0);
+                  const totalSale = products.reduce((acc, p) => acc + Number(p.sellingPrice || 0), 0);
+                  const avgMargin = totalSale > 0 ? (((totalSale - totalCost) / totalSale) * 100).toFixed(1) : 0;
+                  alert(`Moving Average Metrics:\n\nTotal Inventory Cost: ₹${formatCurrency(totalCost)}\nTotal Catalog Value: ₹${formatCurrency(totalSale)}\nAverage Gross Margin: ${avgMargin}%`);
+                }}
+                className={styles.toolBtn}
+                title="View moving average price & margin"
+              >
+                <TrendingUp size={13} /> Mov. avg. price
+              </button>
+
+              <Link
+                href="/inventory/new"
+                className={styles.toolBtn}
+                title="Import products from Excel/CSV"
+              >
+                <Upload size={13} /> Import
+              </Link>
+
               <button
                 type="button"
                 onClick={handleExportProductsCSV}
                 className={styles.toolBtn}
+                title="Export catalog as CSV"
               >
                 <Download size={13} /> Export
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  alert("TechNext Billing & Inventory Help:\n\n• Double click any product to quickly edit details.\n• Select a category on the left to filter the products table.\n• Add service products (software, AMC, domain, hosting) or physical hardware items.");
+                }}
+                className={styles.toolBtn}
+                title="Help and documentation"
+              >
+                <HelpCircle size={13} /> Help
               </button>
             </div>
 

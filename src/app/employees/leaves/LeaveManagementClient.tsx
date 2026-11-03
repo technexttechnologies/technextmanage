@@ -7,6 +7,7 @@ import {
   Clock, AlertCircle, User, Filter, Building, X, MessageSquare 
 } from "lucide-react";
 import styles from "../employees.module.css";
+import EmployeeSuiteNav from "../EmployeeSuiteNav";
 import { submitLeaveRequest, reviewLeaveRequest } from "../actions";
 
 export default function LeaveManagementClient({
@@ -95,6 +96,9 @@ export default function LeaveManagementClient({
           </button>
         </div>
       </header>
+
+      {/* Unified HR Management Suite Tabs */}
+      <EmployeeSuiteNav />
 
       {/* Stats Cards */}
       <div className={styles.statsGrid}>

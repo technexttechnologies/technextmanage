@@ -8,6 +8,7 @@ import {
   Check, X, ShieldAlert, Award, FileText, CheckCircle2, UserPlus, Zap
 } from "lucide-react";
 import styles from "./employees.module.css";
+import EmployeeSuiteNav from "./EmployeeSuiteNav";
 import { 
   createEmployee, updateEmployee, resetEmployeePassword, 
   toggleEmployeeStatus, deleteEmployee 
@@ -160,6 +161,9 @@ export default function EmployeesClient({
           </button>
         </div>
       </header>
+
+      {/* Unified HR Management Suite Tabs */}
+      <EmployeeSuiteNav />
 
       {/* Stats Cards */}
       <div className={styles.statsGrid}>

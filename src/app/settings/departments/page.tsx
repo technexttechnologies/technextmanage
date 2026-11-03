@@ -5,6 +5,7 @@ import { createDepartment, deleteDepartment } from "./actions";
 import { Users, Trash2 } from "lucide-react";
 import styles from "./page.module.css";
 import Link from "next/link";
+import EmployeeSuiteNav from "@/app/employees/EmployeeSuiteNav";
 
 export default async function DepartmentsPage() {
   const session = await getSession();
@@ -38,6 +39,9 @@ export default async function DepartmentsPage() {
           &larr; Back to Settings
         </Link>
       </header>
+
+      {/* Unified HR Management Suite Tabs */}
+      <EmployeeSuiteNav />
 
       <div className={styles.content}>
         <div className={styles.card}>

@@ -138,6 +138,80 @@
   font-weight: 600;
 }
 
+/* Primary Enterprise Suite Launch Buttons */
+.suiteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 13.5px;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 6px;
+  border: 1px solid transparent;
+}
+
+.suiteBtnBilling {
+  background: rgba(2, 132, 199, 0.08);
+  color: #0284c7;
+  border-color: rgba(2, 132, 199, 0.22);
+}
+
+.suiteBtnBilling:hover {
+  background: rgba(2, 132, 199, 0.16);
+  border-color: rgba(2, 132, 199, 0.4);
+  transform: translateX(2px);
+}
+
+.suiteBtnBillingActive {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 3px 10px rgba(2, 132, 199, 0.25);
+}
+
+.suiteBtnBillingActive .suiteBadge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.suiteBtnEmployee {
+  background: rgba(79, 70, 229, 0.08);
+  color: #4f46e5;
+  border-color: rgba(79, 70, 229, 0.22);
+}
+
+.suiteBtnEmployee:hover {
+  background: rgba(79, 70, 229, 0.16);
+  border-color: rgba(79, 70, 229, 0.4);
+  transform: translateX(2px);
+}
+
+.suiteBtnEmployeeActive {
+  background: #4f46e5 !important;
+  color: #ffffff !important;
+  border-color: #4f46e5 !important;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25);
+}
+
+.suiteBtnEmployeeActive .suiteBadge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.suiteBadge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
 .userProfile {
   padding: 16px;
   padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));

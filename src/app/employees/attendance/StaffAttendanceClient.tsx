@@ -7,6 +7,7 @@ import {
   Search, Plus, X, ArrowLeft, Filter, Building, UserCheck 
 } from "lucide-react";
 import styles from "../employees.module.css";
+import EmployeeSuiteNav from "../EmployeeSuiteNav";
 import { recordManualAttendance } from "../actions";
 
 export default function StaffAttendanceClient({
@@ -100,6 +101,9 @@ export default function StaffAttendanceClient({
           )}
         </div>
       </header>
+
+      {/* Unified HR Management Suite Tabs */}
+      <EmployeeSuiteNav />
 
       {/* Stats Cards */}
       <div className={styles.statsGrid}>
