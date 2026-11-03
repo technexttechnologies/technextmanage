@@ -1,6 +1,6 @@
 .fabContainer {
   position: fixed;
-  bottom: calc(64px + 16px); /* Bottom Nav height + padding */
+  bottom: calc(68px + 16px + env(safe-area-inset-bottom, 0px)); /* Bottom Nav height + safe-area + padding */
   right: 16px;
   z-index: var(--z-fab);
   display: flex;

@@ -4,10 +4,10 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import styles from "./page.module.css";
 import { 
-  Users, Briefcase, RefreshCw, PhoneCall, 
+  Users, Briefcase, PhoneCall, 
   Globe, Server, Package, Calendar, 
   Shield, TrendingUp, ArrowRight,
-  Receipt
+  Receipt, Plus, UserPlus
 } from "lucide-react";
 import Link from "next/link";
 
@@ -84,7 +84,7 @@ export default async function Dashboard() {
     })
   ]);
 
-  // Aronium Metrics
+  // Aronium Metrics (Strictly Invoices Only)
   const totalBilled = aroniumInvoices.reduce((sum, inv) => {
     const sData = (inv.structuredData as any) || {};
     return sum + (sData.totalAmount || inv.amountRequested || 0);
@@ -130,45 +130,24 @@ export default async function Dashboard() {
     <div className={styles.dashboardContainer}>
       {/* 1. Executive Top Header */}
       <header className={styles.header}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div className={styles.headerTopBar}>
+          <div className={styles.headerBrand}>
             <img 
               src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" 
               alt="TechNext Technologies" 
-              style={{ height: '36px', width: 'auto', maxWidth: '180px', objectFit: 'contain' }} 
+              className={styles.headerLogo}
             />
-            <div style={{ height: "24px", width: "1px", backgroundColor: "var(--surface-border)" }} />
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)" }}>
+            <div className={styles.headerDivider} />
+            <span className={styles.headerDate}>
               {todayDateString}
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ 
-              fontSize: '11px', 
-              fontWeight: 700, 
-              letterSpacing: '0.6px', 
-              textTransform: 'uppercase',
-              padding: '4px 12px',
-              borderRadius: '20px',
-              background: 'rgba(99, 91, 255, 0.08)',
-              color: 'var(--brand-primary, #635bff)',
-              border: '1px solid rgba(99, 91, 255, 0.2)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}>
+          <div className={styles.headerBadges}>
+            <span className={styles.badgeRole}>
               <Shield size={12} /> {isSuperAdmin ? "Super Admin" : "Administrator"}
             </span>
-            <span style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              padding: '4px 10px',
-              borderRadius: '20px',
-              background: '#ecfdf5',
-              color: '#059669',
-              border: '1px solid #a7f3d0'
-            }}>
+            <span className={styles.badgeStatus}>
               ● Cloud ERP Online
             </span>
           </div>
@@ -180,93 +159,61 @@ export default async function Dashboard() {
         </div>
       </header>
 
+      {/* Quick Action Shortcuts Strip for Mobile & Touch screens */}
+      <div className={styles.quickActionsStrip}>
+        <Link href="/billing/new?type=invoice" className={styles.quickActionPill}>
+          <Plus size={14} color="#0284c7" />
+          <span>New Bill</span>
+        </Link>
+        <Link href="/customers/new" className={styles.quickActionPill}>
+          <UserPlus size={14} color="#6366f1" />
+          <span>Add Client</span>
+        </Link>
+        <Link href="/employees?add=1" className={styles.quickActionPill}>
+          <Users size={14} color="#10b981" />
+          <span>Add Staff</span>
+        </Link>
+        <Link href="/projects/new" className={styles.quickActionPill}>
+          <Briefcase size={14} color="#f59e0b" />
+          <span>New Project</span>
+        </Link>
+      </div>
+
       {/* 2. PRIMARY ENTERPRISE SUITE LAUNCHPAD CARDS */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+      <div className={styles.suiteGrid}>
         {/* SUITE 1: BILLING & INVENTORY */}
         <Link 
           href="/billing"
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            background: "linear-gradient(135deg, rgba(2, 132, 199, 0.06) 0%, rgba(2, 132, 199, 0.01) 100%)",
-            border: "1px solid rgba(2, 132, 199, 0.25)",
-            borderRadius: "14px",
-            padding: "22px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-            position: "relative",
-            overflow: "hidden"
-          }}
-          className={styles.suiteCardHover}
+          className={`${styles.suiteCard} ${styles.suiteBilling}`}
         >
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-              <div style={{
-                width: "44px",
-                height: "44px",
-                borderRadius: "10px",
-                background: "#e0f2fe",
-                color: "#0284c7",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}>
+            <div className={styles.suiteCardHeader}>
+              <div className={`${styles.suiteIconWrapper} ${styles.suiteIconBilling}`}>
                 <Receipt size={22} />
               </div>
-              <span style={{
-                fontSize: "10.5px",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                padding: "3px 8px",
-                borderRadius: "6px",
-                background: "#0284c7",
-                color: "#ffffff"
-              }}>
+              <span className={`${styles.suiteBadge} ${styles.suiteBadgeBilling}`}>
                 Full Suite
               </span>
             </div>
 
-            <h3 style={{ fontSize: "17px", fontWeight: 700, margin: "0 0 6px 0", color: "var(--text-primary)" }}>
+            <h3 className={styles.suiteTitle}>
               Billing &amp; Inventory Suite
             </h3>
-            <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: "0 0 16px 0", lineHeight: 1.45 }}>
+            <p className={styles.suiteDesc}>
               POS terminal, tax invoices, quotations, credit notes &amp; refunds, inventory stock catalog, valuation and 21 financial audit reports.
             </p>
           </div>
 
           <div>
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 12px",
-              background: "rgba(255, 255, 255, 0.8)",
-              borderRadius: "8px",
-              border: "1px solid rgba(2, 132, 199, 0.15)",
-              fontSize: "12px",
-              fontWeight: 600,
-              color: "#0369a1",
-              marginBottom: "14px"
-            }}>
-              <span>₹{formatCurrency(totalBilled)} Billed</span>
-              <span>•</span>
-              <span>{aroniumInvoices.length} Invoices</span>
-              <span>•</span>
-              <span>{totalProducts} Catalog Products</span>
+            <div className={`${styles.suiteChipsRow} ${styles.suiteChipsRowBilling}`}>
+              <span className={styles.suiteChip}>₹{formatCurrency(totalBilled)} Billed</span>
+              <span className={styles.suiteChipDot}>•</span>
+              <span className={styles.suiteChip}>{aroniumInvoices.length} Invoices</span>
+              <span className={styles.suiteChipDot}>•</span>
+              <span className={styles.suiteChip}>{totalProducts} Catalog Products</span>
             </div>
 
-            <div style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "13px",
-              fontWeight: 700,
-              color: "#0284c7"
-            }}>
+            <div className={`${styles.suiteActionBtn} ${styles.suiteActionBtnBilling}`}>
               Open Billing &amp; Inventory Suite <ArrowRight size={15} />
             </div>
           </div>
@@ -275,88 +222,36 @@ export default async function Dashboard() {
         {/* SUITE 2: EMPLOYEE MANAGEMENT */}
         <Link 
           href="/employees"
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            background: "linear-gradient(135deg, rgba(79, 70, 229, 0.06) 0%, rgba(79, 70, 229, 0.01) 100%)",
-            border: "1px solid rgba(79, 70, 229, 0.25)",
-            borderRadius: "14px",
-            padding: "22px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-            position: "relative",
-            overflow: "hidden"
-          }}
-          className={styles.suiteCardHover}
+          className={`${styles.suiteCard} ${styles.suiteEmployee}`}
         >
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-              <div style={{
-                width: "44px",
-                height: "44px",
-                borderRadius: "10px",
-                background: "#eef2ff",
-                color: "#4f46e5",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}>
+            <div className={styles.suiteCardHeader}>
+              <div className={`${styles.suiteIconWrapper} ${styles.suiteIconEmployee}`}>
                 <Users size={22} />
               </div>
-              <span style={{
-                fontSize: "10.5px",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                padding: "3px 8px",
-                borderRadius: "6px",
-                background: "#4f46e5",
-                color: "#ffffff"
-              }}>
+              <span className={`${styles.suiteBadge} ${styles.suiteBadgeEmployee}`}>
                 HR Hub
               </span>
             </div>
 
-            <h3 style={{ fontSize: "17px", fontWeight: 700, margin: "0 0 6px 0", color: "var(--text-primary)" }}>
+            <h3 className={styles.suiteTitle}>
               Employee &amp; Staff Management
             </h3>
-            <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: "0 0 16px 0", lineHeight: 1.45 }}>
+            <p className={styles.suiteDesc}>
               Staff directory, biometric shift hours, attendance tracking, leave requests &amp; approvals, departments and portal access.
             </p>
           </div>
 
           <div>
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 12px",
-              background: "rgba(255, 255, 255, 0.8)",
-              borderRadius: "8px",
-              border: "1px solid rgba(79, 70, 229, 0.15)",
-              fontSize: "12px",
-              fontWeight: 600,
-              color: "#3730a3",
-              marginBottom: "14px"
-            }}>
-              <span>{totalStaff} Staff Members</span>
-              <span>•</span>
-              <span>{salesStaffCount} Sales Reps</span>
-              <span>•</span>
-              <span>{activeStaffToday} Active Today</span>
+            <div className={`${styles.suiteChipsRow} ${styles.suiteChipsRowEmployee}`}>
+              <span className={styles.suiteChip}>{totalStaff} Staff Members</span>
+              <span className={styles.suiteChipDot}>•</span>
+              <span className={styles.suiteChip}>{salesStaffCount} Sales Reps</span>
+              <span className={styles.suiteChipDot}>•</span>
+              <span className={styles.suiteChip}>{activeStaffToday} Active Today</span>
             </div>
 
-            <div style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "13px",
-              fontWeight: 700,
-              color: "#4f46e5"
-            }}>
+            <div className={`${styles.suiteActionBtn} ${styles.suiteActionBtnEmployee}`}>
               Manage Team &amp; Employees <ArrowRight size={15} />
             </div>
           </div>
@@ -364,70 +259,70 @@ export default async function Dashboard() {
       </div>
 
       {/* 3. CORE BUSINESS PERFORMANCE METRICS */}
-      <div className={styles.metricsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+      <div className={styles.metricsGrid}>
         <Link href="/customers" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className={styles.metricCard}>
-            <div className={`${styles.iconWrapper} ${styles.blue}`}>
+            <div className={`${styles.iconWrapper} ${styles.iconWrapperBlue}`}>
               <Users size={22} />
             </div>
             <div className={styles.metricInfo}>
               <h3>Active Clients</h3>
               <p className={styles.metricValue}>{totalActiveCustomers}</p>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Verified enterprise accounts</span>
+              <span className={styles.metricSubtitle}>Verified enterprise accounts</span>
             </div>
           </div>
         </Link>
 
         <Link href="/projects" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className={styles.metricCard}>
-            <div className={`${styles.iconWrapper} ${styles.purple}`}>
+            <div className={`${styles.iconWrapper} ${styles.iconWrapperPurple}`}>
               <Briefcase size={22} />
             </div>
             <div className={styles.metricInfo}>
               <h3>Client Projects</h3>
               <p className={styles.metricValue}>{projects.length}</p>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>In design, dev &amp; deployed</span>
+              <span className={styles.metricSubtitle}>In design, dev &amp; deployed</span>
             </div>
           </div>
         </Link>
 
         <Link href="/domains" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className={styles.metricCard}>
-            <div className={`${styles.iconWrapper} ${styles.green}`}>
+            <div className={`${styles.iconWrapper} ${styles.iconWrapperGreen}`}>
               <Globe size={22} />
             </div>
             <div className={styles.metricInfo}>
               <h3>Managed Domains</h3>
               <p className={styles.metricValue}>{activeDomains}</p>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Active client domain assets</span>
+              <span className={styles.metricSubtitle}>Active client domain assets</span>
             </div>
           </div>
         </Link>
 
         <Link href="/hosting" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className={styles.metricCard}>
-            <div className={`${styles.iconWrapper} ${styles.blue}`}>
+            <div className={`${styles.iconWrapper} ${styles.iconWrapperAmber}`}>
               <Server size={22} />
             </div>
             <div className={styles.metricInfo}>
               <h3>Hosting Accounts</h3>
               <p className={styles.metricValue}>{hostingRenewals}</p>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Renewals in next 30 days</span>
+              <span className={styles.metricSubtitle}>Renewals in next 30 days</span>
             </div>
           </div>
         </Link>
       </div>
 
       {/* 4. ACTION-REQUIRED OPERATIONAL ALERTS GRID */}
-      <div className={styles.alertsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', marginBottom: "24px" }}>
+      <div className={styles.alertsGrid}>
         <div className={`${styles.alertCard} ${styles.warningAlert}`}>
           <div className={styles.alertHeader}>
             <PhoneCall size={18} />
             <h3>Today's Follow-ups</h3>
-            <span className={styles.badge}>{followUpsDueToday}</span>
+            <span className={styles.badgeAlertCount}>{followUpsDueToday}</span>
           </div>
           <p>{followUpsDueToday} client follow-ups scheduled for today.</p>
-          <Link href="/follow-ups" className="btn-primary" style={{ marginTop: '10px', fontSize: '12.5px', padding: '6px 14px' }}>
+          <Link href="/follow-ups" className={`${styles.alertBtn} ${styles.alertBtnAmber}`}>
             View Follow-ups
           </Link>
         </div>
@@ -436,10 +331,10 @@ export default async function Dashboard() {
           <div className={styles.alertHeader}>
             <Calendar size={18} />
             <h3>Today's Appointments</h3>
-            <span className={styles.badge}>{upcomingMeetings}</span>
+            <span className={styles.badgeAlertCount}>{upcomingMeetings}</span>
           </div>
           <p>{upcomingMeetings} client consultations scheduled for today.</p>
-          <Link href="/appointments" className="btn-primary" style={{ marginTop: '10px', fontSize: '12.5px', padding: '6px 14px' }}>
+          <Link href="/appointments" className={`${styles.alertBtn} ${styles.alertBtnPrimary}`}>
             View Schedule
           </Link>
         </div>
@@ -448,10 +343,10 @@ export default async function Dashboard() {
           <div className={styles.alertHeader}>
             <Globe size={18} />
             <h3>Domains Expiring Soon</h3>
-            <span className={styles.badge}>{domainsExpiringSoon}</span>
+            <span className={styles.badgeAlertCount}>{domainsExpiringSoon}</span>
           </div>
           <p>{domainsExpiringSoon} client domains expiring in the next 30 days.</p>
-          <Link href="/domains" className="btn-primary" style={{ marginTop: '10px', fontSize: '12.5px', padding: '6px 14px' }}>
+          <Link href="/domains" className={`${styles.alertBtn} ${styles.alertBtnDanger}`}>
             Review Domains
           </Link>
         </div>
@@ -460,10 +355,10 @@ export default async function Dashboard() {
           <div className={styles.alertHeader}>
             <Server size={18} />
             <h3>Hosting Renewals Due</h3>
-            <span className={styles.badge}>{hostingRenewals}</span>
+            <span className={styles.badgeAlertCount}>{hostingRenewals}</span>
           </div>
           <p>{hostingRenewals} server allocations need renewal within 30 days.</p>
-          <Link href="/hosting" className="btn-primary" style={{ marginTop: '10px', fontSize: '12.5px', padding: '6px 14px' }}>
+          <Link href="/hosting" className={`${styles.alertBtn} ${styles.alertBtnPrimary}`}>
             Check Hosting
           </Link>
         </div>
@@ -472,32 +367,32 @@ export default async function Dashboard() {
           <div className={styles.alertHeader}>
             <Package size={18} />
             <h3>Service Packages Expiring</h3>
-            <span className={styles.badge}>{packageRenewals}</span>
+            <span className={styles.badgeAlertCount}>{packageRenewals}</span>
           </div>
           <p>{packageRenewals} packages up for renewal in the next 30 days.</p>
-          <Link href="/packages" className="btn-primary" style={{ marginTop: '10px', fontSize: '12.5px', padding: '6px 14px', background: "#d97706", borderColor: "#d97706" }}>
+          <Link href="/packages" className={`${styles.alertBtn} ${styles.alertBtnAmber}`}>
             View Packages
           </Link>
         </div>
       </div>
 
       {/* 5. OPERATIONAL PIPELINE & REVENUE ANALYTICS */}
-      <div className={styles.sectionGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', marginTop: 'var(--spacing-6)' }}>
+      <div className={styles.sectionGrid}>
         {/* Projects Pipeline Breakdown */}
         <div className={styles.card}>
-          <div className={styles.cardHeader} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className={styles.cardHeader} style={{ justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Briefcase size={18} color="var(--brand-primary)" />
-              <h2 style={{ fontSize: "16px", margin: 0 }}>Client Projects Pipeline</h2>
+              <Briefcase size={18} color="var(--brand-primary, #6366f1)" />
+              <h2>Client Projects Pipeline</h2>
             </div>
-            <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>
+            <span style={{ fontSize: "12px", color: "var(--text-muted, #64748b)", fontWeight: 600 }}>
               {projects.length} Total
             </span>
           </div>
 
-          <div className={styles.projectList} style={{ marginTop: "14px" }}>
+          <div className={styles.projectList}>
             {projectStatusOverview.length === 0 ? (
-              <p style={{ fontSize: "13px", color: "var(--text-muted)", textAlign: "center", padding: "16px 0" }}>
+              <p style={{ fontSize: "13px", color: "var(--text-muted, #64748b)", textAlign: "center", padding: "16px 0" }}>
                 No active projects recorded.
               </p>
             ) : (
@@ -510,7 +405,7 @@ export default async function Dashboard() {
             )}
           </div>
 
-          <Link href="/projects" className={styles.cardLink} style={{ marginTop: "14px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+          <Link href="/projects" className={styles.cardLink}>
             Manage All Projects <ArrowRight size={14} />
           </Link>
         </div>
@@ -519,15 +414,15 @@ export default async function Dashboard() {
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <TrendingUp size={18} color="#10b981" />
-            <h2 style={{ fontSize: "16px", margin: 0 }}>Revenue Growth (Past 6 Months)</h2>
+            <h2>Revenue Growth (Past 6 Months)</h2>
           </div>
 
-          <div className={styles.chartWrapper} style={{ height: '200px', display: 'flex', alignItems: 'flex-end', gap: '20px', padding: '20px 8px 8px 8px' }}>
+          <div className={styles.chartWrapper}>
             {revenueData.map((d) => {
               const heightPercent = Math.round((d.amount / maxRev) * 100);
               return (
                 <div key={d.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: '6px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>₹{(d.amount / 1000).toFixed(0)}k</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted, #64748b)', fontWeight: 600 }}>₹{(d.amount / 1000).toFixed(0)}k</span>
                   <div 
                     style={{ 
                       width: '100%', 
@@ -538,7 +433,7 @@ export default async function Dashboard() {
                       transition: 'height 0.3s'
                     }} 
                   />
-                  <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-main)' }}>{d.month}</span>
+                  <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-main, #0f172a)' }}>{d.month}</span>
                 </div>
               );
             })}
