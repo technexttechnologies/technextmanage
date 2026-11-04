@@ -121,6 +121,11 @@ async function performSync() {
   };
 
   try {
+    // Auto-heal any NULL PLUs in SQLite to guarantee Aronium POS bootstrap never crashes
+    try {
+      await runDB(`UPDATE Product SET PLU = Id WHERE PLU IS NULL`);
+    } catch (e) {}
+
     // =========================================================================
     // STEP 1: PULL FROM CLOUD -> ARONIUM LOCAL POS (CUSTOMERS, VENDORS, PRODUCTS, INVOICES)
     // =========================================================================
@@ -274,15 +279,18 @@ async function performSync() {
                 [p.name, code, unit, price, cost, isService, groupId, aroniumProdId]
               );
             } else {
+              const maxPluRow = await queryDB(`SELECT IFNULL(MAX(PLU), 0) + 1 AS nextPlu FROM Product`);
+              const nextPlu = maxPluRow && maxPluRow[0] && maxPluRow[0].nextPlu ? maxPluRow[0].nextPlu : 1;
+
               const insertRes = await runDB(
                 `INSERT INTO Product (
-                   ProductGroupId, Name, Code, MeasurementUnit, Price, Cost, 
+                   ProductGroupId, Name, Code, PLU, MeasurementUnit, Price, Cost, 
                    IsService, IsEnabled, IsTaxInclusivePrice, DateCreated, DateUpdated
-                 ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
-                [groupId, p.name, code, unit, price, cost, isService]
+                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
+                [groupId, p.name, code, nextPlu, unit, price, cost, isService]
               );
               aroniumProdId = insertRes.lastID;
-              console.log(`  ✨ [PULL] Created Aronium Product #${aroniumProdId}: "${p.name}" (₹${price})`);
+              console.log(`  ✨ [PULL] Created Aronium Product #${aroniumProdId}: "${p.name}" (PLU: ${nextPlu}, ₹${price})`);
             }
 
             // Sync Barcode
@@ -367,10 +375,13 @@ async function performSync() {
                       if (pRow && pRow.length > 0) {
                         pId = pRow[0].Id;
                       } else {
+                        const maxPluRow = await queryDB(`SELECT IFNULL(MAX(PLU), 0) + 1 AS nextPlu FROM Product`);
+                        const nextPlu = maxPluRow && maxPluRow[0] && maxPluRow[0].nextPlu ? maxPluRow[0].nextPlu : 1;
+
                         const newP = await runDB(
-                          `INSERT INTO Product (ProductGroupId, Name, Code, MeasurementUnit, Price, IsService, IsEnabled, IsTaxInclusivePrice, DateCreated, DateUpdated)
-                           VALUES (1, ?, ?, ?, ?, 1, 1, 1, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
-                          [it.name, it.code || `ITEM-${docId}`, it.unit || 'Service', itPrice]
+                          `INSERT INTO Product (ProductGroupId, Name, Code, PLU, MeasurementUnit, Price, IsService, IsEnabled, IsTaxInclusivePrice, DateCreated, DateUpdated)
+                           VALUES (1, ?, ?, ?, ?, ?, 1, 1, 1, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
+                          [it.name, it.code || `ITEM-${docId}`, nextPlu, it.unit || 'Service', itPrice]
                         );
                         pId = newP.lastID;
                       }
@@ -451,10 +462,13 @@ async function performSync() {
               if (pRow && pRow.length > 0) {
                 pId = pRow[0].Id;
               } else {
+                const maxPluRow = await queryDB(`SELECT IFNULL(MAX(PLU), 0) + 1 AS nextPlu FROM Product`);
+                const nextPlu = maxPluRow && maxPluRow[0] && maxPluRow[0].nextPlu ? maxPluRow[0].nextPlu : 1;
+
                 const newP = await runDB(
-                  `INSERT INTO Product (ProductGroupId, Name, Code, MeasurementUnit, Price, IsService, IsEnabled, IsTaxInclusivePrice, DateCreated, DateUpdated)
-                   VALUES (1, ?, ?, ?, ?, ?, 1, 1, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
-                  [it.name, it.code || `ITEM-${newDocId}`, it.unit || 'Service', parseFloat(it.unitPrice) || 0, it.isService ? 1 : 0]
+                  `INSERT INTO Product (ProductGroupId, Name, Code, PLU, MeasurementUnit, Price, IsService, IsEnabled, IsTaxInclusivePrice, DateCreated, DateUpdated)
+                   VALUES (1, ?, ?, ?, ?, ?, ?, 1, 1, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
+                  [it.name, it.code || `ITEM-${newDocId}`, nextPlu, it.unit || 'Service', parseFloat(it.unitPrice) || 0, it.isService ? 1 : 0]
                 );
                 pId = newP.lastID;
               }
