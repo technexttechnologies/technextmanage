@@ -18,7 +18,8 @@ export async function middleware(request: NextRequest) {
     path.startsWith('/request/') ||
     path.startsWith('/quotation/') ||
     path.startsWith('/api/sync') ||
-    path.startsWith('/api/erp/aronium')
+    path.startsWith('/api/erp/aronium') ||
+    path.startsWith('/api/razorpay')
   ) {
     return NextResponse.next();
   }

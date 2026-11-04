@@ -25,6 +25,7 @@ import styles from "./TechNextDocumentTemplate.module.css";
 import { deleteBillingDocument, recordDocumentPayment } from "@/app/billing/actions";
 import { generateDocumentVectorPdf } from "@/lib/vectorPdfGenerator";
 import { cleanPhoneNumber, buildPaymentReminderMessage, getAppUrl } from "@/lib/whatsapp";
+import { RazorpayPaymentButton } from "./RazorpayPaymentButton";
 
 export type BillingDocType = "INVOICE" | "QUOTATION" | "ORDER_FORM" | "PAYMENT_RECEIPT" | "REFUND";
 
@@ -310,6 +311,21 @@ export default function TechNextDocumentTemplate({
           </div>
 
           <div className={styles.actionButtons}>
+            {data.id && amountDue > 0 && docType !== "QUOTATION" && (
+              <RazorpayPaymentButton
+                invoiceId={data.id}
+                amountDue={amountDue}
+                totalAmount={totalAmount}
+                invoiceNumber={data.documentNumber}
+                customerName={data.customer.name}
+                customerPhone={data.customer.phone || undefined}
+                customerEmail={data.customer.email || undefined}
+                token={data.customer.portalToken || undefined}
+                isPaid={data.paymentStatus === "Paid" || amountDue <= 0}
+                variant="compact"
+              />
+            )}
+
             {data.id && amountDue > 0 && docType !== "QUOTATION" && (
               <button
                 type="button"
@@ -641,6 +657,23 @@ export default function TechNextDocumentTemplate({
                   <div className={styles.payRow} style={{ marginTop: "4px", padding: "3px 6px", background: "#EFF6FF", borderRadius: "4px", border: "1px solid #BFDBFE" }}>
                     <span style={{ color: "#1D4ED8", fontWeight: 600, fontSize: "11px" }}>Status:</span>
                     <span style={{ color: "#1D4ED8", fontWeight: 700, fontSize: "11px" }}>Partially Paid (₹{formatCurrency(paidAmount)} received)</span>
+                  </div>
+                )}
+
+                {data.id && amountDue > 0 && docType !== "QUOTATION" && (
+                  <div style={{ marginTop: "12px", borderTop: "1px dashed #cbd5e1", paddingTop: "10px" }}>
+                    <RazorpayPaymentButton
+                      invoiceId={data.id}
+                      amountDue={amountDue}
+                      totalAmount={totalAmount}
+                      invoiceNumber={data.documentNumber}
+                      customerName={data.customer.name}
+                      customerPhone={data.customer.phone || undefined}
+                      customerEmail={data.customer.email || undefined}
+                      token={data.customer.portalToken || undefined}
+                      isPaid={data.paymentStatus === "Paid" || amountDue <= 0}
+                      variant="compact"
+                    />
                   </div>
                 )}
               </div>

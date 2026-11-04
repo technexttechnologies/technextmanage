@@ -25,6 +25,12 @@ export default async function InvoicePortalPage({ params }: { params: Promise<{ 
 
   if (!invoice) return notFound();
 
+  const structured = (invoice.structuredData as any) || {};
+  const total = Number(structured.totalAmount !== undefined ? structured.totalAmount : invoice.amountRequested || 0);
+  const paid = Number(structured.paidAmount || (invoice.status === "PAID" ? total : 0));
+  const amountDue = Number(structured.amountDue !== undefined ? structured.amountDue : Math.max(0, total - paid));
+  const invoiceDocNo = invoice.aroniumInvoiceNo || `INV-${invoice.id.slice(-6).toUpperCase()}`;
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--surface-background)', padding: '40px 20px', fontFamily: 'var(--font-sans)' }}>
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -55,18 +61,28 @@ export default async function InvoicePortalPage({ params }: { params: Promise<{ 
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '40px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', backgroundColor: 'var(--surface-background)', borderRadius: '12px' }}>
-              <span style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>Subtotal</span>
-              <span style={{ fontWeight: '600' }}>₹{invoice.subtotal.toFixed(2)}</span>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>Total Amount</span>
+              <span style={{ fontWeight: '700', fontSize: '16px' }}>₹{total.toFixed(2)}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', backgroundColor: 'var(--surface-border)', borderRadius: '12px' }}>
-              <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Total Amount</span>
-              <span style={{ fontSize: '20px', fontWeight: '900', color: 'var(--brand-primary)' }}>₹{invoice.amountRequested.toFixed(2)}</span>
+            {paid > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 16px', backgroundColor: '#ecfdf5', borderRadius: '12px', border: '1px solid #a7f3d0' }}>
+                <span style={{ color: '#065f46', fontWeight: '600' }}>Paid So Far</span>
+                <span style={{ fontWeight: '700', color: '#059669', fontSize: '16px' }}>₹{paid.toFixed(2)}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '18px', backgroundColor: amountDue > 0 ? '#fef2f2' : 'var(--surface-border)', borderRadius: '12px', border: amountDue > 0 ? '1px solid #fecaca' : 'none' }}>
+              <span style={{ fontSize: '18px', fontWeight: 'bold', color: amountDue > 0 ? '#991b1b' : 'var(--text-primary)' }}>
+                {amountDue > 0 ? "Balance Due" : "Total Paid"}
+              </span>
+              <span style={{ fontSize: '22px', fontWeight: '900', color: amountDue > 0 ? '#dc2626' : 'var(--brand-primary)' }}>
+                ₹{(amountDue > 0 ? amountDue : total).toFixed(2)}
+              </span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'stretch' }}>
             <a 
               href={`/request/invoice/${invoice.id}`}
               target="_blank" 
@@ -90,7 +106,17 @@ export default async function InvoicePortalPage({ params }: { params: Promise<{ 
             )}
             
             <div style={{ flex: 1, minWidth: '300px' }}>
-              <InvoicePaymentButton invoiceId={invoice.id} token={token} currentStatus={invoice.status} />
+              <InvoicePaymentButton 
+                invoiceId={invoice.id} 
+                token={token} 
+                currentStatus={invoice.status} 
+                amountDue={amountDue}
+                totalAmount={total}
+                invoiceNumber={invoiceDocNo}
+                customerName={customer.name}
+                customerPhone={customer.phone || undefined}
+                customerEmail={customer.email || undefined}
+              />
             </div>
           </div>
 

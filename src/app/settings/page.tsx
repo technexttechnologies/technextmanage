@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
-import { Shield, Settings as SettingsIcon, Users, MessageSquare } from "lucide-react";
+import { Shield, Settings as SettingsIcon, Users, MessageSquare, CreditCard, CheckCircle } from "lucide-react";
 import styles from "./page.module.css";
 import { updatePlatformSettings } from "./actions";
 import Link from "next/link";
@@ -36,6 +36,41 @@ export default async function SettingsPage() {
               </Link>
             </section>
           )}
+
+          <section className={styles.card} style={{marginTop: 'var(--spacing-6)'}}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <h2 className={styles.cardTitle} style={{ margin: 0 }}>
+                <CreditCard size={20} style={{ color: '#00a2ed' }} />
+                Razorpay Payment Gateway
+              </h2>
+              <span style={{ 
+                background: '#DCFCE7', 
+                color: '#166534',
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: '6px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <CheckCircle size={12} color="#16a34a" /> Live Active
+              </span>
+            </div>
+            <p style={{color: 'var(--text-muted)', fontSize: '14px', marginBottom: '14px'}}>
+              Accept online customer invoice payments with UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, and NetBanking.
+            </p>
+            <div style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ color: '#64748b' }}>Live Key ID:</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#0f172a' }}>rzp_live_Tw8IklmHyKf7B8</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>Webhook &amp; Verification:</span>
+                <span style={{ color: '#166534', fontWeight: 600 }}>HMAC-SHA256 Enabled</span>
+              </div>
+            </div>
+          </section>
 
           <section className={styles.card} style={{marginTop: 'var(--spacing-6)'}}>
             <h2 className={styles.cardTitle}>
