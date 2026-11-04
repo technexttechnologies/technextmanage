@@ -135,7 +135,7 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
     { label: numberLabel, val: data.documentNumber, isBold: true },
     { label: "Date:", val: formatDate(data.date), isBold: false },
     { label: dueLabel, val: formatDate(data.dueDate || data.date), isBold: false },
-    { label: "Payment status:", val: data.paymentStatus || "Paid", isBold: true },
+    ...(data.documentType !== "QUOTATION" ? [{ label: "Payment status:", val: data.paymentStatus || "Paid", isBold: true }] : []),
   ];
 
   let metaY = metaStartY;
@@ -240,68 +240,73 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
   doc.text(totalHeading, summaryBoxX + 3, finalY + 6.8);
   doc.text(`₹${formatCurrency(totalAmount)}`, summaryBoxX + summaryBoxWidth - 3, finalY + 6.8, { align: "right" });
 
-  // Right Side: Payment Breakdown
+  // Right Side: Payment Breakdown (Invoices / Bills only - omitted for Quotations)
   let payBlockY = finalY + 14;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.text("Payment method:", summaryBoxX, payBlockY);
+  if (data.documentType !== "QUOTATION") {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text("Payment method:", summaryBoxX, payBlockY);
 
-  payBlockY += 4.5;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+    payBlockY += 4.5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
 
-  // If split tender details exist
-  if (data.splitBreakdown && (Number(data.splitBreakdown.upi) > 0 || Number(data.splitBreakdown.cash) > 0)) {
-    if (Number(data.splitBreakdown.upi) > 0) {
-      doc.text("UPI PAYMENT:", summaryBoxX, payBlockY);
-      doc.text(`₹${formatCurrency(Number(data.splitBreakdown.upi))}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+    // If split tender details exist
+    if (data.splitBreakdown && (Number(data.splitBreakdown.upi) > 0 || Number(data.splitBreakdown.cash) > 0)) {
+      if (Number(data.splitBreakdown.upi) > 0) {
+        doc.text("UPI PAYMENT:", summaryBoxX, payBlockY);
+        doc.text(`₹${formatCurrency(Number(data.splitBreakdown.upi))}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+        payBlockY += 4;
+      }
+      if (Number(data.splitBreakdown.cash) > 0) {
+        doc.text("CASH PAYMENT:", summaryBoxX, payBlockY);
+        doc.text(`₹${formatCurrency(Number(data.splitBreakdown.cash))}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+        payBlockY += 4;
+      }
+    } else {
+      const tenderLabel = payMethod.includes("UPI") ? "UPI PAYMENT:" : `${payMethod}:`;
+      doc.text(tenderLabel, summaryBoxX, payBlockY);
+      doc.text(`₹${formatCurrency(paidAmount > 0 ? paidAmount : 0)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
       payBlockY += 4;
     }
-    if (Number(data.splitBreakdown.cash) > 0) {
-      doc.text("CASH PAYMENT:", summaryBoxX, payBlockY);
-      doc.text(`₹${formatCurrency(Number(data.splitBreakdown.cash))}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+
+    if (data.creditTerms) {
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(180, 83, 9);
+      doc.text(`Credit: ${data.creditTerms}`, summaryBoxX, payBlockY);
+      payBlockY += 4;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+    }
+
+    doc.text("Paid amount:", summaryBoxX, payBlockY);
+    if (paidAmount > 0) {
+      doc.setTextColor(22, 101, 52);
+    }
+    doc.text(`₹${formatCurrency(paidAmount)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+    doc.setTextColor(0, 0, 0);
+    payBlockY += 4;
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Amount due:", summaryBoxX, payBlockY);
+    doc.setTextColor(amountDue > 0 ? 220 : 22, amountDue > 0 ? 38 : 101, amountDue > 0 ? 38 : 52);
+    doc.text(`₹${formatCurrency(amountDue)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+    doc.setTextColor(0, 0, 0);
+    payBlockY += 4;
+
+    if (paidAmount > 0 && amountDue > 0) {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7);
+      doc.setTextColor(29, 78, 216);
+      doc.text(`Status: Partially Paid (₹${formatCurrency(paidAmount)} paid)`, summaryBoxX, payBlockY);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(0, 0, 0);
       payBlockY += 4;
     }
   } else {
-    const tenderLabel = payMethod.includes("UPI") ? "UPI PAYMENT:" : `${payMethod}:`;
-    doc.text(tenderLabel, summaryBoxX, payBlockY);
-    doc.text(`₹${formatCurrency(paidAmount > 0 ? paidAmount : 0)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
-    payBlockY += 4;
-  }
-
-  if (data.creditTerms) {
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(180, 83, 9);
-    doc.text(`Credit: ${data.creditTerms}`, summaryBoxX, payBlockY);
-    payBlockY += 4;
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-  }
-
-  doc.text("Paid amount:", summaryBoxX, payBlockY);
-  if (paidAmount > 0) {
-    doc.setTextColor(22, 101, 52);
-  }
-  doc.text(`₹${formatCurrency(paidAmount)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
-  doc.setTextColor(0, 0, 0);
-  payBlockY += 4;
-
-  doc.setFont("helvetica", "bold");
-  doc.text("Amount due:", summaryBoxX, payBlockY);
-  doc.setTextColor(amountDue > 0 ? 220 : 22, amountDue > 0 ? 38 : 101, amountDue > 0 ? 38 : 52);
-  doc.text(`₹${formatCurrency(amountDue)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
-  doc.setTextColor(0, 0, 0);
-  payBlockY += 4;
-
-  if (paidAmount > 0 && amountDue > 0) {
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(7);
-    doc.setTextColor(29, 78, 216);
-    doc.text(`Status: Partially Paid (₹${formatCurrency(paidAmount)} paid)`, summaryBoxX, payBlockY);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(0, 0, 0);
-    payBlockY += 4;
+    // For quotations, no payment breakdown - keep compact
+    payBlockY = finalY + 10;
   }
 
   // Left Side: Scope / Deliverables / Narrative Notes (Matching exact uploaded generation)
@@ -326,9 +331,9 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
     leftScopeY += wrapped.length * 3.8;
   });
 
-  // If payment installments / schedule exist, print installment summary
+  // If payment installments / schedule exist, print installment summary (Invoices / Orders only)
   let scheduleEndBlockY = payBlockY;
-  if (data.paymentSchedule && Array.isArray(data.paymentSchedule) && data.paymentSchedule.length > 0) {
+  if (data.documentType !== "QUOTATION" && data.paymentSchedule && Array.isArray(data.paymentSchedule) && data.paymentSchedule.length > 0) {
     let schedY = Math.max(payBlockY, leftScopeY) + 4;
     if (schedY < pageHeight - 90) {
       doc.setFont("helvetica", "bold");

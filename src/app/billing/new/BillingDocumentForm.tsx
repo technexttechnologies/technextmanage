@@ -236,18 +236,18 @@ export default function BillingDocumentForm({
     }
     return [
       {
-        name: "VERC-M-ANIM-WEBSITE DEV",
-        description: "Custom responsive web development with interactive animations & CMS integration.",
+        name: "",
+        description: "",
         quantity: 1,
-        unitPrice: 12000,
+        unitPrice: 0,
         tax: "0%",
-        discount: "-4500",
-        total: 7500,
+        discount: "0",
+        total: 0,
       }
     ];
   });
 
-  const [totalDiscount, setTotalDiscount] = useState<number>(initialDocument?.totalDiscount ?? 200);
+  const [totalDiscount, setTotalDiscount] = useState<number>(initialDocument?.totalDiscount ?? 0);
   const [scopeOfWork, setScopeOfWork] = useState<string>(
     initialDocument?.scopeOfWork ||
     initialDocument?.notes ||
@@ -697,8 +697,9 @@ export default function BillingDocumentForm({
           </div>
         </div>
 
-        {/* 3. Payment Mode & Split / Credit Controls */}
-        <div style={{ marginBottom: "24px", padding: "18px", background: "var(--surface-background)", borderRadius: "var(--radius-lg)", border: "1px solid var(--surface-border)" }}>
+        {/* 3. Payment Mode & Split / Credit Controls (Invoices & Bills Only - Removed for Quotations) */}
+        {documentType !== "QUOTATION" ? (
+          <div style={{ marginBottom: "24px", padding: "18px", background: "var(--surface-background)", borderRadius: "var(--radius-lg)", border: "1px solid var(--surface-border)" }}>
           <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "8px", margin: "0 0 12px 0" }}>
             <CreditCard size={18} color="#4F46E5" /> Payment Method &amp; Credit Terms
           </h3>
@@ -1020,6 +1021,14 @@ export default function BillingDocumentForm({
             />
           </div>
         </div>
+        ) : (
+          <div style={{ marginBottom: "24px", padding: "14px 18px", background: "var(--surface-background)", borderRadius: "var(--radius-lg)", border: "1px dashed var(--surface-border)", display: "flex", alignItems: "center", gap: "10px" }}>
+            <FileText size={18} color="#4F46E5" />
+            <div style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
+              <strong>Quotation Proposal Mode:</strong> Customer payment collection and credit terms are removed for quotations. Only the professional cost proposal and scope will be generated.
+            </div>
+          </div>
+        )}
 
         {/* 4. Line Items Table with On-The-Fly Price Editing */}
         <div style={{ marginBottom: "24px", border: "1px solid var(--surface-border)", borderRadius: "var(--radius-lg)", padding: "16px", background: "var(--surface-background)" }}>
@@ -1084,7 +1093,7 @@ export default function BillingDocumentForm({
                     <td style={{ padding: "8px 10px" }}>
                       <input 
                         type="text" 
-                        placeholder="Item name (e.g. VERC-M-ANIM-WEBSITE DEV)"
+                        placeholder="Item / service name"
                         value={item.name}
                         onChange={(e) => handleItemChange(idx, "name", e.target.value)}
                         required

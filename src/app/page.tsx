@@ -7,7 +7,7 @@ import {
   Users, Briefcase, PhoneCall, 
   Globe, Server, Package, Calendar, 
   Shield, TrendingUp, ArrowRight,
-  Receipt, Plus, UserPlus
+  Receipt, Plus, UserPlus, LayoutDashboard
 } from "lucide-react";
 import Link from "next/link";
 
@@ -48,6 +48,9 @@ export default async function Dashboard() {
     activeStaffToday,
     totalProducts,
     aroniumInvoices,
+    erpIncomeResult,
+    erpExpenseResult,
+    activeVendorsCount,
   ] = await Promise.all([
     prisma.customer.count({ where: { status: { not: "INACTIVE" } } }),
     prisma.domainRegistration.count({ where: { status: "ACTIVE" } }),
@@ -81,8 +84,13 @@ export default async function Dashboard() {
     prisma.erpProduct.count(),
     prisma.invoiceRequest.findMany({
       select: { amountRequested: true, structuredData: true },
-    })
+    }),
+    prisma.erpIncome.aggregate({ _sum: { amount: true } }),
+    prisma.erpExpense.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
+    prisma.erpVendor.count(),
   ]);
+
+  const totalErpIncome = erpIncomeResult._sum.amount || 0;
 
   // Aronium Metrics (Strictly Invoices Only)
   const totalBilled = aroniumInvoices.reduce((sum, inv) => {
@@ -164,6 +172,10 @@ export default async function Dashboard() {
         <Link href="/billing/new?type=invoice" className={styles.quickActionPill}>
           <Plus size={14} color="#0284c7" />
           <span>New Bill</span>
+        </Link>
+        <Link href="/erp/dashboard" className={styles.quickActionPill}>
+          <LayoutDashboard size={14} color="#7c3aed" />
+          <span>Enterprise ERP</span>
         </Link>
         <Link href="/customers/new" className={styles.quickActionPill}>
           <UserPlus size={14} color="#6366f1" />
@@ -253,6 +265,44 @@ export default async function Dashboard() {
 
             <div className={`${styles.suiteActionBtn} ${styles.suiteActionBtnEmployee}`}>
               Manage Team &amp; Employees <ArrowRight size={15} />
+            </div>
+          </div>
+        </Link>
+
+        {/* SUITE 3: CENTRALIZED ENTERPRISE ERP */}
+        <Link 
+          href="/erp/dashboard"
+          className={`${styles.suiteCard} ${styles.suiteErp}`}
+        >
+          <div>
+            <div className={styles.suiteCardHeader}>
+              <div className={`${styles.suiteIconWrapper} ${styles.suiteIconErp}`}>
+                <LayoutDashboard size={22} />
+              </div>
+              <span className={`${styles.suiteBadge} ${styles.suiteBadgeErp}`}>
+                Enterprise ERP
+              </span>
+            </div>
+
+            <h3 className={styles.suiteTitle}>
+              Centralized Enterprise ERP
+            </h3>
+            <p className={styles.suiteDesc}>
+              Operations overview, finance ledgers, supplier directory, company assets, cloud subscriptions, and live POS sync.
+            </p>
+          </div>
+
+          <div>
+            <div className={`${styles.suiteChipsRow} ${styles.suiteChipsRowErp}`}>
+              <span className={styles.suiteChip}>₹{formatCurrency(totalErpIncome)} Income</span>
+              <span className={styles.suiteChipDot}>•</span>
+              <span className={styles.suiteChip}>{activeVendorsCount} Suppliers</span>
+              <span className={styles.suiteChipDot}>•</span>
+              <span className={styles.suiteChip}>Live POS Sync</span>
+            </div>
+
+            <div className={`${styles.suiteActionBtn} ${styles.suiteActionBtnErp}`}>
+              Enter Operations ERP Hub <ArrowRight size={15} />
             </div>
           </div>
         </Link>

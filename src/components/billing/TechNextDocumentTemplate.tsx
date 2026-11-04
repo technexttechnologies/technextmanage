@@ -468,12 +468,14 @@ export default function TechNextDocumentTemplate({
                       : formatDate(data.dueDate || data.date)}
                   </td>
                 </tr>
-                <tr>
-                  <td className={styles.metaLabelCol}>Payment status:</td>
-                  <td className={`${styles.metaValCol} ${styles.metaStatusPaid}`}>
-                    {data.paymentStatus || "Paid"}
-                  </td>
-                </tr>
+                {docType !== "QUOTATION" && (
+                  <tr>
+                    <td className={styles.metaLabelCol}>Payment status:</td>
+                    <td className={`${styles.metaValCol} ${styles.metaStatusPaid}`}>
+                      {data.paymentStatus || "Paid"}
+                    </td>
+                  </tr>
+                )}
                 <tr>
                   <td className={styles.metaLabelCol}>Bank details:</td>
                   <td className={styles.metaValCol} style={{ whiteSpace: "pre-line" }}>
@@ -567,76 +569,78 @@ export default function TechNextDocumentTemplate({
               <span>₹{formatCurrency(totalAmount)}</span>
             </div>
 
-            <div className={styles.paymentDetailsBlock}>
-              <div className={styles.payRowBold}>
-                <span>Payment method:</span>
-              </div>
+            {docType !== "QUOTATION" && (
+              <div className={styles.paymentDetailsBlock}>
+                <div className={styles.payRowBold}>
+                  <span>Payment method:</span>
+                </div>
 
-              {data.splitBreakdown && (Number(data.splitBreakdown.upi) > 0 || Number(data.splitBreakdown.cash) > 0) ? (
-                <>
-                  {Number(data.splitBreakdown.upi) > 0 && (
-                    <div className={styles.payRow}>
-                      <span>UPI PAYMENT:</span>
-                      <span>₹{formatCurrency(data.splitBreakdown.upi)}</span>
-                    </div>
-                  )}
-                  {Number(data.splitBreakdown.cash) > 0 && (
-                    <div className={styles.payRow}>
-                      <span>CASH PAYMENT:</span>
-                      <span>₹{formatCurrency(data.splitBreakdown.cash)}</span>
-                    </div>
-                  )}
-                  {Number(data.splitBreakdown.bank) > 0 && (
-                    <div className={styles.payRow}>
-                      <span>BANK / NEFT:</span>
-                      <span>₹{formatCurrency(data.splitBreakdown.bank)}</span>
-                    </div>
-                  )}
-                  {Number(data.splitBreakdown.cheque) > 0 && (
-                    <div className={styles.payRow}>
-                      <span>CHEQUE / CARD:</span>
-                      <span>₹{formatCurrency(data.splitBreakdown.cheque)}</span>
-                    </div>
-                  )}
-                </>
-              ) : (
+                {data.splitBreakdown && (Number(data.splitBreakdown.upi) > 0 || Number(data.splitBreakdown.cash) > 0) ? (
+                  <>
+                    {Number(data.splitBreakdown.upi) > 0 && (
+                      <div className={styles.payRow}>
+                        <span>UPI PAYMENT:</span>
+                        <span>₹{formatCurrency(data.splitBreakdown.upi)}</span>
+                      </div>
+                    )}
+                    {Number(data.splitBreakdown.cash) > 0 && (
+                      <div className={styles.payRow}>
+                        <span>CASH PAYMENT:</span>
+                        <span>₹{formatCurrency(data.splitBreakdown.cash)}</span>
+                      </div>
+                    )}
+                    {Number(data.splitBreakdown.bank) > 0 && (
+                      <div className={styles.payRow}>
+                        <span>BANK / NEFT:</span>
+                        <span>₹{formatCurrency(data.splitBreakdown.bank)}</span>
+                      </div>
+                    )}
+                    {Number(data.splitBreakdown.cheque) > 0 && (
+                      <div className={styles.payRow}>
+                        <span>CHEQUE / CARD:</span>
+                        <span>₹{formatCurrency(data.splitBreakdown.cheque)}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className={styles.payRow}>
+                    <span>{(data.paymentMethod || "UPI PAYMENT").toUpperCase().includes("UPI") ? "UPI PAYMENT:" : `${(data.paymentMethod || "CASH").toUpperCase()}:`}</span>
+                    <span>₹{formatCurrency(paidAmount > 0 ? paidAmount : 0)}</span>
+                  </div>
+                )}
+
+                {data.creditTerms && (
+                  <div style={{ margin: "4px 0", padding: "4px 6px", background: "#FEF3C7", borderRadius: "3px", border: "1px solid #FDE68A", fontSize: "11px", color: "#92400E" }}>
+                    <div>Credit Terms: <strong>{data.creditTerms}</strong></div>
+                    {data.creditDueDate && <div>Due Date: <strong>{formatDate(data.creditDueDate)}</strong></div>}
+                  </div>
+                )}
+
                 <div className={styles.payRow}>
-                  <span>{(data.paymentMethod || "UPI PAYMENT").toUpperCase().includes("UPI") ? "UPI PAYMENT:" : `${(data.paymentMethod || "CASH").toUpperCase()}:`}</span>
-                  <span>₹{formatCurrency(paidAmount > 0 ? paidAmount : 0)}</span>
+                  <span>Paid amount:</span>
+                  <span style={{ color: paidAmount > 0 ? "#166534" : "inherit", fontWeight: paidAmount > 0 ? 600 : "normal" }}>
+                    ₹{formatCurrency(paidAmount)}
+                  </span>
                 </div>
-              )}
 
-              {data.creditTerms && (
-                <div style={{ margin: "4px 0", padding: "4px 6px", background: "#FEF3C7", borderRadius: "3px", border: "1px solid #FDE68A", fontSize: "11px", color: "#92400E" }}>
-                  <div>Credit Terms: <strong>{data.creditTerms}</strong></div>
-                  {data.creditDueDate && <div>Due Date: <strong>{formatDate(data.creditDueDate)}</strong></div>}
+                <div className={styles.payRowBold}>
+                  <span>Amount due:</span>
+                  <span style={{ color: amountDue > 0 ? "#DC2626" : "#166534" }}>₹{formatCurrency(amountDue)}</span>
                 </div>
-              )}
 
-              <div className={styles.payRow}>
-                <span>Paid amount:</span>
-                <span style={{ color: paidAmount > 0 ? "#166534" : "inherit", fontWeight: paidAmount > 0 ? 600 : "normal" }}>
-                  ₹{formatCurrency(paidAmount)}
-                </span>
+                {paidAmount > 0 && amountDue > 0 && (
+                  <div className={styles.payRow} style={{ marginTop: "4px", padding: "3px 6px", background: "#EFF6FF", borderRadius: "4px", border: "1px solid #BFDBFE" }}>
+                    <span style={{ color: "#1D4ED8", fontWeight: 600, fontSize: "11px" }}>Status:</span>
+                    <span style={{ color: "#1D4ED8", fontWeight: 700, fontSize: "11px" }}>Partially Paid (₹{formatCurrency(paidAmount)} received)</span>
+                  </div>
+                )}
               </div>
-
-              <div className={styles.payRowBold}>
-                <span>Amount due:</span>
-                <span style={{ color: amountDue > 0 ? "#DC2626" : "#166534" }}>₹{formatCurrency(amountDue)}</span>
-              </div>
-
-              {paidAmount > 0 && amountDue > 0 && (
-                <div className={styles.payRow} style={{ marginTop: "4px", padding: "3px 6px", background: "#EFF6FF", borderRadius: "4px", border: "1px solid #BFDBFE" }}>
-                  <span style={{ color: "#1D4ED8", fontWeight: 600, fontSize: "11px" }}>Status:</span>
-                  <span style={{ color: "#1D4ED8", fontWeight: 700, fontSize: "11px" }}>Partially Paid (₹{formatCurrency(paidAmount)} received)</span>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Multi-Date Payment Schedule & Installment Ledger Table (If present) */}
-        {data.paymentSchedule && data.paymentSchedule.length > 0 && (
+        {/* Multi-Date Payment Schedule & Installment Ledger Table (Invoices / Orders Only) */}
+        {docType !== "QUOTATION" && data.paymentSchedule && data.paymentSchedule.length > 0 && (
           <div className={styles.installmentSection}>
             <div className={styles.installmentTitle}>
               Payment Schedule &amp; Installment Ledger

@@ -1,8 +1,9 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import styles from "./page.module.css";
-import { LayoutDashboard, IndianRupee, TrendingUp, TrendingDown, Users, Monitor, Repeat, FileText, Calendar as CalIcon } from "lucide-react";
+import { LayoutDashboard, IndianRupee, TrendingUp, TrendingDown, Users, Monitor, Repeat, FileText, Calendar as CalIcon, Plus, ArrowRight, RefreshCw, BarChart3 } from "lucide-react";
 import DashboardCharts from "./Charts";
 
 export default async function ErpDashboardPage() {
@@ -90,12 +91,29 @@ export default async function ErpDashboardPage() {
 
   return (
     <div className={styles.container}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>
-          <LayoutDashboard size={32} color="#8B5CF6" />
-          Business Operations
-        </h1>
-        <p className={styles.subtitle}>Executive Dashboard & Financial Overview</p>
+      <header className={styles.header} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h1 className={styles.title}>
+            <LayoutDashboard size={28} color="#7C3AED" />
+            Centralized Business Operations
+          </h1>
+          <p className={styles.subtitle}>Executive ERP Dashboard • Real-time ledgers, operational assets, suppliers and POS live sync</p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <Link href="/erp/finance/income/new" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: '#10B981', color: '#fff', borderRadius: '8px', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}>
+            <Plus size={15} /> Add Income
+          </Link>
+          <Link href="/erp/finance/expense/new" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: '#EF4444', color: '#fff', borderRadius: '8px', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}>
+            <Plus size={15} /> Record Expense
+          </Link>
+          <Link href="/erp/vendors/new" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'var(--surface-background)', border: '1px solid var(--surface-border)', color: 'var(--text-primary)', borderRadius: '8px', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}>
+            <Users size={15} /> New Vendor
+          </Link>
+          <Link href="/erp/reports" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'var(--surface-background)', border: '1px solid var(--surface-border)', color: 'var(--text-primary)', borderRadius: '8px', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}>
+            <BarChart3 size={15} /> Audit Reports
+          </Link>
+        </div>
       </header>
 
       {/* Primary Financial Stats */}
@@ -151,37 +169,37 @@ export default async function ErpDashboardPage() {
         <div className={styles.chartCard}>
           <h2 className={styles.chartTitle}>Operational Overview</h2>
           <div className={styles.secondaryGrid}>
-            <div className={styles.secondaryCard}>
+            <Link href="/erp/vendors" className={styles.secondaryCard} style={{ textDecoration: 'none', color: 'inherit' }}>
               <Users size={24} color="#64748B" />
               <div className={styles.secondaryInfo}>
                 <h4>Active Vendors</h4>
                 <p>{activeVendors}</p>
               </div>
-            </div>
+            </Link>
             
-            <div className={styles.secondaryCard}>
+            <Link href="/erp/assets" className={styles.secondaryCard} style={{ textDecoration: 'none', color: 'inherit' }}>
               <Monitor size={24} color="#64748B" />
               <div className={styles.secondaryInfo}>
                 <h4>Company Assets</h4>
                 <p>{activeAssets}</p>
               </div>
-            </div>
+            </Link>
 
-            <div className={styles.secondaryCard}>
+            <Link href="/erp/subscriptions" className={styles.secondaryCard} style={{ textDecoration: 'none', color: 'inherit' }}>
               <Repeat size={24} color="#64748B" />
               <div className={styles.secondaryInfo}>
                 <h4>Active Subscriptions</h4>
                 <p>{activeSubs}</p>
               </div>
-            </div>
+            </Link>
 
-            <div className={styles.secondaryCard}>
+            <Link href="/erp/finance/expense" className={styles.secondaryCard} style={{ textDecoration: 'none', color: 'inherit' }}>
               <FileText size={24} color="#F59E0B" />
               <div className={styles.secondaryInfo}>
                 <h4>Pending Approvals</h4>
                 <p style={{ color: pendingExpenses > 0 ? '#F59E0B' : 'var(--text-primary)' }}>{pendingExpenses} Expenses</p>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </div>

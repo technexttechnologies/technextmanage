@@ -188,6 +188,34 @@ export default function Sidebar({ user }: { user: any }) {
                 </Link>
               </div>
 
+              {/* ENTERPRISE ERP SUITE (CENTRALISED) */}
+              <div className={styles.navSection}>
+                <p className={styles.navSectionTitle} style={{ color: "#7C3AED", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <LayoutDashboard size={13} /> Centralized Enterprise ERP
+                </p>
+                <Link href="/erp/dashboard" className={`${styles.navItem} ${pathname === '/erp/dashboard' ? styles.active : ''}`}>
+                  <LayoutDashboard size={19} /> Operations Dashboard
+                </Link>
+                <Link href="/erp/finance" className={`${styles.navItem} ${pathname.startsWith('/erp/finance') ? styles.active : ''}`}>
+                  <IndianRupee size={19} /> Finance &amp; Ledgers
+                </Link>
+                <Link href="/erp/vendors" className={`${styles.navItem} ${pathname.startsWith('/erp/vendors') ? styles.active : ''}`}>
+                  <Users size={19} /> Suppliers &amp; Vendors
+                </Link>
+                <Link href="/erp/assets" className={`${styles.navItem} ${pathname.startsWith('/erp/assets') ? styles.active : ''}`}>
+                  <Monitor size={19} /> Company Assets
+                </Link>
+                <Link href="/erp/subscriptions" className={`${styles.navItem} ${pathname.startsWith('/erp/subscriptions') ? styles.active : ''}`}>
+                  <Repeat size={19} /> Cloud &amp; Subscriptions
+                </Link>
+                <Link href="/erp/integrations/aronium" className={`${styles.navItem} ${pathname.startsWith('/erp/integrations') ? styles.active : ''}`}>
+                  <RefreshCw size={19} /> POS Live Sync Engine
+                </Link>
+                <Link href="/erp/reports" className={`${styles.navItem} ${pathname.startsWith('/erp/reports') ? styles.active : ''}`}>
+                  <BarChart3 size={19} /> Financial Reports
+                </Link>
+              </div>
+
               {/* CRM, PIPELINE & SALES */}
               <div className={styles.navSection}>
                 <p className={styles.navSectionTitle}>Clients &amp; Pipeline</p>

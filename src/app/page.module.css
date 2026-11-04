@@ -142,7 +142,7 @@
 /* Enterprise Suite Launchpad Grid */
 .suiteGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -181,6 +181,11 @@
   border: 1px solid rgba(79, 70, 229, 0.25);
 }
 
+.suiteErp {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, rgba(124, 58, 237, 0.01) 100%);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+}
+
 .suiteCardHeader {
   display: flex;
   justify-content: space-between;
@@ -207,6 +212,11 @@
   color: #4f46e5;
 }
 
+.suiteIconErp {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
 .suiteBadge {
   font-size: 10.5px;
   font-weight: 700;
@@ -223,6 +233,10 @@
 
 .suiteBadgeEmployee {
   background: #4f46e5;
+}
+
+.suiteBadgeErp {
+  background: #7c3aed;
 }
 
 .suiteTitle {
@@ -263,6 +277,11 @@
   color: #3730a3;
 }
 
+.suiteChipsRowErp {
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  color: #6d28d9;
+}
+
 .suiteChip {
   font-size: 11.5px;
   font-weight: 600;
@@ -290,6 +309,10 @@
 
 .suiteActionBtnEmployee {
   color: #4f46e5;
+}
+
+.suiteActionBtnErp {
+  color: #7c3aed;
 }
 
 /* Core Metrics Grid */
