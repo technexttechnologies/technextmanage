@@ -602,7 +602,7 @@ export default function TechNextDocumentTemplate({
               ) : (
                 <div className={styles.payRow}>
                   <span>{(data.paymentMethod || "UPI PAYMENT").toUpperCase().includes("UPI") ? "UPI PAYMENT:" : `${(data.paymentMethod || "CASH").toUpperCase()}:`}</span>
-                  <span>₹{formatCurrency(paidAmount || totalAmount)}</span>
+                  <span>₹{formatCurrency(paidAmount > 0 ? paidAmount : 0)}</span>
                 </div>
               )}
 
@@ -615,13 +615,22 @@ export default function TechNextDocumentTemplate({
 
               <div className={styles.payRow}>
                 <span>Paid amount:</span>
-                <span>₹{formatCurrency(paidAmount)}</span>
+                <span style={{ color: paidAmount > 0 ? "#166534" : "inherit", fontWeight: paidAmount > 0 ? 600 : "normal" }}>
+                  ₹{formatCurrency(paidAmount)}
+                </span>
               </div>
 
               <div className={styles.payRowBold}>
                 <span>Amount due:</span>
-                <span style={{ color: amountDue > 0 ? "#DC2626" : "inherit" }}>₹{formatCurrency(amountDue)}</span>
+                <span style={{ color: amountDue > 0 ? "#DC2626" : "#166534" }}>₹{formatCurrency(amountDue)}</span>
               </div>
+
+              {paidAmount > 0 && amountDue > 0 && (
+                <div className={styles.payRow} style={{ marginTop: "4px", padding: "3px 6px", background: "#EFF6FF", borderRadius: "4px", border: "1px solid #BFDBFE" }}>
+                  <span style={{ color: "#1D4ED8", fontWeight: 600, fontSize: "11px" }}>Status:</span>
+                  <span style={{ color: "#1D4ED8", fontWeight: 700, fontSize: "11px" }}>Partially Paid (₹{formatCurrency(paidAmount)} received)</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

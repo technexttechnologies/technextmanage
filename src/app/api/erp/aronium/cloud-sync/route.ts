@@ -336,15 +336,27 @@ export async function POST(req: Request) {
           });
 
           if (existingInv) {
+            const existingStructured = (existingInv.structuredData as any) || {};
+            const isUserEdited = existingStructured.isEditedByUser === true;
+
             await prisma.invoiceRequest.update({
               where: { id: existingInv.id },
               data: {
                 customerId: customerPrisma.id,
-                amountRequested: totalAmount,
-                subtotal: totalAmount,
-                status: isRefundDoc ? 'PAID' : (isPaid ? 'PAID' : (paidAmount > 0 ? 'PARTIALLY_PAID' : 'INVOICE_GENERATED')),
-                structuredData: structuredData,
-                notes: isRefundDoc ? `Aronium POS Refund #${invoiceNumber}` : `Aronium POS Sales Invoice #${invoiceNumber}`,
+                amountRequested: isUserEdited ? existingInv.amountRequested : totalAmount,
+                subtotal: isUserEdited ? existingInv.subtotal : totalAmount,
+                status: isUserEdited ? existingInv.status : (isRefundDoc ? 'PAID' : (isPaid ? 'PAID' : (paidAmount > 0 ? 'PARTIALLY_PAID' : 'INVOICE_GENERATED'))),
+                structuredData: isUserEdited
+                  ? {
+                      ...existingStructured,
+                      ...(paidAmount > (existingStructured.paidAmount || 0) ? {
+                        paidAmount: paidAmount,
+                        amountDue: Math.max(0, (existingStructured.totalAmount || existingInv.amountRequested) - paidAmount),
+                        paymentStatus: paidAmount >= (existingStructured.totalAmount || existingInv.amountRequested) ? 'Paid' : 'Partially Paid'
+                      } : {})
+                    }
+                  : structuredData,
+                notes: isUserEdited ? existingInv.notes : (isRefundDoc ? `Aronium POS Refund #${invoiceNumber}` : `Aronium POS Sales Invoice #${invoiceNumber}`),
                 createdAt: dt
               }
             });

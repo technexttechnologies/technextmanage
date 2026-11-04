@@ -121,6 +121,12 @@ export default function BillingDocumentForm({
   const [paymentStatus, setPaymentStatus] = useState<string>(
     initialDocument?.paymentStatus || "Paid"
   );
+  const [partialPaidAmount, setPartialPaidAmount] = useState<number>(() => {
+    if (initialDocument?.paidAmount !== undefined && Number(initialDocument.paidAmount) > 0) {
+      return Number(initialDocument.paidAmount);
+    }
+    return 0;
+  });
   const [paymentMethod, setPaymentMethod] = useState<string>(
     initialDocument?.paymentMethod || "UPI PAYMENT"
   );
@@ -407,8 +413,14 @@ export default function BillingDocumentForm({
     effectivePaid = totalInstallmentsPaid;
     effectiveDue = Math.max(0, grandTotal - totalInstallmentsPaid);
   } else {
-    // FULL
-    effectivePaid = paymentStatus === "Paid" ? grandTotal : 0;
+    // FULL / SINGLE
+    if (paymentStatus === "Paid") {
+      effectivePaid = grandTotal;
+    } else if (paymentStatus === "Partially Paid") {
+      effectivePaid = Math.min(grandTotal, Math.max(0, partialPaidAmount));
+    } else {
+      effectivePaid = 0;
+    }
     effectiveDue = Math.max(0, grandTotal - effectivePaid);
   }
 
@@ -785,13 +797,42 @@ export default function BillingDocumentForm({
                 <select 
                   name="paymentStatus" 
                   value={paymentStatus}
-                  onChange={(e) => setPaymentStatus(e.target.value)}
+                  onChange={(e) => {
+                    const newStatus = e.target.value;
+                    setPaymentStatus(newStatus);
+                    if (newStatus === "Partially Paid" && partialPaidAmount === 0 && grandTotal > 0) {
+                      setPartialPaidAmount(Math.round(grandTotal / 2));
+                    }
+                  }}
                 >
-                  <option value="Paid">Paid</option>
+                  <option value="Paid">Paid (Full)</option>
+                  <option value="Partially Paid">Partially Paid (Advance / Part Payment)</option>
                   <option value="Pending">Pending / Awaiting Payment</option>
-                  <option value="Partially Paid">Partially Paid</option>
                 </select>
               </div>
+
+              {paymentStatus === "Partially Paid" && (
+                <div className={styles.inputGroup} style={{ gridColumn: "1 / -1", background: "#F0FDF4", border: "1px solid #BBF7D0", padding: "12px", borderRadius: "8px" }}>
+                  <label style={{ color: "#166534", fontWeight: 700, display: "flex", justifyContent: "space-between" }}>
+                    <span>Partial Amount Paid / Collected (₹) *</span>
+                    <span style={{ color: "#DC2626" }}>Balance Due: ₹{(Math.max(0, grandTotal - partialPaidAmount)).toFixed(2)}</span>
+                  </label>
+                  <input 
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={grandTotal}
+                    value={partialPaidAmount || ""}
+                    onChange={(e) => setPartialPaidAmount(parseFloat(e.target.value) || 0)}
+                    placeholder="Enter advance or part amount collected"
+                    required
+                    style={{ borderColor: "#22C55E", fontSize: "15px", fontWeight: 600 }}
+                  />
+                  <div style={{ marginTop: "4px", fontSize: "12px", color: "#15803D" }}>
+                    Total Bill: <strong>₹{grandTotal.toFixed(2)}</strong> | Paid: <strong>₹{partialPaidAmount.toFixed(2)}</strong> | Pending: <strong>₹{(Math.max(0, grandTotal - partialPaidAmount)).toFixed(2)}</strong>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

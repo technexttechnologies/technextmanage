@@ -212,11 +212,17 @@ export async function createBillingDocument(formData: FormData) {
       amountDue,
       scopeOfWork,
       paymentTermsNote,
-      stockDeducted: paymentStatus === "Paid"
+      stockDeducted: paymentStatus === "Paid",
+      isEditedByUser: true,
+      lastEditedAt: new Date().toISOString(),
+      needsAroniumSync: true
     };
 
+    const isPartiallyPaid = paymentStatus === "Partially Paid" || (paidAmount > 0 && amountDue > 0);
     const status = paymentStatus === "Paid" 
       ? "PAID" 
+      : isPartiallyPaid
+      ? "PARTIALLY_PAID"
       : paymentStatus.includes("Credit")
       ? "SENT_TO_CUSTOMER"
       : documentType === "ORDER_FORM" 
@@ -407,8 +413,14 @@ export async function updateBillingDocument(formData: FormData) {
       }
     });
   } else {
-    const existing = await prisma.invoiceRequest.findUnique({ where: { id } });
+    let existing = await prisma.invoiceRequest.findUnique({ where: { id } });
+    if (!existing && documentNumber) {
+      existing = await prisma.invoiceRequest.findFirst({ where: { aroniumInvoiceNo: documentNumber } });
+    }
+    const targetId = existing?.id || id;
     const prevStructured = (existing?.structuredData as any) || {};
+
+    const isPartiallyPaid = paymentStatus === "Partially Paid" || (paidAmount > 0 && amountDue > 0);
 
     const structuredPayload = {
       ...prevStructured,
@@ -417,7 +429,7 @@ export async function updateBillingDocument(formData: FormData) {
       date: dateStr,
       dueDate: dueDateStr,
       paymentType,
-      paymentStatus,
+      paymentStatus: isPartiallyPaid ? "Partially Paid" : paymentStatus,
       paymentMethod,
       paymentSchedule,
       creditDueDate,
@@ -431,10 +443,16 @@ export async function updateBillingDocument(formData: FormData) {
       amountDue,
       scopeOfWork,
       paymentTermsNote,
+      isEditedByUser: true,
+      lastEditedAt: new Date().toISOString(),
+      needsAroniumSync: true,
+      isEdited: true
     };
 
     const status = paymentStatus === "Paid" 
       ? "PAID" 
+      : isPartiallyPaid
+      ? "PARTIALLY_PAID"
       : paymentStatus.includes("Credit")
       ? "SENT_TO_CUSTOMER"
       : documentType === "ORDER_FORM" 
@@ -442,7 +460,7 @@ export async function updateBillingDocument(formData: FormData) {
       : "INVOICE_GENERATED";
 
     await prisma.invoiceRequest.update({
-      where: { id },
+      where: { id: targetId },
       data: {
         customerId,
         projectId,
@@ -454,6 +472,25 @@ export async function updateBillingDocument(formData: FormData) {
         structuredData: structuredPayload,
       }
     });
+
+    // Update ErpSale if linked so ERP dashboard stays synced
+    if (documentNumber) {
+      const existingSale = await prisma.erpSale.findFirst({
+        where: { invoiceNumber: documentNumber }
+      });
+      if (existingSale) {
+        await prisma.erpSale.update({
+          where: { id: existingSale.id },
+          data: {
+            totalAmount,
+            discount: totalDiscount,
+            paymentMethod,
+            paymentStatus: paymentStatus === "Paid" ? "PAID" : isPartiallyPaid ? "PARTIAL" : "PENDING",
+            date: new Date(dateStr)
+          }
+        });
+      }
+    }
 
     // Deduct stock if transitioned to Paid and not previously deducted
     if (paymentStatus === "Paid" && !prevStructured.stockDeducted && items.length > 0) {

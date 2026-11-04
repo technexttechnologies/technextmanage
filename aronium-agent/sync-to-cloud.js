@@ -317,7 +317,43 @@ async function performSync() {
             );
 
             if (existingDoc && existingDoc.length > 0) {
-              // Document already exists in Aronium POS! Confirm to cloud so it stops resending
+              if (doc.isEdited) {
+                const docId = existingDoc[0].Id;
+                const totalAmount = parseFloat(doc.totalAmount) || 0;
+                const paidAmount = parseFloat(doc.paidAmount) || 0;
+                const isPaid = doc.paymentStatus === 'Paid' || doc.status === 'PAID' || (paidAmount >= totalAmount && totalAmount > 0);
+                const paidStatus = isPaid ? 2 : 1;
+
+                await runDB(
+                  `UPDATE Document SET Total = ?, PaidStatus = ?, DateUpdated = DATETIME('now', 'localtime') WHERE Id = ?`,
+                  [totalAmount, paidStatus, docId]
+                );
+
+                // Replace DocumentItems
+                await runDB(`DELETE FROM DocumentItem WHERE DocumentId = ?`, [docId]);
+                if (doc.items && Array.isArray(doc.items)) {
+                  for (const it of doc.items) {
+                    const itQty = parseFloat(it.quantity) || 1;
+                    const itPrice = parseFloat(it.unitPrice) || 0;
+                    const itTotal = parseFloat(it.total) || (itQty * itPrice);
+                    await runDB(
+                      `INSERT INTO DocumentItem (DocumentId, ExpectedQuantity, Quantity, Price, Cost, Discount, Total, PriceBeforeTax)
+                       VALUES (?, ?, ?, ?, 0, 0, ?, ?)`,
+                      [docId, itQty, itQty, itPrice, itTotal, itPrice]
+                    );
+                  }
+                }
+
+                // Update Payments if needed
+                if (paidAmount > 0) {
+                  await runDB(`DELETE FROM Payment WHERE DocumentId = ?`, [docId]);
+                  await runDB(
+                    `INSERT INTO Payment (DocumentId, PaymentTypeId, Amount, Date) VALUES (?, 4, ?, DATETIME('now', 'localtime'))`,
+                    [docId, paidAmount]
+                  );
+                }
+                console.log(`  🔄 [PULL] Updated edited Document #${doc.docNumber} in Aronium (Total: ₹${totalAmount}, Paid: ₹${paidAmount})`);
+              }
               documentConfirmations.push({ crmId: doc.id, aroniumNumber: doc.docNumber });
               continue;
             }

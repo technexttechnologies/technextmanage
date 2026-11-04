@@ -79,10 +79,16 @@ export async function POST(req: Request) {
     for (const conf of documentConfirmations) {
       if (conf.crmId && conf.aroniumNumber) {
         try {
+          const inv = await prisma.invoiceRequest.findUnique({ where: { id: conf.crmId } });
+          const prevStructured = (inv?.structuredData as any) || {};
           await prisma.invoiceRequest.update({
             where: { id: conf.crmId },
             data: {
-              aroniumInvoiceNo: conf.aroniumNumber
+              aroniumInvoiceNo: conf.aroniumNumber,
+              structuredData: {
+                ...prevStructured,
+                needsAroniumSync: false
+              }
             }
           });
           docUpdated++;

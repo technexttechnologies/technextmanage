@@ -2,19 +2,37 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { IndianRupee, ShieldAlert, ArrowRight, CheckCircle, Mail, MessageCircle } from "lucide-react";
+import { IndianRupee, ShieldAlert, ArrowRight, CheckCircle, Mail, MessageCircle, Download } from "lucide-react";
 import styles from "./page.module.css";
 import { sendInvoiceReminder } from "../invoice-requests/actions";
 import { sendAMCPaymentReminder } from "../amc/actions";
 import { getWhatsAppLink, buildPaymentReminderMessage } from "@/lib/whatsapp";
 
 export default async function PaymentsDashboard() {
-  const pendingInvoices = await prisma.invoiceRequest.findMany({
+  const rawInvoices = await prisma.invoiceRequest.findMany({
     where: {
-      status: { notIn: ["PAID", "CANCELLED", "DRAFT"] }
+      status: { not: "CANCELLED" }
     },
     include: { customer: true, project: true },
     orderBy: { createdAt: 'desc' }
+  });
+
+  const pendingInvoices = rawInvoices.filter(inv => {
+    if (inv.status === "DRAFT" || inv.status === "CANCELLED") return false;
+    const sData = (inv.structuredData as any) || {};
+    const total = Number(sData.totalAmount !== undefined ? sData.totalAmount : inv.amountRequested || 0);
+    // Ignore refund documents
+    if (total <= 0 || sData.documentType === "REFUND" || inv.aroniumInvoiceNo?.includes("220-")) return false;
+
+    const paidAmount = Number(sData.paidAmount !== undefined ? sData.paidAmount : (inv.status === "PAID" ? total : 0));
+    const amountDue = Number(sData.amountDue !== undefined ? sData.amountDue : Math.max(0, total - paidAmount));
+
+    // Exclude if explicitly paid and 0 balance due
+    if (inv.status === "PAID" && sData.paymentStatus === "Paid" && amountDue <= 0) {
+      return false;
+    }
+
+    return amountDue > 0 || inv.status === "PARTIALLY_PAID" || sData.paymentStatus === "Partially Paid" || inv.status !== "PAID";
   });
 
   const pendingAMCs = await prisma.aMC.findMany({
@@ -33,7 +51,7 @@ export default async function PaymentsDashboard() {
             <IndianRupee size={32} color="var(--brand-primary)" />
             Outstanding Payments
           </h1>
-          <p className={styles.subtitle}>Track and send reminders for unpaid invoices and AMCs.</p>
+          <p className={styles.subtitle}>Track, download invoice PDFs, and send reminders for unpaid invoices and partial payments.</p>
         </div>
       </header>
 
@@ -41,12 +59,12 @@ export default async function PaymentsDashboard() {
         {/* Outstanding Invoices */}
         <div className={styles.card}>
           <h2 className={styles.cardHeader}>
-            <ShieldAlert size={20} color="#EF4444" /> Unpaid Invoices
+            <ShieldAlert size={20} color="#EF4444" /> Unpaid &amp; Partial Invoices ({pendingInvoices.length})
           </h2>
           {pendingInvoices.length === 0 ? (
             <div className={styles.emptyState}>
               <CheckCircle size={32} color="#10B981" style={{marginBottom: '12px'}} />
-              <p>All sent invoices have been paid!</p>
+              <p>All sent invoices have been fully paid!</p>
             </div>
           ) : (
             <table className={styles.table}>
@@ -54,28 +72,53 @@ export default async function PaymentsDashboard() {
                 <tr>
                   <th>Invoice details</th>
                   <th>Client</th>
-                  <th>Amount</th>
+                  <th>Amount &amp; Balance Due</th>
                   <th>Last Reminder</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {pendingInvoices.map(inv => {
+                  const sData = (inv.structuredData as any) || {};
+                  const total = Number(sData.totalAmount !== undefined ? sData.totalAmount : inv.amountRequested || 0);
+                  const paidAmount = Number(sData.paidAmount !== undefined ? sData.paidAmount : (inv.status === "PAID" ? total : 0));
+                  const amountDue = Number(sData.amountDue !== undefined ? sData.amountDue : Math.max(0, total - paidAmount));
+                  const isPartial = paidAmount > 0 && amountDue > 0;
+                  const invoiceDocNumber = sData.documentNumber || inv.aroniumInvoiceNo || `INV-${inv.id.slice(-6).toUpperCase()}`;
+
                   const whatsappMsg = buildPaymentReminderMessage({
                     customerName: inv.customer.name,
-                    invoiceNumber: inv.aroniumInvoiceNo || inv.id.slice(-6).toUpperCase(),
-                    totalAmount: inv.amountRequested,
-                    pendingAmount: inv.amountRequested,
-                    viewUrl: `https://technextmanage.vercel.app/track/${inv.id}`
+                    invoiceNumber: invoiceDocNumber,
+                    totalAmount: total,
+                    pendingAmount: amountDue,
+                    viewUrl: `https://technextmanage.vercel.app/billing/doc/invoice/${inv.id}`
                   });
+
                   return (
                     <tr key={inv.id}>
                       <td>
-                        <div style={{fontWeight: 500}}>{inv.aroniumInvoiceNo || 'Generated Invoice'}</div>
+                        <div style={{fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px'}}>
+                          <span>{invoiceDocNumber}</span>
+                          {isPartial ? (
+                            <span className={styles.tagPartial}>Partially Paid</span>
+                          ) : (
+                            <span className={styles.tagDue}>Unpaid</span>
+                          )}
+                        </div>
                         <div style={{fontSize: '12px', color: 'var(--text-muted)'}}>{inv.project?.name || 'General'}</div>
                       </td>
-                      <td>{inv.customer.name}</td>
-                      <td style={{fontWeight: 600}}>₹{inv.amountRequested.toFixed(2)}</td>
+                      <td>
+                        <div style={{fontWeight: 500}}>{inv.customer.name}</div>
+                        {inv.customer.phone && <div style={{fontSize: '11px', color: 'var(--text-muted)'}}>{inv.customer.phone}</div>}
+                      </td>
+                      <td>
+                        <div style={{fontWeight: 700, fontSize: '15px', color: amountDue > 0 ? '#DC2626' : '#166534'}}>
+                          ₹{amountDue.toFixed(2)} Due
+                        </div>
+                        <div style={{fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px'}}>
+                          Total: ₹{total.toFixed(2)} {paidAmount > 0 && `| Paid: ₹${paidAmount.toFixed(2)}`}
+                        </div>
+                      </td>
                       <td>
                         {inv.lastReminderSentAt ? (
                           <span className={styles.tagWarning}>{new Date(inv.lastReminderSentAt).toLocaleDateString()}</span>
@@ -84,21 +127,36 @@ export default async function PaymentsDashboard() {
                         )}
                       </td>
                       <td>
-                        <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                        <div style={{display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap'}}>
                           <form action={async () => {
                             "use server";
                             await sendInvoiceReminder(inv.id);
                           }}>
-                            <button type="submit" className={styles.reminderBtn}>
+                            <button type="submit" className={styles.reminderBtn} title="Send Payment Reminder Email">
                               <Mail size={14} /> Email
                             </button>
                           </form>
                           {inv.customer.phone && (
-                            <a href={getWhatsAppLink(inv.customer.phone, whatsappMsg)} target="_blank" rel="noreferrer" className={styles.whatsappBtn}>
+                            <a 
+                              href={getWhatsAppLink(inv.customer.phone, whatsappMsg)} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className={styles.whatsappBtn}
+                              title="Send WhatsApp Payment Reminder with pending balance"
+                            >
                               <MessageCircle size={14} /> WA
                             </a>
                           )}
-                          <Link href={`/invoice-requests/${inv.id}`} className={styles.actionLink} style={{marginLeft: '8px'}}>
+                          <a 
+                            href={`/billing/doc/invoice/${inv.id}?download=pdf`} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className={styles.pdfBtn}
+                            title="Download Vector PDF Invoice"
+                          >
+                            <Download size={14} /> PDF
+                          </a>
+                          <Link href={`/billing/doc/invoice/${inv.id}`} className={styles.actionLink} target="_blank" title="View Official Template">
                             View <ArrowRight size={14} />
                           </Link>
                         </div>

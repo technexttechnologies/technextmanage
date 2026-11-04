@@ -265,19 +265,44 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
   } else {
     const tenderLabel = payMethod.includes("UPI") ? "UPI PAYMENT:" : `${payMethod}:`;
     doc.text(tenderLabel, summaryBoxX, payBlockY);
-    doc.text(`₹${formatCurrency(paidAmount || totalAmount)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+    doc.text(`₹${formatCurrency(paidAmount > 0 ? paidAmount : 0)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
     payBlockY += 4;
   }
 
+  if (data.creditTerms) {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(180, 83, 9);
+    doc.text(`Credit: ${data.creditTerms}`, summaryBoxX, payBlockY);
+    payBlockY += 4;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+  }
+
   doc.text("Paid amount:", summaryBoxX, payBlockY);
+  if (paidAmount > 0) {
+    doc.setTextColor(22, 101, 52);
+  }
   doc.text(`₹${formatCurrency(paidAmount)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+  doc.setTextColor(0, 0, 0);
   payBlockY += 4;
 
   doc.setFont("helvetica", "bold");
   doc.text("Amount due:", summaryBoxX, payBlockY);
-  doc.setTextColor(amountDue > 0 ? 220 : 0, amountDue > 0 ? 38 : 0, amountDue > 0 ? 38 : 0);
+  doc.setTextColor(amountDue > 0 ? 220 : 22, amountDue > 0 ? 38 : 101, amountDue > 0 ? 38 : 52);
   doc.text(`₹${formatCurrency(amountDue)}`, summaryBoxX + summaryBoxWidth, payBlockY, { align: "right" });
+  doc.setTextColor(0, 0, 0);
   payBlockY += 4;
+
+  if (paidAmount > 0 && amountDue > 0) {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7);
+    doc.setTextColor(29, 78, 216);
+    doc.text(`Status: Partially Paid (₹${formatCurrency(paidAmount)} paid)`, summaryBoxX, payBlockY);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
+    payBlockY += 4;
+  }
 
   // Left Side: Scope / Deliverables / Narrative Notes (Matching exact uploaded generation)
   let leftScopeY = finalY + 6;
@@ -301,8 +326,34 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
     leftScopeY += wrapped.length * 3.8;
   });
 
+  // If payment installments / schedule exist, print installment summary
+  let scheduleEndBlockY = payBlockY;
+  if (data.paymentSchedule && Array.isArray(data.paymentSchedule) && data.paymentSchedule.length > 0) {
+    let schedY = Math.max(payBlockY, leftScopeY) + 4;
+    if (schedY < pageHeight - 90) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(30, 41, 59);
+      doc.text("PAYMENT INSTALLMENTS / SCHEDULE:", margin, schedY);
+      schedY += 4;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      data.paymentSchedule.forEach((inst: any, idx: number) => {
+        if (schedY < pageHeight - 82) {
+          const dtStr = inst.date ? formatDate(inst.date) : "---";
+          const isInstPaid = inst.status === "PAID";
+          doc.setTextColor(isInstPaid ? 22 : 180, isInstPaid ? 101 : 83, isInstPaid ? 52 : 9);
+          doc.text(`• ${idx + 1}. ${dtStr} - ${inst.method || 'UPI'}: ₹${formatCurrency(Number(inst.amount) || 0)} [${inst.status || 'PAID'}] ${inst.reference ? `(${inst.reference})` : ''}`, margin, schedY);
+          doc.setTextColor(0, 0, 0);
+          schedY += 3.5;
+        }
+      });
+      scheduleEndBlockY = schedY;
+    }
+  }
+
   // 5. Official Enterprise Footer & Policy Terms (Matching Uploaded Image)
-  let footerStartY = Math.max(payBlockY, leftScopeY) + 12;
+  let footerStartY = Math.max(payBlockY, leftScopeY, scheduleEndBlockY) + 8;
   // Ensure the footer fits on the page without awkward overflow
   if (footerStartY < pageHeight - 78) {
     footerStartY = pageHeight - 78;

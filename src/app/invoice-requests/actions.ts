@@ -324,6 +324,11 @@ export async function sendInvoiceReminder(id: string) {
 
   if (!invoice || !invoice.customer.email) return;
 
+  const sData = (invoice.structuredData as any) || {};
+  const total = Number(sData.totalAmount !== undefined ? sData.totalAmount : invoice.amountRequested || 0);
+  const paid = Number(sData.paidAmount || 0);
+  const due = Number(sData.amountDue !== undefined ? sData.amountDue : Math.max(0, total - paid));
+
   const emailSubject = `Payment Reminder: Invoice #${invoice.aroniumInvoiceNo || invoice.id.substring(0, 8)}`;
   const { templates } = await import("@/lib/email-templates");
   const { generateTechnextEmailHtml, sendEmail } = await import("@/lib/mailer");
@@ -331,7 +336,7 @@ export async function sendInvoiceReminder(id: string) {
   let emailBody = `
     <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 700;">Payment Reminder</h2>
     <p style="font-size: 16px; color: #334155; line-height: 1.6;">Hello ${invoice.customer.name},</p>
-    <p style="font-size: 16px; color: #334155; line-height: 1.6;">This is a friendly reminder that we are still awaiting payment for your recent invoice.</p>
+    <p style="font-size: 16px; color: #334155; line-height: 1.6;">This is a friendly reminder regarding your outstanding invoice payment.</p>
     
     <div style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin: 30px 0;">
       <table style="width: 100%; border-collapse: collapse;">
@@ -340,8 +345,18 @@ export async function sendInvoiceReminder(id: string) {
           <td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">${invoice.aroniumInvoiceNo || `INV-${invoice.id.substring(0, 8)}`}</td>
         </tr>
         <tr>
-          <td style="padding: 8px 0; color: #64748b; font-size: 15px; width: 40%;">Amount Due</td>
-          <td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">₹${invoice.amountRequested.toFixed(2)}</td>
+          <td style="padding: 8px 0; color: #64748b; font-size: 15px; width: 40%;">Total Amount</td>
+          <td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">₹${total.toFixed(2)}</td>
+        </tr>
+        ${paid > 0 ? `
+        <tr>
+          <td style="padding: 8px 0; color: #166534; font-size: 15px; width: 40%;">Paid So Far</td>
+          <td style="padding: 8px 0; color: #166534; font-size: 15px; font-weight: 600;">₹${paid.toFixed(2)}</td>
+        </tr>
+        ` : ''}
+        <tr>
+          <td style="padding: 8px 0; color: #b91c1c; font-size: 15px; width: 40%;">Balance Due</td>
+          <td style="padding: 8px 0; color: #b91c1c; font-size: 17px; font-weight: 700;">₹${due.toFixed(2)}</td>
         </tr>
       </table>
     </div>
@@ -352,7 +367,7 @@ export async function sendInvoiceReminder(id: string) {
   const emailHtml = generateTechnextEmailHtml(
     emailSubject, 
     emailBody,
-    { text: "View and Pay Invoice", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/track/${invoice.id}` }
+    { text: "View and Pay Invoice", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/billing/doc/invoice/${invoice.id}` }
   );
 
   await sendEmail(invoice.customer.email, emailSubject, emailHtml);

@@ -50,11 +50,14 @@ export default async function InvoiceRequestDetails({ params }: { params: Promis
           </div>
           <p className={styles.subtitle}>Requested by {request.requestedBy.name} for {request.customer.name}</p>
         </div>
-        {request.pdfUrl && (
-          <a href={formatPdfUrl(request.pdfUrl)} target="_blank" rel="noreferrer" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Download size={18} /> Download Official Invoice
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <a href={`/billing/doc/invoice/${request.id}?download=pdf`} target="_blank" rel="noreferrer" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Download size={18} /> Download Invoice PDF
           </a>
-        )}
+          <Link href={`/billing/doc/invoice/${request.id}`} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            View Template
+          </Link>
+        </div>
       </header>
 
       <div className={styles.detailGrid}>

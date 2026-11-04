@@ -93,7 +93,13 @@ export async function GET(req: Request) {
       where: {
         OR: [
           { aroniumInvoiceNo: null },
-          { aroniumInvoiceNo: { startsWith: "ORD-" } }
+          { aroniumInvoiceNo: { startsWith: "ORD-" } },
+          {
+            structuredData: {
+              path: ["needsAroniumSync"],
+              equals: true
+            }
+          }
         ]
       },
       include: {
@@ -116,6 +122,7 @@ export async function GET(req: Request) {
         id: inv.id,
         docNumber: sData.documentNumber || inv.aroniumInvoiceNo || `26-200-${inv.id.slice(-6).toUpperCase()}`,
         docType: docType,
+        isEdited: sData.isEditedByUser === true || sData.isEdited === true,
         date: sData.date || inv.createdAt,
         dueDate: sData.dueDate || inv.createdAt,
         totalAmount: isRefund ? -Math.abs(totalAmount) : Math.abs(totalAmount),
