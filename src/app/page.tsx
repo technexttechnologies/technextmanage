@@ -33,6 +33,7 @@ export default async function Dashboard() {
   todayStart.setHours(0,0,0,0);
   const todayEnd = new Date();
   todayEnd.setHours(23,59,59,999);
+  const sixMonthsAgo = new Date(todayStart.getFullYear(), todayStart.getMonth() - 5, 1);
 
   const [
     totalActiveCustomers,
@@ -51,6 +52,7 @@ export default async function Dashboard() {
     erpIncomeResult,
     erpExpenseResult,
     activeVendorsCount,
+    recentIncomes,
   ] = await Promise.all([
     prisma.customer.count({ where: { status: { not: "INACTIVE" } } }),
     prisma.domainRegistration.count({ where: { status: "ACTIVE" } }),
@@ -88,12 +90,21 @@ export default async function Dashboard() {
     prisma.erpIncome.aggregate({ _sum: { amount: true } }),
     prisma.erpExpense.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
     prisma.erpVendor.count(),
+    prisma.erpIncome.findMany({
+      where: { date: { gte: sixMonthsAgo } },
+      select: { date: true, amount: true }
+    }),
   ]);
 
   const totalErpIncome = erpIncomeResult._sum.amount || 0;
 
-  // Aronium Metrics (Strictly Invoices Only)
-  const totalBilled = aroniumInvoices.reduce((sum, inv) => {
+  // Aronium Metrics (Strictly Invoices Only, Excluding Quotations)
+  const actualInvoices = aroniumInvoices.filter((inv) => {
+    const sData = (inv.structuredData as any) || {};
+    return sData.documentType !== "QUOTATION";
+  });
+
+  const totalBilled = actualInvoices.reduce((sum, inv) => {
     const sData = (inv.structuredData as any) || {};
     return sum + (sData.totalAmount || inv.amountRequested || 0);
   }, 0);
@@ -109,16 +120,34 @@ export default async function Dashboard() {
     count
   }));
 
-  // Revenue chart data
-  const revenueData = [
-    { month: "Jan", amount: 150000 },
-    { month: "Feb", amount: 220000 },
-    { month: "Mar", amount: 180000 },
-    { month: "Apr", amount: 350000 },
-    { month: "May", amount: 410000 },
-    { month: "Jun", amount: 290000 },
-  ];
-  const maxRev = Math.max(...revenueData.map(d => d.amount));
+  // Real Dynamic 6-Month Revenue Data
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const past6Months: { month: string; year: number; monthIdx: number; amount: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(todayStart.getFullYear(), todayStart.getMonth() - i, 1);
+    past6Months.push({
+      month: monthNames[d.getMonth()],
+      year: d.getFullYear(),
+      monthIdx: d.getMonth(),
+      amount: 0,
+    });
+  }
+
+  recentIncomes.forEach((inc) => {
+    const incDate = new Date(inc.date);
+    const target = past6Months.find(
+      (m) => m.monthIdx === incDate.getMonth() && m.year === incDate.getFullYear()
+    );
+    if (target) {
+      target.amount += Number(inc.amount) || 0;
+    }
+  });
+
+  const revenueData = past6Months.map((m) => ({
+    month: m.month,
+    amount: Math.max(0, Math.round(m.amount))
+  }));
+  const maxRev = Math.max(...revenueData.map(d => d.amount), 1);
 
   const formatCurrency = (amt: number) => {
     return Number(amt || 0).toLocaleString("en-IN", {
@@ -220,7 +249,7 @@ export default async function Dashboard() {
             <div className={`${styles.suiteChipsRow} ${styles.suiteChipsRowBilling}`}>
               <span className={styles.suiteChip}>₹{formatCurrency(totalBilled)} Billed</span>
               <span className={styles.suiteChipDot}>•</span>
-              <span className={styles.suiteChip}>{aroniumInvoices.length} Invoices</span>
+              <span className={styles.suiteChip}>{actualInvoices.length} Invoices</span>
               <span className={styles.suiteChipDot}>•</span>
               <span className={styles.suiteChip}>{totalProducts} Catalog Products</span>
             </div>
@@ -471,8 +500,10 @@ export default async function Dashboard() {
             {revenueData.map((d) => {
               const heightPercent = Math.round((d.amount / maxRev) * 100);
               return (
-                <div key={d.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: '6px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted, #64748b)', fontWeight: 600 }}>₹{(d.amount / 1000).toFixed(0)}k</span>
+                <div key={d.month} title={`${d.month}: ₹${formatCurrency(d.amount)}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted, #64748b)', fontWeight: 600 }}>
+                    {d.amount >= 1000 ? `₹${(d.amount / 1000).toFixed(1)}k` : `₹${d.amount}`}
+                  </span>
                   <div 
                     style={{ 
                       width: '100%', 

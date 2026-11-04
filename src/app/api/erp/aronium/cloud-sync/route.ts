@@ -380,6 +380,30 @@ export async function POST(req: Request) {
 
         salesCount++;
       }
+
+      // 4d. Prune orphaned sales & ghost incomes deleted from Aronium POS
+      const activeAroniumDocIds = sales.map((s: any) => s.Id.toString());
+      const orphanedSales = await prisma.erpSale.findMany({
+        where: {
+          aroniumId: { notIn: activeAroniumDocIds }
+        },
+        select: { id: true, invoiceNumber: true, aroniumId: true }
+      });
+      if (orphanedSales.length > 0) {
+        const orphanedIds = orphanedSales.map(s => s.id);
+        const orphanedAroniumIds = orphanedSales.map(s => s.aroniumId).filter(Boolean) as string[];
+        const orphanedNumbers = orphanedSales.map(s => s.invoiceNumber);
+
+        await prisma.erpSale.deleteMany({ where: { id: { in: orphanedIds } } });
+        await prisma.erpIncome.deleteMany({
+          where: {
+            OR: [
+              { aroniumId: { in: orphanedAroniumIds } },
+              { incomeId: { in: orphanedNumbers.map(num => `INC-${num}`) } }
+            ]
+          }
+        });
+      }
     }
 
     // 5. Sync Proformas -> Quotations & QuotationItems
@@ -527,6 +551,28 @@ export async function POST(req: Request) {
           });
         }
         purchasesCount++;
+      }
+
+      // 6b. Prune orphaned purchases deleted from Aronium POS
+      const activePurchaseIds = purchases.map((p: any) => p.Id.toString());
+      const orphanedPurchases = await prisma.erpPurchase.findMany({
+        where: {
+          aroniumId: { notIn: activePurchaseIds }
+        },
+        select: { id: true, orderNumber: true, aroniumId: true }
+      });
+      if (orphanedPurchases.length > 0) {
+        const orphanedIds = orphanedPurchases.map(p => p.id);
+        const orphanedAroniumIds = orphanedPurchases.map(p => p.aroniumId).filter(Boolean) as string[];
+        await prisma.erpPurchase.deleteMany({ where: { id: { in: orphanedIds } } });
+        await prisma.erpExpense.deleteMany({
+          where: {
+            OR: [
+              { aroniumId: { in: orphanedAroniumIds } },
+              { title: { in: orphanedPurchases.map(p => `Aronium Purchase #${p.orderNumber}`) } }
+            ]
+          }
+        });
       }
     }
 

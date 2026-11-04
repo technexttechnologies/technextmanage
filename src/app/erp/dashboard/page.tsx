@@ -14,21 +14,24 @@ export default async function ErpDashboardPage() {
 
   // Fetch Financial Data
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const currentYear = now.getFullYear();
+  const startOfMonth = new Date(currentYear, now.getMonth(), 1, 0, 0, 0);
+  const startOfToday = new Date(currentYear, now.getMonth(), now.getDate(), 0, 0, 0);
+  const endOfToday = new Date(currentYear, now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  const startOfYear = new Date(currentYear, 0, 1, 0, 0, 0);
+  const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59, 999);
 
-  // Income
+  // Income (Strictly Real Ledger Income, Excluding Quotations)
   const totalIncomeObj = await prisma.erpIncome.aggregate({ _sum: { amount: true } });
-  const annualIncomeObj = await prisma.erpIncome.aggregate({ where: { date: { gte: startOfYear } }, _sum: { amount: true } });
+  const annualIncomeObj = await prisma.erpIncome.aggregate({ where: { date: { gte: startOfYear, lte: endOfYear } }, _sum: { amount: true } });
   const monthlyIncomeObj = await prisma.erpIncome.aggregate({ where: { date: { gte: startOfMonth } }, _sum: { amount: true } });
-  const todayIncomeObj = await prisma.erpIncome.aggregate({ where: { date: { gte: startOfToday } }, _sum: { amount: true } });
+  const todayIncomeObj = await prisma.erpIncome.aggregate({ where: { date: { gte: startOfToday, lte: endOfToday } }, _sum: { amount: true } });
 
   // Expenses
   const totalExpenseObj = await prisma.erpExpense.aggregate({ _sum: { amount: true }, where: { status: "PAID" } });
-  const annualExpenseObj = await prisma.erpExpense.aggregate({ where: { paymentDate: { gte: startOfYear }, status: "PAID" }, _sum: { amount: true } });
+  const annualExpenseObj = await prisma.erpExpense.aggregate({ where: { paymentDate: { gte: startOfYear, lte: endOfYear }, status: "PAID" }, _sum: { amount: true } });
   const monthlyExpenseObj = await prisma.erpExpense.aggregate({ where: { paymentDate: { gte: startOfMonth }, status: "PAID" }, _sum: { amount: true } });
-  const todayExpenseObj = await prisma.erpExpense.aggregate({ where: { paymentDate: { gte: startOfToday }, status: "PAID" }, _sum: { amount: true } });
+  const todayExpenseObj = await prisma.erpExpense.aggregate({ where: { paymentDate: { gte: startOfToday, lte: endOfToday }, status: "PAID" }, _sum: { amount: true } });
 
   const monthlyIncome = monthlyIncomeObj._sum.amount || 0;
   const monthlyExpense = monthlyExpenseObj._sum.amount || 0;
@@ -46,15 +49,14 @@ export default async function ErpDashboardPage() {
   // Pending approvals
   const pendingExpenses = await prisma.erpExpense.count({ where: { status: "PENDING" } });
 
-  // For Charts: We need the last 6 months of data
-  // Since Prisma group by date is complex across SQLite/Postgres without raw, we can fetch all for the year and map in JS.
+  // For Charts: We need the verified data for the year and map accurately in JS
   const allYearIncome = await prisma.erpIncome.findMany({
-    where: { date: { gte: startOfYear } },
+    where: { date: { gte: startOfYear, lte: endOfYear } },
     select: { date: true, amount: true, category: true }
   });
   
   const allYearExpense = await prisma.erpExpense.findMany({
-    where: { paymentDate: { gte: startOfYear }, status: "PAID" },
+    where: { paymentDate: { gte: startOfYear, lte: endOfYear }, status: "PAID" },
     select: { paymentDate: true, amount: true, category: true }
   });
 
@@ -63,30 +65,37 @@ export default async function ErpDashboardPage() {
     if (index > now.getMonth()) return null; // Only show up to current month
     
     const incomeForMonth = allYearIncome
-      .filter(i => new Date(i.date).getMonth() === index)
-      .reduce((sum, i) => sum + i.amount, 0);
+      .filter(i => {
+        const d = new Date(i.date);
+        return d.getMonth() === index && d.getFullYear() === currentYear;
+      })
+      .reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
       
     const expenseForMonth = allYearExpense
-      .filter(e => new Date(e.paymentDate).getMonth() === index)
-      .reduce((sum, e) => sum + e.amount, 0);
+      .filter(e => {
+        const d = new Date(e.paymentDate);
+        return d.getMonth() === index && d.getFullYear() === currentYear;
+      })
+      .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
     return {
       name: month,
-      Income: incomeForMonth,
-      Expenses: expenseForMonth,
-      Profit: incomeForMonth - expenseForMonth
+      Income: Math.round(incomeForMonth),
+      Expenses: Math.round(expenseForMonth),
+      Profit: Math.round(incomeForMonth - expenseForMonth)
     };
   }).filter(Boolean);
 
   // Expense breakdown
   const expenseCategories = allYearExpense.reduce((acc: any, curr) => {
-    acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+    const cat = curr.category || "General";
+    acc[cat] = (acc[cat] || 0) + (Number(curr.amount) || 0);
     return acc;
   }, {});
 
   const breakdownData = Object.keys(expenseCategories).map(key => ({
     name: key,
-    value: expenseCategories[key]
+    value: Math.round(expenseCategories[key])
   })).sort((a, b) => b.value - a.value).slice(0, 5); // Top 5 categories
 
   return (
