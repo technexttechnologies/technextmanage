@@ -94,6 +94,10 @@ export async function createQuotation(formData: FormData) {
   });
 
   if ((status === "SENT" || status === "APPROVED") && quotation.customer?.email) {
+    const quoteUrl = quotation.customer.portalToken
+      ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${quotation.customer.portalToken}/quotations/${quotation.id}`
+      : `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/quotation/${quotation.id}`;
+
     const html = generateTechnextEmailHtml(
       "Your Official Quotation",
       templates.quotationEmail({
@@ -101,7 +105,7 @@ export async function createQuotation(formData: FormData) {
         quotationNumber: quotation.quotationNumber,
         totalAmount: quotation.totalAmount,
       }),
-      { text: "View Dynamic Quotation", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/quotation/${quotation.id}` }
+      { text: "View Dynamic Quotation", url: quoteUrl }
     );
     await sendEmail(quotation.customer.email, `Quotation ${quotation.quotationNumber} from Technext`, html);
   }
@@ -121,6 +125,10 @@ export async function updateQuotationStatus(formData: FormData) {
     });
 
     if (status === "SENT" && quotation.customer?.email) {
+      const quoteUrl = quotation.customer.portalToken
+        ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${quotation.customer.portalToken}/quotations/${quotation.id}`
+        : `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/quotation/${quotation.id}`;
+
       const html = generateTechnextEmailHtml(
         "Your Official Quotation",
         templates.quotationEmail({
@@ -128,7 +136,7 @@ export async function updateQuotationStatus(formData: FormData) {
           quotationNumber: quotation.quotationNumber,
           totalAmount: quotation.totalAmount,
         }),
-        { text: "View Dynamic Quotation", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/quotation/${quotation.id}` }
+        { text: "View Dynamic Quotation", url: quoteUrl }
       );
       await sendEmail(quotation.customer.email, `Quotation ${quotation.quotationNumber} from Technext`, html);
     }

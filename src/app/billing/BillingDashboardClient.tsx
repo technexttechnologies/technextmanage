@@ -21,7 +21,13 @@ import {
 } from "lucide-react";
 import styles from "./page.module.css";
 import { convertQuotationToInvoice, deleteBillingDocument } from "./actions";
-import { getWhatsAppLink, buildPaymentReminderMessage } from "@/lib/whatsapp";
+import { 
+  getWhatsAppLink, 
+  buildPaymentReminderMessage,
+  buildInvoiceNotificationMessage,
+  buildQuotationNotificationMessage,
+  getAppUrl 
+} from "@/lib/whatsapp";
 
 interface Props {
   invoices: any[];
@@ -74,6 +80,7 @@ export default function BillingDashboardClient({
       customerCompany: inv.customer?.company || "",
       customerCode: inv.customer?.customerNumber ? `TN-${inv.customer.customerNumber}` : inv.customer?.aroniumCode ? `TN-${inv.customer.aroniumCode}` : `TN-${inv.customer?.id?.slice(-4) || '8779'}`,
       customerPhone: inv.customer?.phone || "",
+      customerPortalToken: inv.customer?.portalToken,
       date: sData.date || inv.createdAt,
       dueDate: sData.dueDate || inv.createdAt,
       amount: sData.totalAmount || inv.amountRequested,
@@ -93,6 +100,7 @@ export default function BillingDashboardClient({
       customerCompany: q.companyName || q.customer?.company || "",
       customerCode: q.customer?.customerNumber ? `TN-${q.customer.customerNumber}` : q.customer?.aroniumCode ? `TN-${q.customer.aroniumCode}` : `TN-${q.customer?.id?.slice(-4) || '8779'}`,
       customerPhone: q.customer?.phone || "",
+      customerPortalToken: q.customer?.portalToken,
       date: q.date,
       dueDate: q.expiryDate || q.date,
       amount: q.totalAmount,
@@ -319,7 +327,7 @@ export default function BillingDashboardClient({
                         <a 
                           href={getWhatsAppLink(
                             doc.customerPhone,
-                            `Hello ${doc.customerName}, here is your ${doc.kind.replace('_', ' ')} #${doc.docNumber} for ₹${formatCurrency(doc.amount)}. View document: https://technextmanage.vercel.app${doc.viewUrl}`
+                            `Hello ${doc.customerName}, here is your ${doc.kind.replace('_', ' ')} #${doc.docNumber} for ₹${formatCurrency(doc.amount)}. View document: ${doc.customerPortalToken ? (doc.kind === 'QUOTATION' ? `https://technextmanage.vercel.app/portal/${doc.customerPortalToken}/quotations/${doc.id}` : `https://technextmanage.vercel.app/portal/${doc.customerPortalToken}/invoices/${doc.id}`) : (doc.kind === 'QUOTATION' ? `https://technextmanage.vercel.app/quotation/${doc.id}` : `https://technextmanage.vercel.app/request/invoice/${doc.id}`)}`
                           )}
                           target="_blank"
                           rel="noreferrer"
@@ -341,7 +349,7 @@ export default function BillingDashboardClient({
                               totalAmount: doc.amount,
                               pendingAmount: doc.amount,
                               dueDate: doc.date,
-                              viewUrl: `https://technextmanage.vercel.app${doc.viewUrl}`
+                              viewUrl: doc.customerPortalToken ? `https://technextmanage.vercel.app/portal/${doc.customerPortalToken}/invoices/${doc.id}` : `https://technextmanage.vercel.app/request/invoice/${doc.id}`
                             })
                           )}
                           target="_blank"

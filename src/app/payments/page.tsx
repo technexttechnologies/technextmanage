@@ -86,12 +86,16 @@ export default async function PaymentsDashboard() {
                   const isPartial = paidAmount > 0 && amountDue > 0;
                   const invoiceDocNumber = sData.documentNumber || inv.aroniumInvoiceNo || `INV-${inv.id.slice(-6).toUpperCase()}`;
 
+                  const portalInvoiceUrl = inv.customer?.portalToken
+                    ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${inv.customer.portalToken}/invoices/${inv.id}`
+                    : `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/request/invoice/${inv.id}`;
+
                   const whatsappMsg = buildPaymentReminderMessage({
                     customerName: inv.customer.name,
                     invoiceNumber: invoiceDocNumber,
                     totalAmount: total,
                     pendingAmount: amountDue,
-                    viewUrl: `https://technextmanage.vercel.app/billing/doc/invoice/${inv.id}`
+                    viewUrl: portalInvoiceUrl
                   });
 
                   return (

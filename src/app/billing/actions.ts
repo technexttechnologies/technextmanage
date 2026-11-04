@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { 
   sendWhatsAppNotification, 
   buildInvoiceNotificationMessage, 
+  buildQuotationNotificationMessage,
   getAppUrl 
 } from "@/lib/whatsapp";
 
@@ -190,6 +191,30 @@ export async function createBillingDocument(formData: FormData) {
         details: `Created Quotation #${documentNumber} for ${customer.name}`
       }
     });
+
+    // Send WhatsApp notification for quotation
+    if (customer.phone) {
+      try {
+        const trackingUrl = customer.portalToken
+          ? `${getAppUrl()}/portal/${customer.portalToken}/quotations/${quotation.id}`
+          : `${getAppUrl()}/quotation/${quotation.id}`;
+        const waMsg = buildQuotationNotificationMessage({
+          customerName: customer.name,
+          quoteNo: documentNumber,
+          amount: totalAmount,
+          trackingUrl,
+        });
+        await sendWhatsAppNotification({
+          phone: customer.phone,
+          recipientName: customer.name,
+          message: waMsg,
+          triggerType: "QUOTATION",
+          customerId: customer.id,
+        });
+      } catch (waErr) {
+        console.error("[Billing Quotation WhatsApp Error]", waErr);
+      }
+    }
   } else {
     // INVOICE, ORDER_FORM, or PAYMENT_RECEIPT
     const structuredPayload = {
@@ -291,7 +316,9 @@ export async function createBillingDocument(formData: FormData) {
     // Send WhatsApp notification
     if (customer.phone) {
       try {
-        const trackingUrl = `${getAppUrl()}/billing/doc/${documentType.toLowerCase()}/${invoice.id}`;
+        const trackingUrl = customer.portalToken
+          ? `${getAppUrl()}/portal/${customer.portalToken}/invoices/${invoice.id}`
+          : `${getAppUrl()}/request/invoice/${invoice.id}`;
         const waMsg = buildInvoiceNotificationMessage({
           customerName: customer.name,
           invoiceNo: documentNumber,

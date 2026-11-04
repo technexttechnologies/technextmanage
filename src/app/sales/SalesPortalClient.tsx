@@ -891,7 +891,9 @@ export default function SalesPortalClient({
                               invoiceNumber: inv.aroniumInvoiceNo || inv.id.slice(-6).toUpperCase(),
                               totalAmount: inv.amountRequested,
                               pendingAmount: inv.amountRequested,
-                              viewUrl: `https://technextmanage.vercel.app/track/${inv.id}`
+                              viewUrl: inv.customer?.portalToken 
+                                ? `https://technextmanage.vercel.app/portal/${inv.customer.portalToken}/invoices/${inv.id}` 
+                                : `https://technextmanage.vercel.app/request/invoice/${inv.id}`
                             })
                           )}
                           target="_blank"

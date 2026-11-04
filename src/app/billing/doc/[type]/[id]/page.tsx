@@ -46,6 +46,7 @@ export default async function BillingDocumentViewerPage({
         customerNumber: quotation.customer.customerNumber,
         aroniumCode: quotation.customer.aroniumCode,
         gstNumber: quotation.companyGst || quotation.customer.gstNumber,
+        portalToken: quotation.customer.portalToken,
       },
       items: quotation.items.map(it => ({
         id: it.id,
@@ -141,6 +142,7 @@ export default async function BillingDocumentViewerPage({
       customerNumber: invoice.customer.customerNumber,
       aroniumCode: invoice.customer.aroniumCode,
       gstNumber: invoice.customer.gstNumber,
+      portalToken: invoice.customer.portalToken,
     },
     items,
     subtotal: structured.subtotal !== undefined ? structured.subtotal : invoice.subtotal || invoice.amountRequested,

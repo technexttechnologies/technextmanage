@@ -191,7 +191,9 @@ export async function updateInvoiceStatus(formData: FormData) {
 
   if (request.customer?.phone) {
     try {
-      const trackingUrl = `${getAppUrl()}/track/${request.id}`;
+      const trackingUrl = request.customer?.portalToken
+        ? `${getAppUrl()}/portal/${request.customer.portalToken}/invoices/${request.id}`
+        : `${getAppUrl()}/request/invoice/${request.id}`;
       const waMsg = buildInvoiceNotificationMessage({
         customerName: request.customer.name,
         invoiceNo: request.aroniumInvoiceNo || request.id.substring(0, 8).toUpperCase(),
@@ -283,6 +285,10 @@ export async function uploadInvoicePdf(formData: FormData) {
   const { generateTechnextEmailHtml, sendEmail } = await import("@/lib/mailer");
   
   if (request.customer.email) {
+    const invoiceUrl = request.customer.portalToken
+      ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${request.customer.portalToken}/invoices/${request.id}`
+      : `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/request/invoice/${request.id}`;
+
     const emailHtml = generateTechnextEmailHtml(
       "Your Invoice is Ready",
       templates.invoiceEmail({
@@ -291,7 +297,7 @@ export async function uploadInvoicePdf(formData: FormData) {
         amount: request.amountRequested,
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString() // Example: 7 days due
       }),
-      { text: "View Dynamic Invoice", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/request/invoice/${request.id}` }
+      { text: "View and Pay Invoice", url: invoiceUrl }
     );
     await sendEmail(request.customer.email, `Invoice #${request.aroniumInvoiceNo || request.id.substring(0, 8)} from TechNext`, emailHtml);
   }
@@ -364,10 +370,14 @@ export async function sendInvoiceReminder(id: string) {
     <p style="font-size: 16px; color: #334155; line-height: 1.6;">You can view your invoice and arrange for payment using the link below.</p>
   `;
 
+  const portalInvoiceUrl = invoice.customer.portalToken
+    ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${invoice.customer.portalToken}/invoices/${invoice.id}`
+    : `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/request/invoice/${invoice.id}`;
+
   const emailHtml = generateTechnextEmailHtml(
     emailSubject, 
     emailBody,
-    { text: "View and Pay Invoice", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/billing/doc/invoice/${invoice.id}` }
+    { text: "View and Pay Invoice", url: portalInvoiceUrl }
   );
 
   await sendEmail(invoice.customer.email, emailSubject, emailHtml);

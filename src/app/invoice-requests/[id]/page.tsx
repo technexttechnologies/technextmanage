@@ -171,7 +171,10 @@ export default async function InvoiceRequestDetails({ params }: { params: Promis
               </form>
               <div style={{ marginTop: '12px' }}>
                 <a 
-                  href={getWhatsAppLink(request.customer.phone, `Hello ${request.customer.name}, the status of your Invoice (#${request.id.slice(-6).toUpperCase()}) has been updated to: ${request.status.replace(/_/g, ' ')}.\n\nView live progress: https://technextmanage.vercel.app/track/${request.id}`)}
+                  href={getWhatsAppLink(
+                    request.customer.phone, 
+                    `Hello ${request.customer.name}, the status of your Invoice (#${request.aroniumInvoiceNo || request.id.slice(-6).toUpperCase()}) has been updated to: ${request.status.replace(/_/g, ' ')}.\n\nView details: ${request.customer.portalToken ? `https://technextmanage.vercel.app/portal/${request.customer.portalToken}/invoices/${request.id}` : `https://technextmanage.vercel.app/request/invoice/${request.id}`}`
+                  )}
                   target="_blank" 
                   rel="noreferrer" 
                   className="btn-primary" 
@@ -193,7 +196,9 @@ export default async function InvoiceRequestDetails({ params }: { params: Promis
                             invoiceNumber: request.aroniumInvoiceNo || request.id.slice(-6).toUpperCase(),
                             totalAmount: request.amountRequested,
                             pendingAmount: request.amountRequested,
-                            viewUrl: `https://technextmanage.vercel.app/track/${request.id}`
+                            viewUrl: request.customer.portalToken 
+                              ? `https://technextmanage.vercel.app/portal/${request.customer.portalToken}/invoices/${request.id}` 
+                              : `https://technextmanage.vercel.app/request/invoice/${request.id}`
                           })
                         )}
                         target="_blank"

@@ -5,13 +5,21 @@ import { jwtVerify } from 'jose';
 const SECRET_KEY = process.env.JWT_SECRET || 'technext-super-secret-key-2026';
 const encodedKey = new TextEncoder().encode(SECRET_KEY);
 
-const publicRoutes = ['/login', '/api/sync/receive-aronium', '/api/sync-enquiries', '/api/cron/reminders', '/support'];
+const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/api/sync/receive-aronium', '/api/sync-enquiries', '/api/cron/reminders', '/support'];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   
-  // Allow public routes, public tracking links, customer portal, and API sync endpoints
-  if (publicRoutes.includes(path) || path.startsWith('/track/') || path.startsWith('/portal/') || path.startsWith('/api/sync') || path.startsWith('/api/erp/aronium')) {
+  // Allow public routes, public tracking links, customer portal, public bills/quotations, and API sync endpoints
+  if (
+    publicRoutes.includes(path) ||
+    path.startsWith('/track/') ||
+    path.startsWith('/portal/') ||
+    path.startsWith('/request/') ||
+    path.startsWith('/quotation/') ||
+    path.startsWith('/api/sync') ||
+    path.startsWith('/api/erp/aronium')
+  ) {
     return NextResponse.next();
   }
 

@@ -116,7 +116,9 @@ export async function updateQuotationStatus(formData: FormData) {
 
   if (request.customer?.phone) {
     try {
-      const trackingUrl = `${getAppUrl()}/track/${request.id}`;
+      const trackingUrl = request.customer.portalToken
+        ? `${getAppUrl()}/portal/${request.customer.portalToken}/quotations/${request.id}`
+        : `${getAppUrl()}/request/quotation/${request.id}`;
       const waMsg = buildQuotationNotificationMessage({
         customerName: request.customer.name,
         quoteNo: request.aroniumQuotationNo || request.id.substring(0, 8).toUpperCase(),
@@ -207,15 +209,19 @@ export async function uploadQuotationPdf(formData: FormData) {
   const { generateTechnextEmailHtml, sendEmail } = await import("@/lib/mailer");
   
   if (request.customer.email) {
-    const emailHtml = generateTechnextEmailHtml(
-      "Your Quotation is Ready",
-      templates.quotationEmail({
-        customerName: request.customer.name,
-        quotationNumber: request.aroniumQuotationNo || `REQ-${request.id.substring(0, 8)}`,
-        totalAmount: request.budget || 0
-      }),
-      { text: "View Dynamic Proposal", url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/request/quotation/${request.id}` }
-    );
+      const quoteUrl = request.customer.portalToken
+        ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/portal/${request.customer.portalToken}/quotations/${request.id}`
+        : `${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/request/quotation/${request.id}`;
+
+      const emailHtml = generateTechnextEmailHtml(
+        "Your Quotation is Ready",
+        templates.quotationEmail({
+          customerName: request.customer.name,
+          quotationNumber: request.aroniumQuotationNo || `REQ-${request.id.substring(0, 8)}`,
+          totalAmount: request.budget || 0
+        }),
+        { text: "View Dynamic Proposal", url: quoteUrl }
+      );
     await sendEmail(request.customer.email, "Your Official Quotation from TechNext", emailHtml);
   }
 

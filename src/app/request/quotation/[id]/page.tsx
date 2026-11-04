@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CheckCircle2, Clock, Download, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import styles from "@/app/quotation/[id]/page.module.css";
@@ -17,7 +17,17 @@ export default async function DynamicQuotationRequestPage({ params }: { params: 
     }
   });
 
-  if (!request || !request.structuredData) return notFound();
+  if (!request) {
+    const quotation = await prisma.quotation.findUnique({
+      where: { id }
+    });
+    if (quotation) {
+      return redirect(`/quotation/${quotation.id}`);
+    }
+    return notFound();
+  }
+
+  if (!request.structuredData) return notFound();
 
   const data: any = request.structuredData;
 

@@ -55,7 +55,14 @@ import styles from "./AroniumBillingConsole.module.css";
 import { convertQuotationToInvoice, deleteBillingDocument, processReturnAndRefund } from "./actions";
 import { deleteProduct } from "@/app/inventory/actions";
 import { generateReportVectorPdf } from "@/lib/vectorPdfGenerator";
-import { cleanPhoneNumber, getWhatsAppLink, buildPaymentReminderMessage } from "@/lib/whatsapp";
+import { 
+  cleanPhoneNumber, 
+  getWhatsAppLink, 
+  buildPaymentReminderMessage,
+  buildInvoiceNotificationMessage,
+  buildQuotationNotificationMessage,
+  getAppUrl 
+} from "@/lib/whatsapp";
 
 interface Props {
   invoices: any[];
@@ -310,6 +317,7 @@ export default function AroniumBillingConsole({
         customerId: inv.customer?.id || "",
         customerCode: inv.customer?.customerNumber ? `TN-${inv.customer.customerNumber}` : inv.customer?.aroniumCode ? `TN-${inv.customer.aroniumCode}` : `TN-${inv.customer?.id?.slice(-4) || '8779'}`,
         customerPhone: inv.customer?.phone || "+91 85906 74531",
+        customerPortalToken: inv.customer?.portalToken,
         date: sData.date || inv.createdAt,
         dueDate: sData.dueDate || inv.createdAt,
         amount: totalAmount,
@@ -382,6 +390,7 @@ export default function AroniumBillingConsole({
         customerId: q.customer?.id || "",
         customerCode: q.customer?.customerNumber ? `TN-${q.customer.customerNumber}` : q.customer?.aroniumCode ? `TN-${q.customer.aroniumCode}` : `TN-${q.customer?.id?.slice(-4) || '8779'}`,
         customerPhone: q.customer?.phone || "+91 85906 74531",
+        customerPortalToken: q.customer?.portalToken,
         date: q.date,
         dueDate: q.expiryDate || q.date,
         amount: totalAmount,
@@ -1225,43 +1234,71 @@ export default function AroniumBillingConsole({
                 </form>
               )}
 
-              {selectedDoc?.customerPhone && (
-                <a
-                  href={getWhatsAppLink(
-                    selectedDoc.customerPhone,
-                    `Hello ${selectedDoc.customerName}, here is your ${selectedDoc.kind.replace('_', ' ')} #${selectedDoc.docNumber} from TechNext Technologies for ₹${formatCurrency(selectedDoc.amount)}. View document: https://technextmanage.vercel.app${selectedDoc.viewUrl}`
-                  )}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={styles.toolBtn}
-                  style={{ color: "#22c55e" }}
-                >
-                  <Share2 size={13} /> WhatsApp
-                </a>
-              )}
+              {selectedDoc?.customerPhone && (() => {
+                const docUrl = selectedDoc.customerPortalToken
+                  ? (selectedDoc.kind === "QUOTATION"
+                      ? `${getAppUrl()}/portal/${selectedDoc.customerPortalToken}/quotations/${selectedDoc.id}`
+                      : `${getAppUrl()}/portal/${selectedDoc.customerPortalToken}/invoices/${selectedDoc.id}`)
+                  : (selectedDoc.kind === "QUOTATION"
+                      ? `${getAppUrl()}/quotation/${selectedDoc.id}`
+                      : `${getAppUrl()}/request/invoice/${selectedDoc.id}`);
 
-              {selectedDoc?.customerPhone && selectedDoc.kind === "INVOICE" && selectedDoc.status !== "Paid" && (
-                <a
-                  href={getWhatsAppLink(
-                    selectedDoc.customerPhone,
-                    buildPaymentReminderMessage({
+                const shareMsg = selectedDoc.kind === "QUOTATION"
+                  ? buildQuotationNotificationMessage({
                       customerName: selectedDoc.customerName,
-                      invoiceNumber: selectedDoc.docNumber,
-                      totalAmount: selectedDoc.amount,
-                      pendingAmount: Math.max(0, selectedDoc.amount - (selectedDoc.paidAmount || (selectedDoc.status === "Paid" ? selectedDoc.amount : 0))),
-                      dueDate: selectedDoc.date,
-                      viewUrl: `https://technextmanage.vercel.app${selectedDoc.viewUrl}`
+                      quoteNo: selectedDoc.docNumber,
+                      amount: selectedDoc.amount,
+                      trackingUrl: docUrl
                     })
-                  )}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={styles.toolBtn}
-                  style={{ color: "#d97706", borderColor: "#fde68a", background: "#fef3c7" }}
-                  title="Send WhatsApp Payment Reminder"
-                >
-                  <Bell size={13} /> Payment Reminder
-                </a>
-              )}
+                  : buildInvoiceNotificationMessage({
+                      customerName: selectedDoc.customerName,
+                      invoiceNo: selectedDoc.docNumber,
+                      amount: selectedDoc.amount,
+                      trackingUrl: docUrl
+                    });
+
+                return (
+                  <a
+                    href={getWhatsAppLink(selectedDoc.customerPhone, shareMsg)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={styles.toolBtn}
+                    style={{ color: "#22c55e" }}
+                    title="Share Document on WhatsApp"
+                  >
+                    <Share2 size={13} /> WhatsApp
+                  </a>
+                );
+              })()}
+
+              {selectedDoc?.customerPhone && selectedDoc.kind === "INVOICE" && selectedDoc.status !== "Paid" && (() => {
+                const portalInvoiceUrl = selectedDoc.customerPortalToken
+                  ? `${getAppUrl()}/portal/${selectedDoc.customerPortalToken}/invoices/${selectedDoc.id}`
+                  : `${getAppUrl()}/request/invoice/${selectedDoc.id}`;
+
+                return (
+                  <a
+                    href={getWhatsAppLink(
+                      selectedDoc.customerPhone,
+                      buildPaymentReminderMessage({
+                        customerName: selectedDoc.customerName,
+                        invoiceNumber: selectedDoc.docNumber,
+                        totalAmount: selectedDoc.amount,
+                        pendingAmount: Math.max(0, selectedDoc.amount - (selectedDoc.paidAmount || (selectedDoc.status === "Paid" ? selectedDoc.amount : 0))),
+                        dueDate: selectedDoc.date,
+                        viewUrl: portalInvoiceUrl
+                      })
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={styles.toolBtn}
+                    style={{ color: "#d97706", borderColor: "#fde68a", background: "#fef3c7" }}
+                    title="Send WhatsApp Payment Reminder"
+                  >
+                    <Bell size={13} /> Payment Reminder
+                  </a>
+                );
+              })()}
             </div>
 
             {/* Structured 3-Row Filter Bar (Matching Screenshot 1) */}

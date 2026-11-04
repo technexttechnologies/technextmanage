@@ -24,7 +24,7 @@ import {
 import styles from "./TechNextDocumentTemplate.module.css";
 import { deleteBillingDocument, recordDocumentPayment } from "@/app/billing/actions";
 import { generateDocumentVectorPdf } from "@/lib/vectorPdfGenerator";
-import { cleanPhoneNumber, buildPaymentReminderMessage } from "@/lib/whatsapp";
+import { cleanPhoneNumber, buildPaymentReminderMessage, getAppUrl } from "@/lib/whatsapp";
 
 export type BillingDocType = "INVOICE" | "QUOTATION" | "ORDER_FORM" | "PAYMENT_RECEIPT" | "REFUND";
 
@@ -80,6 +80,7 @@ export interface BillingDocumentData {
     customerNumber?: number | string | null;
     aroniumCode?: string | null;
     gstNumber?: string | null;
+    portalToken?: string | null;
   };
 
   items: BillingItem[];
@@ -221,28 +222,36 @@ export default function TechNextDocumentTemplate({
     return lines;
   }, [data.scopeOfWork, data.items]);
 
-  // WhatsApp Share URL (Fixed +91 bug using cleanPhoneNumber)
+  // WhatsApp Share URL (Fixed +91 bug using cleanPhoneNumber & verified customer portal URL)
   const prepareWhatsAppUrl = () => {
     const phone = cleanPhoneNumber(data.customer.phone);
     const docName = titles[docType];
+    const portalUrl = data.customer?.portalToken
+      ? `${getAppUrl()}/portal/${data.customer.portalToken}/${docType === "QUOTATION" ? "quotations" : "invoices"}/${data.id}`
+      : (docType === "QUOTATION" ? `${getAppUrl()}/quotation/${data.id}` : `${getAppUrl()}/request/invoice/${data.id}`);
+
     const text = encodeURIComponent(
-      `Hello ${data.customer.name},\n\nPlease find your official ${docName} (#${data.documentNumber}) from TechNext Technologies for ₹${formatCurrency(totalAmount)}.\n\nStatus: ${data.paymentStatus || 'Pending'}\n\nThank you for choosing TechNext Technologies!`
+      `Hello ${data.customer.name},\n\nPlease find your official ${docName} (#${data.documentNumber}) from TechNext Technologies for ₹${formatCurrency(totalAmount)}.\n\nStatus: ${data.paymentStatus || 'Pending'}\n\n🔗 View & Pay Online: ${portalUrl}\n\nThank you for choosing TechNext Technologies!`
     );
     return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
   };
 
-  // Dedicated Payment Reminder URL
+  // Dedicated Payment Reminder URL (Sends customer portal link with invoice breakdown & online payment)
   const preparePaymentReminderUrl = () => {
     const phone = cleanPhoneNumber(data.customer.phone);
     const dueAmt = Math.max(0, totalAmount - (paidAmount || (data.paymentStatus === "Paid" ? totalAmount : 0)));
+    const portalUrl = data.customer?.portalToken
+      ? `${getAppUrl()}/portal/${data.customer.portalToken}/invoices/${data.id}`
+      : `${getAppUrl()}/request/invoice/${data.id}`;
+
     const text = encodeURIComponent(
       buildPaymentReminderMessage({
         customerName: data.customer.name,
         invoiceNumber: data.documentNumber,
         totalAmount: totalAmount,
         pendingAmount: dueAmt,
-        dueDate: data.dueDate,
-        viewUrl: typeof window !== "undefined" ? window.location.href : `https://technextmanage.vercel.app/billing/doc/invoice/${data.documentNumber}`
+        dueDate: data.dueDate ? String(data.dueDate) : undefined,
+        viewUrl: portalUrl
       })
     );
     return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
