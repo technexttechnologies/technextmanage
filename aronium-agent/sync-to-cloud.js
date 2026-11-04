@@ -316,86 +316,95 @@ async function performSync() {
               [doc.docNumber]
             );
 
-            if (!existingDoc || existingDoc.length === 0) {
-              // Resolve Customer
-              let aroniumCustomerId = null;
-              if (doc.customerAroniumId) {
-                aroniumCustomerId = parseInt(doc.customerAroniumId, 10);
-              }
-              if (!aroniumCustomerId && doc.customerName) {
-                const cRow = await queryDB(
-                  `SELECT Id FROM Customer WHERE Name = ? OR (PhoneNumber IS NOT NULL AND PhoneNumber = ?) LIMIT 1`,
-                  [doc.customerName, doc.customerPhone || '']
-                );
-                if (cRow && cRow.length > 0) {
-                  aroniumCustomerId = cRow[0].Id;
-                } else {
-                  const newC = await runDB(
-                    `INSERT INTO Customer (Name, PhoneNumber, IsCustomer, IsSupplier, IsEnabled, DateCreated, DateUpdated)
-                     VALUES (?, ?, 1, 0, 1, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
-                    [doc.customerName, doc.customerPhone || '0000000000']
-                  );
-                  aroniumCustomerId = newC.lastID;
-                }
-              }
-
-              const isRefund = doc.docType === 'REFUND';
-              const isQuote = doc.docType === 'QUOTATION';
-              const docTypeId = isRefund ? 4 : (isQuote ? 7 : 2);
-              const isPaid = doc.paymentStatus === 'Paid' || doc.status === 'PAID' || isRefund;
-              const totalAmount = parseFloat(doc.totalAmount) || 0;
-              const docDate = doc.date ? doc.date.split('T')[0] : new Date().toISOString().split('T')[0];
-
-              const docRes = await runDB(
-                `INSERT INTO Document (
-                   Number, UserId, CustomerId, Date, StockDate, Total, 
-                   DocumentTypeId, WarehouseId, PaidStatus, DateCreated, DateUpdated
-                 ) VALUES (?, 1, ?, ?, ?, ?, ?, 1, ?, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
-                [doc.docNumber, aroniumCustomerId || null, docDate, docDate, totalAmount, docTypeId, isPaid ? 1 : 0]
-              );
-
-              const newDocId = docRes.lastID;
-
-              // Insert Line Items
-              for (const it of (doc.items || [])) {
-                let pId = null;
-                const pRow = await queryDB(
-                  `SELECT Id FROM Product WHERE Code = ? OR LOWER(Name) = LOWER(?) LIMIT 1`,
-                  [it.code || '', it.name]
-                );
-                if (pRow && pRow.length > 0) {
-                  pId = pRow[0].Id;
-                } else {
-                  const newP = await runDB(
-                    `INSERT INTO Product (ProductGroupId, Name, Code, MeasurementUnit, Price, IsService, IsEnabled, IsTaxInclusivePrice, DateCreated, DateUpdated)
-                     VALUES (1, ?, ?, ?, ?, ?, 1, 1, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
-                    [it.name, it.code || `ITEM-${newDocId}`, it.unit || 'Service', parseFloat(it.unitPrice) || 0, it.isService ? 1 : 0]
-                  );
-                  pId = newP.lastID;
-                }
-
-                await runDB(
-                  `INSERT INTO DocumentItem (
-                     DocumentId, ProductId, Quantity, PriceBeforeTax, Price, Total
-                   ) VALUES (?, ?, ?, ?, ?, ?)`,
-                  [newDocId, pId, parseFloat(it.quantity) || 1, parseFloat(it.priceBeforeTax || it.unitPrice) || 0, parseFloat(it.unitPrice) || 0, parseFloat(it.total) || 0]
-                );
-              }
-
-              // Insert Payment if Paid
-              if (isPaid && !isQuote) {
-                const method = (doc.paymentMethod || '').toUpperCase();
-                const paymentTypeId = method.includes('CASH') ? 1 : (method.includes('CARD') ? 2 : 4);
-                await runDB(
-                  `INSERT INTO Payment (DocumentId, PaymentTypeId, Amount, Date, UserId, DateCreated)
-                   VALUES (?, ?, ?, ?, 1, DATETIME('now', 'localtime'))`,
-                  [newDocId, paymentTypeId, Math.abs(totalAmount), docDate]
-                );
-              }
-
-              console.log(`  📄 [PULL] Created Aronium Document #${doc.docNumber} (${doc.docType}) for ₹${Math.abs(totalAmount)}`);
+            if (existingDoc && existingDoc.length > 0) {
+              // Document already exists in Aronium POS! Confirm to cloud so it stops resending
               documentConfirmations.push({ crmId: doc.id, aroniumNumber: doc.docNumber });
+              continue;
             }
+
+            // Resolve Customer
+            let aroniumCustomerId = null;
+            if (doc.customerAroniumId) {
+              aroniumCustomerId = parseInt(doc.customerAroniumId, 10);
+            }
+            if (!aroniumCustomerId && doc.customerName) {
+              const cRow = await queryDB(
+                `SELECT Id FROM Customer WHERE Name = ? OR (PhoneNumber IS NOT NULL AND PhoneNumber = ?) LIMIT 1`,
+                [doc.customerName, doc.customerPhone || '']
+              );
+              if (cRow && cRow.length > 0) {
+                aroniumCustomerId = cRow[0].Id;
+              } else {
+                const newC = await runDB(
+                  `INSERT INTO Customer (Name, PhoneNumber, IsCustomer, IsSupplier, IsEnabled, DateCreated, DateUpdated)
+                   VALUES (?, ?, 1, 0, 1, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
+                  [doc.customerName, doc.customerPhone || '0000000000']
+                );
+                aroniumCustomerId = newC.lastID;
+              }
+            }
+
+            const isRefund = doc.docType === 'REFUND';
+            const isQuote = doc.docType === 'QUOTATION';
+            const docTypeId = isRefund ? 4 : (isQuote ? 7 : 2);
+            const isPaid = doc.paymentStatus === 'Paid' || doc.status === 'PAID' || isRefund;
+            const totalAmount = parseFloat(doc.totalAmount) || 0;
+
+            // Aronium POS .NET SQLite reader strictly requires format "YYYY-MM-DD HH:mm:ss"
+            const rawDate = (doc.date ? String(doc.date).split('T')[0] : new Date().toISOString().split('T')[0]).slice(0, 10);
+            const docDate = `${rawDate} 00:00:00`;
+            const rawDueDate = doc.dueDate ? String(doc.dueDate).split('T')[0].slice(0, 10) : null;
+            const docDueDate = rawDueDate ? `${rawDueDate} 00:00:00` : null;
+
+            const docRes = await runDB(
+              `INSERT INTO Document (
+                 Number, UserId, CustomerId, Date, StockDate, DueDate, Total, 
+                 DocumentTypeId, WarehouseId, PaidStatus, DateCreated, DateUpdated
+               ) VALUES (?, 1, ?, ?, DATETIME('now', 'localtime'), ?, ?, ?, 1, ?, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
+              [doc.docNumber, aroniumCustomerId || null, docDate, docDueDate, totalAmount, docTypeId, isPaid ? 1 : 0]
+            );
+
+            const newDocId = docRes.lastID;
+
+            // Insert Line Items
+            for (const it of (doc.items || [])) {
+              let pId = null;
+              const pRow = await queryDB(
+                `SELECT Id FROM Product WHERE Code = ? OR LOWER(Name) = LOWER(?) LIMIT 1`,
+                [it.code || '', it.name]
+              );
+              if (pRow && pRow.length > 0) {
+                pId = pRow[0].Id;
+              } else {
+                const newP = await runDB(
+                  `INSERT INTO Product (ProductGroupId, Name, Code, MeasurementUnit, Price, IsService, IsEnabled, IsTaxInclusivePrice, DateCreated, DateUpdated)
+                   VALUES (1, ?, ?, ?, ?, ?, 1, 1, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
+                  [it.name, it.code || `ITEM-${newDocId}`, it.unit || 'Service', parseFloat(it.unitPrice) || 0, it.isService ? 1 : 0]
+                );
+                pId = newP.lastID;
+              }
+
+              await runDB(
+                `INSERT INTO DocumentItem (
+                   DocumentId, ProductId, Quantity, PriceBeforeTax, Price, Total
+                 ) VALUES (?, ?, ?, ?, ?, ?)`,
+                [newDocId, pId, parseFloat(it.quantity) || 1, parseFloat(it.priceBeforeTax || it.unitPrice) || 0, parseFloat(it.unitPrice) || 0, parseFloat(it.total) || 0]
+              );
+            }
+
+            // Insert Payment if Paid
+            if (isPaid && !isQuote) {
+              const method = (doc.paymentMethod || '').toUpperCase();
+              const paymentTypeId = method.includes('CASH') ? 1 : (method.includes('CARD') ? 2 : 4);
+              await runDB(
+                `INSERT INTO Payment (DocumentId, PaymentTypeId, Amount, Date, UserId, DateCreated)
+                 VALUES (?, ?, ?, ?, 1, DATETIME('now', 'localtime'))`,
+                [newDocId, paymentTypeId, Math.abs(totalAmount), docDate]
+              );
+            }
+
+            console.log(`  📄 [PULL] Created Aronium Document #${doc.docNumber} (${doc.docType}) for ₹${Math.abs(totalAmount)}`);
+            documentConfirmations.push({ crmId: doc.id, aroniumNumber: doc.docNumber });
           } catch (e) {
             console.error(`  ⚠️ Document Sync Error for #${doc.docNumber}:`, e.message);
           }

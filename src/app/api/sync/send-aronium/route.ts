@@ -93,8 +93,6 @@ export async function GET(req: Request) {
       where: {
         OR: [
           { aroniumInvoiceNo: null },
-          { aroniumInvoiceNo: { startsWith: "26-200-" } },
-          { aroniumInvoiceNo: { startsWith: "26-220-" } },
           { aroniumInvoiceNo: { startsWith: "ORD-" } }
         ]
       },

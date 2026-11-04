@@ -246,7 +246,14 @@ export async function POST(req: Request) {
         }
 
         // 4b. Sync to ErpIncome (Financial Ledger)
-        const existingIncome = await prisma.erpIncome.findFirst({ where: { aroniumId: sid } });
+        const existingIncome = await prisma.erpIncome.findFirst({
+          where: {
+            OR: [
+              { aroniumId: sid },
+              { incomeId: `INC-${invoiceNumber}` }
+            ]
+          }
+        });
         if (existingIncome) {
           await prisma.erpIncome.update({
             where: { id: existingIncome.id },
@@ -254,6 +261,7 @@ export async function POST(req: Request) {
               amount: totalAmount,
               date: dt,
               paymentMethod,
+              aroniumId: sid,
               notes: `Aronium Sale #${invoiceNumber}${s.CustomerName ? ' - ' + s.CustomerName : ''}`
             }
           });
