@@ -336,10 +336,27 @@ async function performSync() {
                     const itQty = parseFloat(it.quantity) || 1;
                     const itPrice = parseFloat(it.unitPrice) || 0;
                     const itTotal = parseFloat(it.total) || (itQty * itPrice);
+                    let pId = null;
+                    if (it.name) {
+                      const pRow = await queryDB(
+                        `SELECT Id FROM Product WHERE Code = ? OR LOWER(Name) = LOWER(?) LIMIT 1`,
+                        [it.code || '', it.name]
+                      );
+                      if (pRow && pRow.length > 0) {
+                        pId = pRow[0].Id;
+                      } else {
+                        const newP = await runDB(
+                          `INSERT INTO Product (ProductGroupId, Name, Code, MeasurementUnit, Price, IsService, IsEnabled, IsTaxInclusivePrice, DateCreated, DateUpdated)
+                           VALUES (1, ?, ?, ?, ?, 1, 1, 1, DATETIME('now', 'localtime'), DATETIME('now', 'localtime'))`,
+                          [it.name, it.code || `ITEM-${docId}`, it.unit || 'Service', itPrice]
+                        );
+                        pId = newP.lastID;
+                      }
+                    }
                     await runDB(
-                      `INSERT INTO DocumentItem (DocumentId, ExpectedQuantity, Quantity, Price, Cost, Discount, Total, PriceBeforeTax)
-                       VALUES (?, ?, ?, ?, 0, 0, ?, ?)`,
-                      [docId, itQty, itQty, itPrice, itTotal, itPrice]
+                      `INSERT INTO DocumentItem (DocumentId, ProductId, ExpectedQuantity, Quantity, PriceBeforeTax, Price, Total)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                      [docId, pId || 1, itQty, itQty, itPrice, itPrice, itTotal]
                     );
                   }
                 }
