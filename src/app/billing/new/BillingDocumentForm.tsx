@@ -89,6 +89,40 @@ export default function BillingDocumentForm({
     return customers[0]?.id || "";
   });
 
+  const initialCust = customers.find((c: any) => c.id === (initialDocument?.customerId || defaultCustomerId || customers[0]?.id));
+
+  const [customerName, setCustomerName] = useState<string>(() => {
+    return initialDocument?.customerName || initialCust?.name || "";
+  });
+  const [customerCompany, setCustomerCompany] = useState<string>(() => {
+    return initialDocument?.customerCompany || initialCust?.company || "";
+  });
+  const [customerPhone, setCustomerPhone] = useState<string>(() => {
+    return initialDocument?.customerPhone || initialCust?.phone || "";
+  });
+  const [customerEmail, setCustomerEmail] = useState<string>(() => {
+    return initialDocument?.customerEmail || initialCust?.email || "";
+  });
+  const [customerAddress, setCustomerAddress] = useState<string>(() => {
+    return initialDocument?.customerAddress || initialCust?.address || "";
+  });
+  const [customerGst, setCustomerGst] = useState<string>(() => {
+    return initialDocument?.customerGst || initialCust?.gstNumber || "";
+  });
+
+  const handleSelectCustomer = (newId: string) => {
+    setSelectedCustomerId(newId);
+    const found = customerList.find(c => c.id === newId);
+    if (found) {
+      setCustomerName(found.name || "");
+      setCustomerCompany(found.company || "");
+      setCustomerPhone(found.phone || "");
+      setCustomerEmail(found.email || "");
+      setCustomerAddress(found.address || "");
+      setCustomerGst(found.gstNumber || "");
+    }
+  };
+
   // Document Number generators
   const getRandomNumber = (prefix: string) => `${prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
 
@@ -315,6 +349,12 @@ export default function BillingDocumentForm({
       if (res.success && res.customer) {
         setCustomerList(prev => [res.customer, ...prev]);
         setSelectedCustomerId(res.customer.id);
+        setCustomerName(res.customer.name || "");
+        setCustomerCompany(res.customer.company || "");
+        setCustomerPhone(res.customer.phone || "");
+        setCustomerEmail(res.customer.email || "");
+        setCustomerAddress(res.customer.address || "");
+        setCustomerGst(res.customer.gstNumber || "");
         setShowAddCustomerModal(false);
         // Reset modal fields
         setNewCustName("");
@@ -570,7 +610,7 @@ export default function BillingDocumentForm({
               name="customerId" 
               required 
               value={selectedCustomerId}
-              onChange={(e) => setSelectedCustomerId(e.target.value)}
+              onChange={(e) => handleSelectCustomer(e.target.value)}
             >
               <option value="">-- Choose Customer --</option>
               {customerList.map(c => (
@@ -585,6 +625,106 @@ export default function BillingDocumentForm({
                 <span>Email: <strong>{selectedCustomer.email || "---"}</strong></span>
                 <span>Code: <strong>TN-{selectedCustomer.customerNumber || selectedCustomer.aroniumCode || selectedCustomer.id.slice(-4)}</strong></span>
                 {selectedCustomer.address && <span>Address: <strong>{selectedCustomer.address}</strong></span>}
+              </div>
+            )}
+
+            {selectedCustomerId && (
+              <div style={{
+                marginTop: "12px",
+                padding: "14px",
+                background: "var(--surface-card, #f8fafc)",
+                borderRadius: "8px",
+                border: "1px solid var(--surface-border, #e2e8f0)",
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: "12px"
+              }}>
+                <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#4F46E5", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    Client Profile on this Bill (Editable — saves directly to document &amp; CRM)
+                  </span>
+                </div>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px", color: "var(--text-secondary)" }}>
+                    Client / Contact Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="customerName"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    required
+                    placeholder="Client Name"
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid var(--surface-border)", fontSize: "13px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px", color: "var(--text-secondary)" }}>
+                    Business / Company Name
+                  </label>
+                  <input
+                    type="text"
+                    name="customerCompany"
+                    value={customerCompany}
+                    onChange={(e) => setCustomerCompany(e.target.value)}
+                    placeholder="Company Name"
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid var(--surface-border)", fontSize: "13px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px", color: "var(--text-secondary)" }}>
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    name="customerPhone"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="Phone Number"
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid var(--surface-border)", fontSize: "13px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px", color: "var(--text-secondary)" }}>
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="customerEmail"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="Email Address"
+                    style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid var(--surface-border)", fontSize: "13px" }}
+                  />
+                </div>
+                <div style={{ gridColumn: "1 / -1", display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px", color: "var(--text-secondary)" }}>
+                      Billing Address / Location
+                    </label>
+                    <input
+                      type="text"
+                      name="customerAddress"
+                      value={customerAddress}
+                      onChange={(e) => setCustomerAddress(e.target.value)}
+                      placeholder="Address / City"
+                      style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid var(--surface-border)", fontSize: "13px" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px", color: "var(--text-secondary)" }}>
+                      GSTIN (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      name="customerGst"
+                      value={customerGst}
+                      onChange={(e) => setCustomerGst(e.target.value)}
+                      placeholder="GSTIN"
+                      style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid var(--surface-border)", fontSize: "13px" }}
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>

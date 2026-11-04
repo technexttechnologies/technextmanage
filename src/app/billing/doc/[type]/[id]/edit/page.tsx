@@ -38,10 +38,17 @@ export default async function EditBillingDocumentPage({
   ]);
 
   if (normalizedType === "quotation") {
-    const quotation = await prisma.quotation.findUnique({
+    let quotation = await prisma.quotation.findUnique({
       where: { id },
       include: { customer: true, items: true }
     });
+
+    if (!quotation) {
+      quotation = await prisma.quotation.findFirst({
+        where: { quotationNumber: id },
+        include: { customer: true, items: true }
+      });
+    }
 
     if (!quotation) return notFound();
 
@@ -50,6 +57,12 @@ export default async function EditBillingDocumentPage({
       documentType: "QUOTATION",
       documentNumber: quotation.quotationNumber,
       customerId: quotation.customerId,
+      customerName: quotation.companyName || quotation.customer?.name || "",
+      customerCompany: quotation.companyName || quotation.customer?.company || "",
+      customerPhone: quotation.customer?.phone || "",
+      customerEmail: quotation.customer?.email || "",
+      customerAddress: quotation.companyAddress || quotation.customer?.address || "",
+      customerGst: quotation.companyGst || quotation.customer?.gstNumber || "",
       date: quotation.date,
       dueDate: quotation.expiryDate || quotation.date,
       paymentStatus: quotation.status === "APPROVED" || quotation.status === "CONVERTED" ? "Paid" : "Pending",
@@ -109,10 +122,17 @@ export default async function EditBillingDocumentPage({
   }
 
   // Invoice, Order Form, or Payment Receipt
-  const invoice = await prisma.invoiceRequest.findUnique({
+  let invoice = await prisma.invoiceRequest.findUnique({
     where: { id },
     include: { customer: true, project: true }
   });
+
+  if (!invoice) {
+    invoice = await prisma.invoiceRequest.findFirst({
+      where: { aroniumInvoiceNo: id },
+      include: { customer: true, project: true }
+    });
+  }
 
   if (!invoice) return notFound();
 
@@ -123,6 +143,12 @@ export default async function EditBillingDocumentPage({
     documentType: sData.documentType || (invoice.aroniumInvoiceNo?.includes("ORD") ? "ORDER_FORM" : invoice.aroniumInvoiceNo?.includes("REC") ? "PAYMENT_RECEIPT" : "INVOICE"),
     documentNumber: sData.documentNumber || invoice.aroniumInvoiceNo || `26-200-${invoice.id.slice(-6).toUpperCase()}`,
     customerId: invoice.customerId,
+    customerName: sData.customerName || invoice.customer?.name || "",
+    customerCompany: sData.customerCompany || invoice.customer?.company || "",
+    customerPhone: sData.customerPhone || invoice.customer?.phone || "",
+    customerEmail: sData.customerEmail || invoice.customer?.email || "",
+    customerAddress: sData.customerAddress || invoice.customer?.address || "",
+    customerGst: sData.customerGst || invoice.customer?.gstNumber || "",
     projectId: invoice.projectId,
     date: sData.date || invoice.createdAt,
     dueDate: sData.dueDate || invoice.createdAt,

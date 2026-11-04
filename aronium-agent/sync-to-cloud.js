@@ -157,14 +157,16 @@ async function performSync() {
               aroniumId = existing[0].Id;
               await runDB(
                 `UPDATE Customer SET 
+                   Name = COALESCE(?, Name),
                    Code = COALESCE(?, Code), 
                    PhoneNumber = COALESCE(?, PhoneNumber), 
                    Email = COALESCE(?, Email), 
                    Address = COALESCE(?, Address),
                    DateUpdated = DATETIME('now', 'localtime')
                  WHERE Id = ?`,
-                [c.code || null, c.phone || null, c.email || null, c.address || null, aroniumId]
+                [c.name || null, c.code || null, c.phone || null, c.email || null, c.address || null, aroniumId]
               );
+              console.log(`  🔄 [PULL] Updated Aronium Customer #${aroniumId}: "${c.name}"`);
             } else {
               const insertRes = await runDB(
                 `INSERT INTO Customer (
@@ -324,9 +326,29 @@ async function performSync() {
                 const isPaid = doc.paymentStatus === 'Paid' || doc.status === 'PAID' || (paidAmount >= totalAmount && totalAmount > 0);
                 const paidStatus = isPaid ? 2 : 1;
 
+                // Resolve customer for edited document
+                let aroniumCustomerId = null;
+                if (doc.customerAroniumId) {
+                  aroniumCustomerId = parseInt(doc.customerAroniumId, 10);
+                }
+                if (!aroniumCustomerId && doc.customerName) {
+                  const cRow = await queryDB(
+                    `SELECT Id FROM Customer WHERE Name = ? OR (PhoneNumber IS NOT NULL AND PhoneNumber != '' AND PhoneNumber = ?) LIMIT 1`,
+                    [doc.customerName, doc.customerPhone || '']
+                  );
+                  if (cRow && cRow.length > 0) {
+                    aroniumCustomerId = cRow[0].Id;
+                  }
+                }
+
                 await runDB(
-                  `UPDATE Document SET Total = ?, PaidStatus = ?, DateUpdated = DATETIME('now', 'localtime') WHERE Id = ?`,
-                  [totalAmount, paidStatus, docId]
+                  `UPDATE Document SET 
+                     CustomerId = COALESCE(?, CustomerId),
+                     Total = ?, 
+                     PaidStatus = ?, 
+                     DateUpdated = DATETIME('now', 'localtime') 
+                   WHERE Id = ?`,
+                  [aroniumCustomerId || null, totalAmount, paidStatus, docId]
                 );
 
                 // Replace DocumentItems

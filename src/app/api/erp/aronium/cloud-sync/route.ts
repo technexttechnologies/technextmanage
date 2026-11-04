@@ -39,16 +39,17 @@ export async function POST(req: Request) {
         if (existingCustomer) {
           const cleanPhone = c.PhoneNumber ? c.PhoneNumber.replace(/\s+/g, '') : '';
           const shouldUpdateAroniumId = !existingCustomer.aroniumId || existingCustomer.aroniumId === aroniumIdStr;
+          const isPendingPush = existingCustomer.syncStatus === "PENDING";
 
           await prisma.customer.update({
             where: { id: existingCustomer.id },
             data: {
               ...(shouldUpdateAroniumId ? { aroniumId: aroniumIdStr, aroniumCode: c.Code || existingCustomer.aroniumCode } : {}),
-              phone: (cleanPhone && cleanPhone !== '0000000000') ? cleanPhone : existingCustomer.phone,
-              email: existingCustomer.email || c.Email,
-              address: existingCustomer.address || c.Address,
+              phone: isPendingPush ? existingCustomer.phone : ((cleanPhone && cleanPhone !== '0000000000') ? cleanPhone : existingCustomer.phone),
+              email: isPendingPush ? existingCustomer.email : (existingCustomer.email || c.Email),
+              address: isPendingPush ? existingCustomer.address : (existingCustomer.address || c.Address),
               lastSyncDate: new Date(),
-              syncStatus: "SYNCED"
+              syncStatus: isPendingPush ? "PENDING" : "SYNCED"
             }
           });
         } else {
@@ -342,7 +343,8 @@ export async function POST(req: Request) {
             await prisma.invoiceRequest.update({
               where: { id: existingInv.id },
               data: {
-                customerId: customerPrisma.id,
+                // If bill was edited in CRM, preserve the CRM's customer assignment!
+                customerId: isUserEdited ? existingInv.customerId : customerPrisma.id,
                 amountRequested: isUserEdited ? existingInv.amountRequested : totalAmount,
                 subtotal: isUserEdited ? existingInv.subtotal : totalAmount,
                 status: isUserEdited ? existingInv.status : (isRefundDoc ? 'PAID' : (isPaid ? 'PAID' : (paidAmount > 0 ? 'PARTIALLY_PAID' : 'INVOICE_GENERATED'))),
@@ -357,7 +359,8 @@ export async function POST(req: Request) {
                     }
                   : structuredData,
                 notes: isUserEdited ? existingInv.notes : (isRefundDoc ? `Aronium POS Refund #${invoiceNumber}` : `Aronium POS Sales Invoice #${invoiceNumber}`),
-                createdAt: dt
+                // Preserve original createdAt if already edited by user
+                ...(isUserEdited ? {} : { createdAt: dt })
               }
             });
           } else {
@@ -432,21 +435,38 @@ export async function POST(req: Request) {
         });
 
         let quoteId = existingQuote?.id;
+        const isQuoteUserEdited = (existingQuote?.meta as any)?.isEditedByUser === true || 
+                                  existingQuote?.status === "APPROVED" || 
+                                  existingQuote?.status === "CONVERTED";
 
         if (existingQuote) {
-          await prisma.quotation.update({
-            where: { id: quoteId },
-            data: {
-              customerId: customerPrisma.id,
-              date: pfDate,
-              createdAt: pfDate,
-              totalAmount: totalAmount,
-              subtotal: subtotal,
-              status: pf.PaidStatus === 2 ? 'APPROVED' : (pf.PaidStatus === 1 ? 'SENT' : 'DRAFT'),
-              notes: `Aronium Proforma #${pf.Number} - ${pf.CustomerName || ''}`
+          if (!isQuoteUserEdited) {
+            await prisma.quotation.update({
+              where: { id: quoteId },
+              data: {
+                customerId: customerPrisma.id,
+                date: pfDate,
+                createdAt: pfDate,
+                totalAmount: totalAmount,
+                subtotal: subtotal,
+                status: pf.PaidStatus === 2 ? 'APPROVED' : (pf.PaidStatus === 1 ? 'SENT' : 'DRAFT'),
+                notes: `Aronium Proforma #${pf.Number} - ${pf.CustomerName || ''}`
+              }
+            });
+            await prisma.quotationItem.deleteMany({ where: { quotationId: quoteId } });
+            for (const it of pfItems) {
+              await prisma.quotationItem.create({
+                data: {
+                  quotationId: quoteId!,
+                  name: it.ProductName || 'Service / Product Item',
+                  description: `Code: ${it.ProductCode || it.ProductId} | Unit: ${it.MeasurementUnit || 'Pcs'}`,
+                  quantity: Math.max(1, parseInt(it.Quantity) || 1),
+                  price: parseFloat(it.Price) || 0,
+                  total: parseFloat(it.Total) || (parseFloat(it.Quantity) * parseFloat(it.Price)) || 0
+                }
+              });
             }
-          });
-          await prisma.quotationItem.deleteMany({ where: { quotationId: quoteId } });
+          }
         } else {
           const createdQuote = await prisma.quotation.create({
             data: {
@@ -462,19 +482,19 @@ export async function POST(req: Request) {
             }
           });
           quoteId = createdQuote.id;
-        }
 
-        for (const it of pfItems) {
-          await prisma.quotationItem.create({
-            data: {
-              quotationId: quoteId!,
-              name: it.ProductName || 'Service / Product Item',
-              description: `Code: ${it.ProductCode || it.ProductId} | Unit: ${it.MeasurementUnit || 'Pcs'}`,
-              quantity: Math.max(1, parseInt(it.Quantity) || 1),
-              price: parseFloat(it.Price) || 0,
-              total: parseFloat(it.Total) || (parseFloat(it.Quantity) * parseFloat(it.Price)) || 0
-            }
-          });
+          for (const it of pfItems) {
+            await prisma.quotationItem.create({
+              data: {
+                quotationId: quoteId!,
+                name: it.ProductName || 'Service / Product Item',
+                description: `Code: ${it.ProductCode || it.ProductId} | Unit: ${it.MeasurementUnit || 'Pcs'}`,
+                quantity: Math.max(1, parseInt(it.Quantity) || 1),
+                price: parseFloat(it.Price) || 0,
+                total: parseFloat(it.Total) || (parseFloat(it.Quantity) * parseFloat(it.Price)) || 0
+              }
+            });
+          }
         }
         proformasCount++;
       }

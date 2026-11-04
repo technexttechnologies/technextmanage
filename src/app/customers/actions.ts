@@ -160,8 +160,28 @@ export async function updateCustomer(formData: FormData) {
 
   await prisma.customer.update({
     where: { id },
-    data: { name, company, phone: cleanPhone, email, status, address, gstNumber, notes, anydeskId, teamviewerId, pcLoginDetails }
+    data: { 
+      name, 
+      company, 
+      phone: cleanPhone, 
+      email, 
+      status, 
+      address, 
+      gstNumber, 
+      notes, 
+      anydeskId, 
+      teamviewerId, 
+      pcLoginDetails,
+      syncStatus: "PENDING"
+    }
   });
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1200);
+    await fetch("http://127.0.0.1:4040/sync", { signal: controller.signal }).catch(() => {});
+    clearTimeout(timeout);
+  } catch {}
 
   revalidatePath("/customers");
   revalidatePath(`/customers/${id}`);

@@ -32,6 +32,7 @@ export default function EditCustomerModal({
     try {
       await updateCustomerProfile(customer.id, formData);
       onClose();
+      window.location.reload();
     } catch (error) {
       console.error(error);
       alert("Failed to update customer");

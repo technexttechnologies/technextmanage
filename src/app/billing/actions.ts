@@ -45,9 +45,22 @@ export async function quickCreateBillingCustomer(data: {
         }
       });
       if (existing) {
+        // Update customer details with the newly provided name/company/details
+        const updated = await prisma.customer.update({
+          where: { id: existing.id },
+          data: {
+            name: data.name.trim(),
+            company: data.company?.trim() || existing.company,
+            email: data.email?.trim() || existing.email,
+            address: data.address?.trim() || existing.address,
+            gstNumber: data.gstNumber?.trim() || existing.gstNumber,
+            syncStatus: "PENDING",
+          }
+        });
+        await triggerLocalAroniumSync();
         return {
           success: true,
-          customer: existing,
+          customer: updated,
           isExisting: true
         };
       }
@@ -151,6 +164,29 @@ export async function createBillingDocument(formData: FormData) {
   });
   if (!customer) throw new Error("Customer not found");
 
+  const customerName = (formData.get("customerName") as string) || "";
+  const customerCompany = (formData.get("customerCompany") as string) || "";
+  const customerPhone = (formData.get("customerPhone") as string) || "";
+  const customerEmail = (formData.get("customerEmail") as string) || "";
+  const customerAddress = (formData.get("customerAddress") as string) || "";
+  const customerGst = (formData.get("customerGst") as string) || "";
+
+  if (customerId && customerName.trim()) {
+    const cleanPhone = customerPhone ? customerPhone.replace(/\s+/g, "") : null;
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: {
+        name: customerName.trim(),
+        company: customerCompany.trim() || null,
+        phone: cleanPhone || undefined,
+        email: customerEmail.trim() || undefined,
+        address: customerAddress.trim() || undefined,
+        gstNumber: customerGst.trim() || undefined,
+        syncStatus: "PENDING"
+      }
+    });
+  }
+
   let createdId = "";
 
   if (documentType === "QUOTATION") {
@@ -164,9 +200,13 @@ export async function createBillingDocument(formData: FormData) {
         subtotal,
         status: paymentStatus === "Paid" ? "APPROVED" : "SENT",
         notes: scopeOfWork || notes,
-        companyName: customer.company || customer.name,
-        companyAddress: customer.address,
-        companyGst: customer.gstNumber,
+        companyName: customerCompany.trim() || customerName.trim() || customer.company || customer.name,
+        companyAddress: customerAddress.trim() || customer.address,
+        companyGst: customerGst.trim() || customer.gstNumber,
+        meta: {
+          isEditedByUser: true,
+          lastEditedAt: new Date().toISOString()
+        },
         assignedToId: session.userId as string,
         items: {
           create: items.map(it => ({
@@ -229,6 +269,12 @@ export async function createBillingDocument(formData: FormData) {
       creditDueDate,
       creditTerms,
       bankDetails,
+      customerName: customerName.trim() || customer.name,
+      customerCompany: customerCompany.trim() || customer.company,
+      customerPhone: customerPhone.trim() || customer.phone,
+      customerEmail: customerEmail.trim() || customer.email,
+      customerAddress: customerAddress.trim() || customer.address,
+      customerGst: customerGst.trim() || customer.gstNumber,
       items,
       subtotal,
       totalDiscount,
@@ -413,21 +459,60 @@ export async function updateBillingDocument(formData: FormData) {
     }
   }
 
+  const customerName = (formData.get("customerName") as string) || "";
+  const customerCompany = (formData.get("customerCompany") as string) || "";
+  const customerPhone = (formData.get("customerPhone") as string) || "";
+  const customerEmail = (formData.get("customerEmail") as string) || "";
+  const customerAddress = (formData.get("customerAddress") as string) || "";
+  const customerGst = (formData.get("customerGst") as string) || "";
+
+  if (customerId && customerName.trim()) {
+    const cleanPhone = customerPhone ? customerPhone.replace(/\s+/g, "") : null;
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: {
+        name: customerName.trim(),
+        company: customerCompany.trim() || null,
+        phone: cleanPhone || undefined,
+        email: customerEmail.trim() || undefined,
+        address: customerAddress.trim() || undefined,
+        gstNumber: customerGst.trim() || undefined,
+        syncStatus: "PENDING"
+      }
+    });
+  }
+
+  let targetQuoteId = id;
+  let targetId = id;
+
   if (documentType === "QUOTATION") {
+    let quote = await prisma.quotation.findUnique({ where: { id } });
+    if (!quote && documentNumber) {
+      quote = await prisma.quotation.findFirst({ where: { quotationNumber: documentNumber } });
+    }
+    targetQuoteId = quote?.id || id;
+
     await prisma.quotationItem.deleteMany({
-      where: { quotationId: id }
+      where: { quotationId: targetQuoteId }
     });
 
     await prisma.quotation.update({
-      where: { id },
+      where: { id: targetQuoteId },
       data: {
         quotationNumber: documentNumber,
         customerId,
+        companyName: customerCompany.trim() || customerName.trim() || quote?.companyName || null,
+        companyAddress: customerAddress.trim() || quote?.companyAddress || null,
+        companyGst: customerGst.trim() || quote?.companyGst || null,
         date: new Date(dateStr),
         expiryDate: new Date(dueDateStr),
         totalAmount,
         subtotal,
         notes: scopeOfWork || notes,
+        meta: {
+          isEditedByUser: true,
+          lastEditedAt: new Date().toISOString()
+        },
         items: {
           create: items.map(it => ({
             name: it.name,
@@ -444,7 +529,7 @@ export async function updateBillingDocument(formData: FormData) {
     if (!existing && documentNumber) {
       existing = await prisma.invoiceRequest.findFirst({ where: { aroniumInvoiceNo: documentNumber } });
     }
-    const targetId = existing?.id || id;
+    targetId = existing?.id || id;
     const prevStructured = (existing?.structuredData as any) || {};
 
     const isPartiallyPaid = paymentStatus === "Partially Paid" || (paidAmount > 0 && amountDue > 0);
@@ -462,6 +547,12 @@ export async function updateBillingDocument(formData: FormData) {
       creditDueDate,
       creditTerms,
       bankDetails,
+      customerName: customerName.trim() || prevStructured.customerName,
+      customerCompany: customerCompany.trim() || prevStructured.customerCompany,
+      customerPhone: customerPhone.trim() || prevStructured.customerPhone,
+      customerEmail: customerEmail.trim() || prevStructured.customerEmail,
+      customerAddress: customerAddress.trim() || prevStructured.customerAddress,
+      customerGst: customerGst.trim() || prevStructured.customerGst,
       items,
       subtotal,
       totalDiscount,
@@ -549,7 +640,7 @@ export async function updateBillingDocument(formData: FormData) {
         }
       }
       await prisma.invoiceRequest.update({
-        where: { id },
+        where: { id: targetId },
         data: {
           structuredData: {
             ...structuredPayload,
@@ -561,7 +652,9 @@ export async function updateBillingDocument(formData: FormData) {
     }
   }
 
+  const finalDocId = documentType === "QUOTATION" ? (targetQuoteId || id) : (targetId || id);
   revalidatePath("/billing");
+  revalidatePath(`/billing/doc/${documentType.toLowerCase()}/${finalDocId}`);
   revalidatePath(`/billing/doc/${documentType.toLowerCase()}/${id}`);
   revalidatePath("/invoice-requests");
   revalidatePath("/quotations");
@@ -569,7 +662,7 @@ export async function updateBillingDocument(formData: FormData) {
 
   await triggerLocalAroniumSync();
 
-  redirect(`/billing/doc/${documentType.toLowerCase()}/${id}`);
+  redirect(`/billing/doc/${documentType.toLowerCase()}/${finalDocId}`);
 }
 
 export async function recordDocumentPayment(formData: FormData) {

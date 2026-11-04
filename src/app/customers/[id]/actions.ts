@@ -29,9 +29,18 @@ export async function updateCustomerProfile(customerId: string, formData: FormDa
       billingNotes: billingNotes || null,
       paymentStatus: paymentStatus || null,
       notes: notes || null,
+      syncStatus: "PENDING"
     },
   });
 
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1200);
+    await fetch("http://127.0.0.1:4040/sync", { signal: controller.signal }).catch(() => {});
+    clearTimeout(timeout);
+  } catch {}
+
   revalidatePath(`/customers/${customerId}`);
+  revalidatePath("/customers");
   return { success: true };
 }

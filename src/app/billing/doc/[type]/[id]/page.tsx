@@ -16,7 +16,7 @@ export default async function BillingDocumentViewerPage({
   const normalizedType = type.toLowerCase();
 
   if (normalizedType === "quotation") {
-    const quotation = await prisma.quotation.findUnique({
+    let quotation = await prisma.quotation.findUnique({
       where: { id },
       include: {
         customer: true,
@@ -24,6 +24,17 @@ export default async function BillingDocumentViewerPage({
         terms: { orderBy: { order: "asc" } }
       }
     });
+
+    if (!quotation) {
+      quotation = await prisma.quotation.findFirst({
+        where: { quotationNumber: id },
+        include: {
+          customer: true,
+          items: { orderBy: { id: "asc" } },
+          terms: { orderBy: { order: "asc" } }
+        }
+      });
+    }
 
     if (!quotation) return notFound();
 
@@ -72,13 +83,23 @@ export default async function BillingDocumentViewerPage({
   }
 
   // Invoice, Order Form, or Payment Receipt from InvoiceRequest
-  const invoice = await prisma.invoiceRequest.findUnique({
+  let invoice = await prisma.invoiceRequest.findUnique({
     where: { id },
     include: {
       customer: true,
       project: true,
     }
   });
+
+  if (!invoice) {
+    invoice = await prisma.invoiceRequest.findFirst({
+      where: { aroniumInvoiceNo: id },
+      include: {
+        customer: true,
+        project: true,
+      }
+    });
+  }
 
   if (!invoice) return notFound();
 
@@ -134,14 +155,14 @@ export default async function BillingDocumentViewerPage({
     bankDetails: structured.bankDetails || "SOUTH INDIAN BANK\nPULPALLY",
     customer: {
       id: invoice.customer.id,
-      name: invoice.customer.name,
-      company: invoice.customer.company,
-      address: invoice.customer.address,
-      phone: invoice.customer.phone,
-      email: invoice.customer.email,
+      name: structured.customerName || invoice.customer.name,
+      company: structured.customerCompany || invoice.customer.company,
+      address: structured.customerAddress || invoice.customer.address,
+      phone: structured.customerPhone || invoice.customer.phone,
+      email: structured.customerEmail || invoice.customer.email,
       customerNumber: invoice.customer.customerNumber,
       aroniumCode: invoice.customer.aroniumCode,
-      gstNumber: invoice.customer.gstNumber,
+      gstNumber: structured.customerGst || invoice.customer.gstNumber,
       portalToken: invoice.customer.portalToken,
     },
     items,
