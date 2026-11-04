@@ -244,20 +244,7 @@ export default function ProductForm({ initialData, isEdit = false }: Props) {
           />
         </div>
 
-        <div className={styles.formGroup}>
-          <label>Applicable GST Tax Rate (%)</label>
-          <select
-            name="taxRate"
-            className={styles.select}
-            defaultValue={initialData?.taxRate ?? 18}
-          >
-            <option value="0">0% (Exempt)</option>
-            <option value="5">5% GST</option>
-            <option value="12">12% GST</option>
-            <option value="18">18% GST (Standard Services / IT)</option>
-            <option value="28">28% GST</option>
-          </select>
-        </div>
+        <input type="hidden" name="taxRate" value="0" />
       </div>
 
       {/* 3. Stock Tracking (Physical only) */}

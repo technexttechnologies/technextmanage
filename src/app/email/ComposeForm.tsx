@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { sendComposedEmail } from "./actions";
 import { Mail, Settings, Send, MessageSquare, Sparkles, Phone } from "lucide-react";
+import { getWhatsAppLink } from "@/lib/whatsapp";
 
 export default function ComposeForm({ customers, isConfigured, templates }: any) {
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
@@ -65,9 +66,7 @@ export default function ComposeForm({ customers, isConfigured, templates }: any)
 
   const handleWhatsApp = () => {
     if (!customer?.phone) return alert("This customer has no phone number!");
-    const phone = customer.phone.replace(/\D/g, "");
-    const text = encodeURIComponent(body);
-    window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+    window.open(getWhatsAppLink(customer.phone, body), "_blank");
   };
 
   return (

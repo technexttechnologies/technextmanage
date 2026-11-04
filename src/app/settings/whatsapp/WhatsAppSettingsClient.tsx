@@ -22,6 +22,7 @@ import {
   Sparkles
 } from "lucide-react";
 import styles from "./page.module.css";
+import { getWhatsAppLink } from "@/lib/whatsapp";
 
 interface WhatsAppSettingsClientProps {
   settings: any;
@@ -551,7 +552,7 @@ export function WhatsAppSettingsClient({ settings, logs, stats }: WhatsAppSettin
             </thead>
             <tbody>
               {logs.map((log) => {
-                const waLink = `https://wa.me/${log.phone}?text=${encodeURIComponent(log.message)}`;
+                const waLink = getWhatsAppLink(log.phone, log.message);
                 const statusClass = log.status === "SENT" ? styles.sent : log.status === "SIMULATED" ? styles.simulated : styles.failed;
                 return (
                   <tr key={log.id}>

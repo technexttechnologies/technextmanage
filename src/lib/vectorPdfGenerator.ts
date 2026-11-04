@@ -164,10 +164,10 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
   });
   const currentRightY = metaY + (bankLines.length * 4);
 
-  // 3. Line Items Table (Matching exact layout: # | Item | Quantity | Unit price | Tax | Discount | Total)
+  // 3. Line Items Table (Matching exact layout: # | Item | Quantity | Unit price | Discount | Total)
   const tableStartY = Math.max(currentLeftY, currentRightY) + 4;
 
-  const headers = [["#", "Item", "Quantity", "Unit price", "Tax", "Discount", "Total"]];
+  const headers = [["#", "Item", "Quantity", "Unit price", "Discount", "Total"]];
   const tableRows = (data.items || []).map((it, idx) => {
     const itemName = it.name ? it.name.toUpperCase() : "ITEM";
     const discountVal = it.discount !== undefined && it.discount !== null && it.discount !== "---"
@@ -179,7 +179,6 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
       itemName + (it.description && it.description !== it.name ? `\n${it.description}` : ""),
       String(it.quantity || 1),
       formatCurrency(it.unitPrice),
-      it.tax && it.tax !== "---" ? it.tax : "---",
       discountVal,
       formatCurrency(it.total)
     ];
@@ -210,11 +209,10 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
     columnStyles: {
       0: { cellWidth: 10, halign: "center" },
       1: { cellWidth: "auto", halign: "left", fontStyle: "bold" },
-      2: { cellWidth: 20, halign: "center" },
-      3: { cellWidth: 26, halign: "right" },
-      4: { cellWidth: 18, halign: "center" },
-      5: { cellWidth: 22, halign: "right" },
-      6: { cellWidth: 28, halign: "right", fontStyle: "bold" },
+      2: { cellWidth: 22, halign: "center" },
+      3: { cellWidth: 30, halign: "right" },
+      4: { cellWidth: 26, halign: "right" },
+      5: { cellWidth: 32, halign: "right", fontStyle: "bold" },
     },
   });
 

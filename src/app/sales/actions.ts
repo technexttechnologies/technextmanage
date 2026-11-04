@@ -93,16 +93,15 @@ export async function requestInvoice(formData: FormData) {
   const projectId = (formData.get("projectId") as string) || null;
   const subtotalStr = formData.get("subtotal") as string;
   const subtotal = parseFloat(subtotalStr || "0");
-  const gstPercentageStr = (formData.get("gstPercentage") as string) || "18";
-  const gstPercentage = parseFloat(gstPercentageStr);
+  const gstPercentage = 0;
   const notes = formData.get("notes") as string;
 
   if (!customerId || isNaN(subtotal) || subtotal <= 0) {
     throw new Error("Please choose a Customer and enter a valid billing amount.");
   }
 
-  const gstAmount = gstPercentage > 0 ? (subtotal * gstPercentage) / 100 : 0;
-  const amountRequested = parseFloat((subtotal + gstAmount).toFixed(2));
+  const gstAmount = 0;
+  const amountRequested = parseFloat(subtotal.toFixed(2));
 
   const request = await prisma.invoiceRequest.create({
     data: {
@@ -139,8 +138,7 @@ export async function requestInvoice(formData: FormData) {
       <p><strong>Customer:</strong> ${request.customer.name}</p>
       ${request.project ? `<p><strong>Project:</strong> ${request.project.name}</p>` : ""}
       <p><strong>Subtotal:</strong> ₹${subtotal.toLocaleString("en-IN")}</p>
-      <p><strong>GST (${gstPercentage}%):</strong> ₹${gstAmount.toLocaleString("en-IN")}</p>
-      <p><strong>Total Amount Requested:</strong> ₹${amountRequested.toLocaleString("en-IN")}</p>
+      <p><strong>Total Amount Requested (0% Tax):</strong> ₹${amountRequested.toLocaleString("en-IN")}</p>
       ${notes ? `<p><strong>Notes/Milestone:</strong> ${notes}</p>` : ""}
       <br/>
       <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://technextmanage.vercel.app'}/invoice-requests/${request.id}" style="display:inline-block;padding:10px 16px;background:#635bff;color:#fff;text-decoration:none;border-radius:4px;">Review & Issue Invoice</a>

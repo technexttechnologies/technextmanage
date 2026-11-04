@@ -17,6 +17,7 @@ import {
   dispatchProjectWhatsAppReview
 } from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { getWhatsAppLink } from "@/lib/whatsapp";
 
 export default function ProjectDetailsClient({ project }: { project: any }) {
   const [copied, setCopied] = useState(false);
@@ -92,12 +93,7 @@ technext`;
   };
 
   const openWhatsApp = () => {
-    let phone = project.customer?.phone || "";
-    phone = phone.replace(/\D/g, "");
-    if (phone && !phone.startsWith("91") && phone.length === 10) phone = "91" + phone;
-    
-    const encodedMessage = encodeURIComponent(messageTemplate);
-    const url = `https://wa.me/${phone}?text=${encodedMessage}`;
+    const url = getWhatsAppLink(project.customer?.phone, messageTemplate);
     window.open(url, "_blank");
   };
 

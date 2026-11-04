@@ -2,17 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { MessageCircle, X } from "lucide-react";
+import { getWhatsAppLink } from "@/lib/whatsapp";
 
 export function WhatsAppWelcomeTrigger({ phone, name }: { phone: string, name: string }) {
   const router = useRouter();
 
   if (!phone) return null;
 
-  let cleanPhone = phone.replace(/\D/g, "");
-  if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
-
   const message = `Hi ${name}, welcome to Technext Technologies! We are thrilled to connect with you. Please let us know if you have any questions or require our IT services.`;
-  const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+  const url = getWhatsAppLink(phone, message);
 
   const closeMenu = () => {
     router.replace("/customers");

@@ -236,7 +236,7 @@ export default async function CustomerDetailsPage({
         </Link>
         <div className={styles.headerActions}>
           <a 
-            href={`https://wa.me/${customer.phone.replace(/\D/g, '')}?text=Hi%20${encodeURIComponent(customer.name)}`} 
+            href={getWhatsAppLink(customer.phone, `Hi ${customer.name}`)} 
             target="_blank" 
             rel="noreferrer" 
             className="btn-secondary" 

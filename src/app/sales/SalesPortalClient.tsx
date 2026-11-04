@@ -8,7 +8,7 @@ import {
   CheckCircle2, Clock, AlertCircle, X, ExternalLink,
   Building, User, IndianRupee, Calendar, ArrowRight,
   ShieldCheck, RefreshCw, Send, Layers, HelpCircle,
-  Lock, KeyRound, Shield, Check, UserCheck, MessageSquare
+  Lock, KeyRound, Shield, Check, UserCheck, MessageSquare, Bell
 } from "lucide-react";
 import styles from "./sales.module.css";
 import { 
@@ -20,6 +20,7 @@ import {
   requestClientAccess,
   reviewClientAccess
 } from "./actions";
+import { getWhatsAppLink, buildPaymentReminderMessage } from "@/lib/whatsapp";
 
 interface SalesPortalProps {
   currentUser: any;
@@ -71,9 +72,9 @@ export default function SalesPortalClient({
   // Pre-selected customer for quick actions from Clients tab
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
 
-  // Invoice calculations
+  // Invoice calculations (0% Tax)
   const [invSubtotal, setInvSubtotal] = useState<number>(0);
-  const [invGst, setInvGst] = useState<number>(18);
+  const [invGst, setInvGst] = useState<number>(0);
 
   // Status & error messages
   const [formError, setFormError] = useState<string | null>(null);
@@ -855,8 +856,9 @@ export default function SalesPortalClient({
                   <th>Customer</th>
                   <th>Project</th>
                   <th>Subtotal</th>
-                  <th>GST %</th>
+                  <th>Tax</th>
                   <th>Total Amount</th>
+                  <th>Reminder</th>
                   <th>Notes</th>
                   <th>Status</th>
                   <th>Official Invoice #</th>
@@ -873,11 +875,36 @@ export default function SalesPortalClient({
                     </td>
                     <td>{inv.project?.name || "—"}</td>
                     <td>₹{inv.subtotal.toLocaleString("en-IN")}</td>
-                    <td>{inv.gstPercentage}%</td>
+                    <td><span style={{ fontSize: "11px", color: "#10b981", fontWeight: 600 }}>0% Tax</span></td>
                     <td>
                       <strong style={{ color: "#10b981", fontSize: "14px" }}>
                         ₹{inv.amountRequested.toLocaleString("en-IN")}
                       </strong>
+                    </td>
+                    <td>
+                      {inv.customer?.phone && inv.status !== "PAID" && inv.status !== "CANCELLED" ? (
+                        <a
+                          href={getWhatsAppLink(
+                            inv.customer.phone,
+                            buildPaymentReminderMessage({
+                              customerName: inv.customer.name,
+                              invoiceNumber: inv.aroniumInvoiceNo || inv.id.slice(-6).toUpperCase(),
+                              totalAmount: inv.amountRequested,
+                              pendingAmount: inv.amountRequested,
+                              viewUrl: `https://technextmanage.vercel.app/track/${inv.id}`
+                            })
+                          )}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-secondary"
+                          style={{ fontSize: "11px", padding: "4px 8px", background: "#fef3c7", color: "#b45309", borderColor: "#fde68a", display: "inline-flex", alignItems: "center", gap: "4px", textDecoration: "none" }}
+                          title="Send 1-Click WhatsApp Payment Reminder"
+                        >
+                          <Bell size={11} /> Remind
+                        </a>
+                      ) : (
+                        <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>—</span>
+                      )}
                     </td>
                     <td style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {inv.notes || "—"}
@@ -1175,7 +1202,7 @@ export default function SalesPortalClient({
                           </button>
                           {c.phone && (
                             <a
-                              href={`https://wa.me/${c.phone.replace(/\D/g, '').length === 10 ? '91' + c.phone.replace(/\D/g, '') : c.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${c.name} 👋, here is your secure client portal link from Technext Technologies:\nhttps://technextmanage.vercel.app/portal/${c.portalToken || ''}`)}`}
+                              href={getWhatsAppLink(c.phone, `Hello ${c.name} 👋, here is your secure client portal link from Technext Technologies:\nhttps://technextmanage.vercel.app/portal/${c.portalToken || ''}`)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="btn-secondary"
@@ -1644,34 +1671,22 @@ export default function SalesPortalClient({
                     />
                   </div>
 
-                  <div className={styles.fieldGroup}>
-                    <label htmlFor="invGst">GST Applicable (%)</label>
-                    <select 
-                      id="invGst" 
-                      name="gstPercentage" 
-                      defaultValue="18"
-                      onChange={(e) => setInvGst(parseFloat(e.target.value) || 0)}
-                    >
-                      <option value="0">0% (Nil / Exempt)</option>
-                      <option value="5">5% GST</option>
-                      <option value="12">12% GST</option>
-                      <option value="18">18% GST (Standard)</option>
-                      <option value="28">28% GST</option>
-                    </select>
+                  <div className={styles.fieldGroup} style={{ display: "none" }}>
+                    <input type="hidden" name="gstPercentage" value="0" />
                   </div>
                 </div>
 
-                {/* Auto Calculated Preview */}
+                {/* Auto Calculated Preview (0% Tax) */}
                 <div style={{ background: "rgba(16, 185, 129, 0.08)", padding: "12px 16px", borderRadius: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Total Requested with GST:</span>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Total Requested (0% Tax):</span>
                     <div style={{ fontSize: "18px", fontWeight: 700, color: "#10b981" }}>
-                      ₹{((invSubtotal) + (invSubtotal * invGst / 100)).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      ₹{invSubtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                   <div style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "right" }}>
                     Subtotal: ₹{invSubtotal.toLocaleString("en-IN")}<br/>
-                    Tax ({invGst}%): ₹{(invSubtotal * invGst / 100).toFixed(2)}
+                    Tax (0%): ₹0.00
                   </div>
                 </div>
 

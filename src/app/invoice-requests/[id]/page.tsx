@@ -4,11 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { formatPdfUrl } from "@/lib/cloudinaryStorage";
-import { ArrowLeft, User, Receipt, CheckCircle, Save, Download, FileSignature, MessageCircle } from "lucide-react";
+import { ArrowLeft, User, Receipt, CheckCircle, Save, Download, FileSignature, MessageCircle, Bell, Mail } from "lucide-react";
 import styles from "../page.module.css";
 import Link from "next/link";
 import { updateInvoiceStatus } from "../actions";
 import InvoicePdfUploader from "@/components/InvoicePdfUploader";
+import { getWhatsAppLink, buildPaymentReminderMessage } from "@/lib/whatsapp";
 
 export default async function InvoiceRequestDetails({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -167,7 +168,7 @@ export default async function InvoiceRequestDetails({ params }: { params: Promis
               </form>
               <div style={{ marginTop: '12px' }}>
                 <a 
-                  href={`https://wa.me/${request.customer.phone}?text=${encodeURIComponent(`Hello ${request.customer.name}, the status of your Invoice (#${request.id.slice(-6).toUpperCase()}) has been updated to: ${request.status.replace(/_/g, ' ')}.\n\nView live progress: https://technextmanage.vercel.app/track/${request.id}`)}`} 
+                  href={getWhatsAppLink(request.customer.phone, `Hello ${request.customer.name}, the status of your Invoice (#${request.id.slice(-6).toUpperCase()}) has been updated to: ${request.status.replace(/_/g, ' ')}.\n\nView live progress: https://technextmanage.vercel.app/track/${request.id}`)}
                   target="_blank" 
                   rel="noreferrer" 
                   className="btn-primary" 
@@ -179,13 +180,36 @@ export default async function InvoiceRequestDetails({ params }: { params: Promis
 
               {request.status !== "PAID" && request.status !== "DRAFT" && request.status !== "CANCELLED" && (
                 <div style={{ marginTop: '12px' }}>
+                  {request.customer.phone && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <a
+                        href={getWhatsAppLink(
+                          request.customer.phone,
+                          buildPaymentReminderMessage({
+                            customerName: request.customer.name,
+                            invoiceNumber: request.aroniumInvoiceNo || request.id.slice(-6).toUpperCase(),
+                            totalAmount: request.amountRequested,
+                            pendingAmount: request.amountRequested,
+                            viewUrl: `https://technextmanage.vercel.app/track/${request.id}`
+                          })
+                        )}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-primary"
+                        style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px', background: '#D97706', color: 'white', border: 'none' }}
+                        title="Send 1-Click WhatsApp Payment Reminder"
+                      >
+                        <Bell size={16} /> Send WhatsApp Payment Reminder
+                      </a>
+                    </div>
+                  )}
                   <form action={async () => {
                     "use server";
                     const { sendInvoiceReminder } = await import('../actions');
                     await sendInvoiceReminder(request.id);
                   }}>
                     <button type="submit" className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px', background: '#0284C7', color: 'white', border: 'none' }}>
-                      <MessageCircle size={16} /> Send Payment Reminder Email
+                      <Mail size={16} /> Send Payment Reminder Email
                     </button>
                   </form>
                   {request.lastReminderSentAt && (

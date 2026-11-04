@@ -16,10 +16,12 @@ import {
   Clock, 
   RefreshCcw,
   Edit3,
-  Trash2
+  Trash2,
+  Bell
 } from "lucide-react";
 import styles from "./page.module.css";
 import { convertQuotationToInvoice, deleteBillingDocument } from "./actions";
+import { getWhatsAppLink, buildPaymentReminderMessage } from "@/lib/whatsapp";
 
 interface Props {
   invoices: any[];
@@ -315,9 +317,10 @@ export default function BillingDashboardClient({
 
                       {doc.customerPhone && (
                         <a 
-                          href={`https://wa.me/91${doc.customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                          href={getWhatsAppLink(
+                            doc.customerPhone,
                             `Hello ${doc.customerName}, here is your ${doc.kind.replace('_', ' ')} #${doc.docNumber} for ₹${formatCurrency(doc.amount)}. View document: https://technextmanage.vercel.app${doc.viewUrl}`
-                          )}`}
+                          )}
                           target="_blank"
                           rel="noreferrer"
                           className={styles.iconBtn}
@@ -325,6 +328,29 @@ export default function BillingDashboardClient({
                           title="Share on WhatsApp"
                         >
                           <Share2 size={13} /> WhatsApp
+                        </a>
+                      )}
+
+                      {doc.customerPhone && doc.kind === "INVOICE" && doc.status !== "Paid" && (
+                        <a 
+                          href={getWhatsAppLink(
+                            doc.customerPhone,
+                            buildPaymentReminderMessage({
+                              customerName: doc.customerName,
+                              invoiceNumber: doc.docNumber,
+                              totalAmount: doc.amount,
+                              pendingAmount: doc.amount,
+                              dueDate: doc.date,
+                              viewUrl: `https://technextmanage.vercel.app${doc.viewUrl}`
+                            })
+                          )}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.iconBtn}
+                          style={{ color: "#ca8a04", borderColor: "#fef08a", background: "#fefce8" }}
+                          title="Send Payment Reminder on WhatsApp"
+                        >
+                          <Bell size={13} /> Reminder
                         </a>
                       )}
 

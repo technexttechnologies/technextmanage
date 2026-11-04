@@ -12,7 +12,7 @@ import {
   Megaphone, LayoutDashboard, CreditCard, Monitor, Repeat, 
   Folder, PieChart, X, UserCheck, Clock, CalendarCheck, 
   Shield, TrendingUp, UserPlus, ShieldCheck, MessageSquare,
-  Package, History, BarChart3, Plus
+  Package, History, BarChart3, Plus, Bell
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { logout } from "@/app/login/actions";
@@ -139,6 +139,9 @@ export default function Sidebar({ user }: { user: any }) {
                 <Link href="/tickets" className={`${styles.navItem} ${pathname.startsWith('/tickets') ? styles.active : ''}`}>
                   <HeadphonesIcon size={19} /> Support Tickets
                 </Link>
+                <Link href="/payments" className={`${styles.navItem} ${pathname.startsWith('/payments') ? styles.active : ''}`}>
+                  <Bell size={19} style={{ color: "#EAB308" }} /> Payment Reminders
+                </Link>
               </div>
 
               <div className={styles.navSection}>
@@ -233,6 +236,9 @@ export default function Sidebar({ user }: { user: any }) {
                 </Link>
                 <Link href="/tickets" className={`${styles.navItem} ${pathname.startsWith('/tickets') ? styles.active : ''}`}>
                   <HeadphonesIcon size={19} /> Support Tickets
+                </Link>
+                <Link href="/payments" className={`${styles.navItem} ${pathname.startsWith('/payments') ? styles.active : ''}`}>
+                  <Bell size={19} style={{ color: "#EAB308" }} /> Payment Reminders
                 </Link>
                 <Link href="/email" className={`${styles.navItem} ${pathname === "/email" ? styles.active : ""}`}>
                   <Mail size={19} />

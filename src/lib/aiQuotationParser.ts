@@ -52,8 +52,8 @@ export async function parseQuotationPdf(base64Data: string, mimeType: string = "
       "companyGst": "extracted GST number or null",
       "expiryDate": "ISO date string or null (YYYY-MM-DD)",
       "subtotal": 1000.00,
-      "gstPercentage": 18.0,
-      "totalAmount": 1180.00,
+      "gstPercentage": 0.0,
+      "totalAmount": 1000.00,
       "items": [
         {
           "name": "Service name",

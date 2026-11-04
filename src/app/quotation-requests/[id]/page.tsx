@@ -10,6 +10,7 @@ import { updateQuotationStatus } from "../actions";
 import QuotationPdfUploader from "@/components/QuotationPdfUploader";
 import { QuotationRequestActionButtons } from "../QuotationRequestActionButtons";
 import { formatPdfUrl } from "@/lib/cloudinaryStorage";
+import { getWhatsAppLink } from "@/lib/whatsapp";
 
 export default async function QuotationRequestDetails({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -130,7 +131,7 @@ export default async function QuotationRequestDetails({ params }: { params: Prom
               </form>
               <div style={{ marginTop: '12px' }}>
                 <a 
-                  href={`https://wa.me/${request.customer.phone}?text=${encodeURIComponent(`Hello ${request.customer.name}, the status of your Quotation (#${request.id.slice(-6).toUpperCase()}) has been updated to: ${request.status.replace(/_/g, ' ')}.\n\nView live progress: https://technextmanage.vercel.app/track/${request.id}`)}`} 
+                  href={getWhatsAppLink(request.customer.phone, `Hello ${request.customer.name}, the status of your Quotation (#${request.id.slice(-6).toUpperCase()}) has been updated to: ${request.status.replace(/_/g, ' ')}.\n\nView live progress: https://technextmanage.vercel.app/track/${request.id}`)}
                   target="_blank" 
                   rel="noreferrer" 
                   className="btn-primary" 

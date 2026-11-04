@@ -18,11 +18,13 @@ import {
   Calendar,
   Layers,
   Download,
-  RotateCcw
+  RotateCcw,
+  Bell
 } from "lucide-react";
 import styles from "./TechNextDocumentTemplate.module.css";
 import { deleteBillingDocument, recordDocumentPayment } from "@/app/billing/actions";
 import { generateDocumentVectorPdf } from "@/lib/vectorPdfGenerator";
+import { cleanPhoneNumber, buildPaymentReminderMessage } from "@/lib/whatsapp";
 
 export type BillingDocType = "INVOICE" | "QUOTATION" | "ORDER_FORM" | "PAYMENT_RECEIPT" | "REFUND";
 
@@ -219,14 +221,31 @@ export default function TechNextDocumentTemplate({
     return lines;
   }, [data.scopeOfWork, data.items]);
 
-  // WhatsApp Share URL
+  // WhatsApp Share URL (Fixed +91 bug using cleanPhoneNumber)
   const prepareWhatsAppUrl = () => {
-    const phone = data.customer.phone ? data.customer.phone.replace(/\D/g, "") : "";
+    const phone = cleanPhoneNumber(data.customer.phone);
     const docName = titles[docType];
     const text = encodeURIComponent(
       `Hello ${data.customer.name},\n\nPlease find your official ${docName} (#${data.documentNumber}) from TechNext Technologies for ₹${formatCurrency(totalAmount)}.\n\nStatus: ${data.paymentStatus || 'Pending'}\n\nThank you for choosing TechNext Technologies!`
     );
-    return phone ? `https://wa.me/91${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+    return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+  };
+
+  // Dedicated Payment Reminder URL
+  const preparePaymentReminderUrl = () => {
+    const phone = cleanPhoneNumber(data.customer.phone);
+    const dueAmt = Math.max(0, totalAmount - (paidAmount || (data.paymentStatus === "Paid" ? totalAmount : 0)));
+    const text = encodeURIComponent(
+      buildPaymentReminderMessage({
+        customerName: data.customer.name,
+        invoiceNumber: data.documentNumber,
+        totalAmount: totalAmount,
+        pendingAmount: dueAmt,
+        dueDate: data.dueDate,
+        viewUrl: typeof window !== "undefined" ? window.location.href : `https://technextmanage.vercel.app/billing/doc/invoice/${data.documentNumber}`
+      })
+    );
+    return phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
   };
 
   return (
@@ -322,6 +341,19 @@ export default function TechNextDocumentTemplate({
                   <Trash2 size={15} /> Delete
                 </button>
               </form>
+            )}
+
+            {data.customer.phone && docType !== "QUOTATION" && docType !== "REFUND" && data.paymentStatus !== "Paid" && (
+              <a
+                href={preparePaymentReminderUrl()}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.btnSecondary}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#B45309", borderColor: "#FDE68A", background: "#FEF3C7", padding: "8px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, textDecoration: "none" }}
+                title="Send WhatsApp Payment Reminder"
+              >
+                <Bell size={15} /> Payment Reminder
+              </a>
             )}
 
             <a
@@ -461,7 +493,6 @@ export default function TechNextDocumentTemplate({
               <th className={styles.colItem}>Item</th>
               <th className={styles.colQty}>Quantity</th>
               <th className={styles.colPrice}>Unit price</th>
-              <th className={styles.colTax}>Tax</th>
               <th className={styles.colDiscount}>Discount</th>
               <th className={styles.colTotal}>Total</th>
             </tr>
@@ -469,7 +500,7 @@ export default function TechNextDocumentTemplate({
           <tbody>
             {data.items.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: "16px", color: "#6b7280" }}>
+                <td colSpan={6} style={{ textAlign: "center", padding: "16px", color: "#6b7280" }}>
                   No items listed.
                 </td>
               </tr>
@@ -485,7 +516,6 @@ export default function TechNextDocumentTemplate({
                   </td>
                   <td className={styles.colQty}>{item.quantity}</td>
                   <td className={styles.colPrice}>{formatCurrency(item.unitPrice)}</td>
-                  <td className={styles.colTax}>{item.tax || "---"}</td>
                   <td className={styles.colDiscount}>
                     {item.discount !== undefined && item.discount !== null
                       ? String(item.discount).includes("%") || String(item.discount).startsWith("-")

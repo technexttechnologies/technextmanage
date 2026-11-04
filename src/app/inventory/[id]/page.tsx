@@ -155,7 +155,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
             <div>
               <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '12px' }}>GST Tax Rate</span>
-              <strong>{product.taxRate}% GST</strong>
+              <strong>0% Tax (Exempt)</strong>
             </div>
 
             <div>

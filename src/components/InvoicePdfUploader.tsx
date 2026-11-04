@@ -79,8 +79,8 @@ export default function InvoicePdfUploader({ requestId }: { requestId: string })
 
   if (parsedData) {
     const subtotal = parsedData.items?.reduce((sum: number, item: any) => sum + (Number(item.total) || 0), 0) || 0;
-    const gstPercentage = parsedData.gstPercentage || 18;
-    const totalAmount = subtotal * (1 + gstPercentage / 100);
+    const gstPercentage = 0;
+    const totalAmount = subtotal;
 
     return (
       <div style={{ marginTop: '16px', padding: '16px', background: 'white', border: '1px solid var(--surface-border)', borderRadius: 'var(--radius-md)', textAlign: 'left' }}>

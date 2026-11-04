@@ -300,7 +300,7 @@ export async function POST(req: Request) {
             quantity: parseFloat(it.Quantity) || 1,
             unitPrice: parseFloat(it.Price) || 0,
             priceBeforeTax: parseFloat(it.PriceBeforeTax || it.Price) || 0,
-            tax: '18%',
+            tax: '0%',
             discount: parseFloat(it.Discount) > 0 ? (it.DiscountType === 1 ? `₹${it.Discount}` : `${it.Discount}%`) : '---',
             totalBeforeDiscount: (parseFloat(it.Quantity) || 1) * (parseFloat(it.Price) || 0),
             total: parseFloat(it.Total) || 0

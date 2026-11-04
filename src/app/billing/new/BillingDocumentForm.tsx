@@ -221,7 +221,7 @@ export default function BillingDocumentForm({
             description: p.description || `${p.name} - Official Product/Service item.`,
             quantity: 1,
             unitPrice: p.sellingPrice || 0,
-            tax: p.taxRate ? `${p.taxRate}%` : "18%",
+            tax: "0%",
             discount: "0",
             total: p.sellingPrice || 0,
           }
@@ -234,7 +234,7 @@ export default function BillingDocumentForm({
         description: "Custom responsive web development with interactive animations & CMS integration.",
         quantity: 1,
         unitPrice: 12000,
-        tax: "---",
+        tax: "0%",
         discount: "-4500",
         total: 7500,
       }
@@ -336,7 +336,7 @@ export default function BillingDocumentForm({
           description: product.description || `SKU: ${product.sku || 'N/A'} • Unit: ${product.unit || 'Pcs'}`,
           quantity: 1,
           unitPrice: product.sellingPrice || 0,
-          tax: product.taxRate ? `${product.taxRate}%` : "---",
+          tax: "0%",
           discount: "---",
           total: product.sellingPrice || 0,
         }
@@ -349,7 +349,7 @@ export default function BillingDocumentForm({
           description: "",
           quantity: 1,
           unitPrice: 0,
-          tax: "---",
+          tax: "0%",
           discount: "---",
           total: 0,
         }
@@ -1031,7 +1031,6 @@ export default function BillingDocumentForm({
                   <th style={{ padding: "8px 10px" }}>Item Name &amp; Description</th>
                   <th style={{ padding: "8px 10px", width: "80px", textAlign: "center" }}>Qty</th>
                   <th style={{ padding: "8px 10px", width: "120px", textAlign: "right" }}>Unit Price (₹)</th>
-                  <th style={{ padding: "8px 10px", width: "90px", textAlign: "center" }}>Tax</th>
                   <th style={{ padding: "8px 10px", width: "110px", textAlign: "right" }}>Discount</th>
                   <th style={{ padding: "8px 10px", width: "110px", textAlign: "right" }}>Total (₹)</th>
                   <th style={{ padding: "8px 10px", width: "40px" }}></th>
@@ -1078,15 +1077,6 @@ export default function BillingDocumentForm({
                         required
                         style={{ width: "100%", padding: "6px 8px", borderRadius: "4px", border: "1px solid #4F46E5", textAlign: "right", fontWeight: 600, background: "#EEF2FF" }}
                         title="Click to edit unit price"
-                      />
-                    </td>
-                    <td style={{ padding: "8px 10px" }}>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. --- or 18%"
-                        value={item.tax}
-                        onChange={(e) => handleItemChange(idx, "tax", e.target.value)}
-                        style={{ width: "100%", padding: "6px 8px", borderRadius: "4px", border: "1px solid var(--surface-border)", textAlign: "center" }}
                       />
                     </td>
                     <td style={{ padding: "8px 10px" }}>

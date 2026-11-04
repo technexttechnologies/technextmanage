@@ -27,7 +27,7 @@ export async function createProduct(formData: FormData) {
   const sellingPrice = parseFloat((formData.get("sellingPrice") as string) || "0");
   const initialStock = isService ? 0 : parseFloat((formData.get("currentStock") as string) || "0");
   const reorderLevel = isService ? 0 : parseFloat((formData.get("reorderLevel") as string) || "5");
-  const taxRate = parseFloat((formData.get("taxRate") as string) || "18");
+  const taxRate = parseFloat((formData.get("taxRate") as string) || "0");
 
   if (!name || isNaN(purchasePrice) || isNaN(sellingPrice)) {
     throw new Error("Product Name, Cost Price, and Selling Price are required.");
@@ -102,7 +102,7 @@ export async function updateProduct(formData: FormData) {
   const purchasePrice = parseFloat((formData.get("purchasePrice") as string) || "0");
   const sellingPrice = parseFloat((formData.get("sellingPrice") as string) || "0");
   const reorderLevel = isService ? 0 : parseFloat((formData.get("reorderLevel") as string) || "5");
-  const taxRate = parseFloat((formData.get("taxRate") as string) || "18");
+  const taxRate = parseFloat((formData.get("taxRate") as string) || "0");
 
   const existing = await prisma.erpProduct.findUnique({ where: { id } });
   if (!existing) throw new Error("Product not found");

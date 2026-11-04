@@ -48,12 +48,14 @@ import {
   FolderOpen,
   FolderPlus,
   Upload,
-  RotateCcw
+  RotateCcw,
+  Bell
 } from "lucide-react";
 import styles from "./AroniumBillingConsole.module.css";
 import { convertQuotationToInvoice, deleteBillingDocument, processReturnAndRefund } from "./actions";
 import { deleteProduct } from "@/app/inventory/actions";
 import { generateReportVectorPdf } from "@/lib/vectorPdfGenerator";
+import { cleanPhoneNumber, getWhatsAppLink, buildPaymentReminderMessage } from "@/lib/whatsapp";
 
 interface Props {
   invoices: any[];
@@ -292,7 +294,7 @@ export default function AroniumBillingConsole({
               quantity: 1,
               unit: isRefund ? "Refund" : "Service",
               unitPrice: totalAmount,
-              tax: "18%",
+              tax: "0%",
               discount: "0.00",
               total: totalAmount
             }
@@ -327,7 +329,7 @@ export default function AroniumBillingConsole({
           unit: it.unit || "Pcs",
           quantity: Number(it.quantity) || 1,
           priceBeforeTax: Number(it.unitPrice || it.priceBeforeTax) || 0,
-          tax: it.tax || "18%",
+          tax: it.tax || "0%",
           unitPrice: Number(it.unitPrice) || 0,
           totalBeforeDiscount: (Number(it.quantity) || 1) * (Number(it.unitPrice) || 0),
           discount: it.discount || "0.00",
@@ -348,7 +350,7 @@ export default function AroniumBillingConsole({
             unit: "Pcs",
             quantity: Number(it.quantity) || 1,
             priceBeforeTax: Number(it.price) || 0,
-            tax: "18%",
+            tax: "0%",
             unitPrice: Number(it.price) || 0,
             totalBeforeDiscount: (Number(it.quantity) || 1) * (Number(it.price) || 0),
             discount: "0.00",
@@ -362,7 +364,7 @@ export default function AroniumBillingConsole({
               unit: "Project",
               quantity: 1,
               priceBeforeTax: totalAmount,
-              tax: "18%",
+              tax: "0%",
               unitPrice: totalAmount,
               totalBeforeDiscount: totalAmount,
               discount: "0.00",
@@ -898,8 +900,8 @@ export default function AroniumBillingConsole({
     const topCustomers = Array.from(custMap.values()).sort((a, b) => b.rev - a.rev).slice(0, 5);
 
     const poolGrossSales = pool.reduce((s, d) => s + d.amount, 0);
-    const poolTax = Math.round((poolGrossSales * 0.18) / 1.18);
-    const poolNetSales = poolGrossSales - poolTax;
+    const poolTax = 0; // 0% Tax
+    const poolNetSales = poolGrossSales;
     const poolPaid = pool.reduce((s, d) => s + (d.amount > 0 ? (d.paidAmount || 0) : 0), 0);
 
     return { 
@@ -968,7 +970,7 @@ export default function AroniumBillingConsole({
       `"${(p.category || 'General').replace(/"/g, '""')}"`,
       `"${p.barcode || ''}"`,
       p.purchasePrice || 0,
-      p.taxRate || 18,
+      0, // 0% Tax
       p.sellingPrice || 0,
       p.unit || (p.isService ? 'SERVICE' : 'PCS'),
       p.isService ? 'YES' : 'NO'
@@ -1003,7 +1005,6 @@ export default function AroniumBillingConsole({
     { id: "SECURITY", label: "Users & security", icon: ShieldCheck },
     { id: "PAYMENT_TYPES", label: "Payment types", icon: CreditCard },
     { id: "COUNTRIES", label: "Countries", icon: Globe },
-    { id: "TAX_RATES", label: "Tax rates", icon: Percent },
     { id: "MY_COMPANY", label: "My company", icon: Building2 },
   ];
 
@@ -1226,15 +1227,39 @@ export default function AroniumBillingConsole({
 
               {selectedDoc?.customerPhone && (
                 <a
-                  href={`https://wa.me/91${selectedDoc.customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                  href={getWhatsAppLink(
+                    selectedDoc.customerPhone,
                     `Hello ${selectedDoc.customerName}, here is your ${selectedDoc.kind.replace('_', ' ')} #${selectedDoc.docNumber} from TechNext Technologies for ₹${formatCurrency(selectedDoc.amount)}. View document: https://technextmanage.vercel.app${selectedDoc.viewUrl}`
-                  )}`}
+                  )}
                   target="_blank"
                   rel="noreferrer"
                   className={styles.toolBtn}
                   style={{ color: "#22c55e" }}
                 >
                   <Share2 size={13} /> WhatsApp
+                </a>
+              )}
+
+              {selectedDoc?.customerPhone && selectedDoc.kind === "INVOICE" && selectedDoc.status !== "Paid" && (
+                <a
+                  href={getWhatsAppLink(
+                    selectedDoc.customerPhone,
+                    buildPaymentReminderMessage({
+                      customerName: selectedDoc.customerName,
+                      invoiceNumber: selectedDoc.docNumber,
+                      totalAmount: selectedDoc.amount,
+                      pendingAmount: Math.max(0, selectedDoc.amount - (selectedDoc.paidAmount || (selectedDoc.status === "Paid" ? selectedDoc.amount : 0))),
+                      dueDate: selectedDoc.date,
+                      viewUrl: `https://technextmanage.vercel.app${selectedDoc.viewUrl}`
+                    })
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.toolBtn}
+                  style={{ color: "#d97706", borderColor: "#fde68a", background: "#fef3c7" }}
+                  title="Send WhatsApp Payment Reminder"
+                >
+                  <Bell size={13} /> Payment Reminder
                 </a>
               )}
             </div>
@@ -1526,7 +1551,7 @@ export default function AroniumBillingConsole({
                             <td>{item.unit || "Pcs"}</td>
                             <td style={{ textAlign: "center", fontWeight: 600 }}>{item.quantity}</td>
                             <td style={{ textAlign: "right" }}>₹{formatCurrency(item.priceBeforeTax)}</td>
-                            <td style={{ textAlign: "center" }}>{item.tax || "18%"}</td>
+                            <td style={{ textAlign: "center" }}>{item.tax || "0%"}</td>
                             <td style={{ textAlign: "right" }}>₹{formatCurrency(item.unitPrice)}</td>
                             <td style={{ textAlign: "right" }}>₹{formatCurrency(item.totalBeforeDiscount)}</td>
                             <td style={{ textAlign: "right" }}>{item.discount || "0.00"}</td>
@@ -2020,8 +2045,8 @@ export default function AroniumBillingConsole({
                         <span style={{ fontWeight: 700, color: "#00a2ed" }}>₹{formatCurrency(periodicData.poolGrossSales)}</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", padding: "4px 0", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                        <span style={{ opacity: 0.75 }}>GST Output Tax (18%)</span>
-                        <span style={{ fontWeight: 600 }}>₹{formatCurrency(periodicData.poolTax)}</span>
+                        <span style={{ opacity: 0.75 }}>GST Output Tax (0%)</span>
+                        <span style={{ fontWeight: 600 }}>₹0.00</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", padding: "4px 0", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
                         <span style={{ opacity: 0.75 }}>Net Sales (ex. Tax)</span>
@@ -2347,8 +2372,8 @@ export default function AroniumBillingConsole({
                       ) : (
                         filteredProducts.map((p, idx) => {
                           const isSelected = selectedProductId === p.id;
-                          const taxPct = Number(p.taxRate || 18);
-                          const exclPrice = Number(p.sellingPrice || 0) / (1 + taxPct / 100);
+                          const taxPct = 0; // 0% Tax
+                          const exclPrice = Number(p.sellingPrice || 0);
                           const code = p.sku || p.aroniumId || `8${80 + idx}`;
 
                           return (

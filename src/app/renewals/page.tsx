@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, RefreshCw, AlertTriangle, CheckCircle, Search } from "lucide-react";
 import styles from "./page.module.css";
+import { getWhatsAppLink } from "@/lib/whatsapp";
 
 export default async function RenewalsPage({
   searchParams,
@@ -139,7 +140,7 @@ export default async function RenewalsPage({
                   <Link href={`/renewals/${renewal.id}/renew`} className="btn-primary" style={{flex: 1}}>
                     <RefreshCw size={16} /> Renew
                   </Link>
-                  <a href={`https://wa.me/${renewal.customer.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(waMsg)}`} className="btn-secondary" style={{flex: 1, backgroundColor: '#25D366', color: 'white', borderColor: '#25D366'}} target="_blank" rel="noopener noreferrer">
+                  <a href={getWhatsAppLink(renewal.customer.phone, waMsg)} className="btn-secondary" style={{flex: 1, backgroundColor: '#25D366', color: 'white', borderColor: '#25D366'}} target="_blank" rel="noopener noreferrer">
                     WhatsApp
                   </a>
                   {/* Client component wrapper for the email button could be used, or just a form */}

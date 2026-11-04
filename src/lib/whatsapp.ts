@@ -2,18 +2,62 @@ import { prisma } from "@/lib/prisma";
 
 export function cleanPhoneNumber(phone: string | null | undefined): string {
   if (!phone) return "";
-  let cleaned = phone.replace(/\D/g, "");
-  // If Indian 10-digit number without country code
-  if (cleaned.length === 10) {
-    cleaned = "91" + cleaned;
+  let digits = String(phone).replace(/\D/g, "");
+  if (!digits) return "";
+
+  // Strip leading zeroes e.g. 09876543210 -> 9876543210
+  digits = digits.replace(/^0+/, "");
+
+  // If number was accidentally double-prefixed with 9191 e.g. 91919876543210 (14+ digits)
+  while (digits.startsWith("9191") && digits.length >= 14) {
+    digits = digits.slice(2);
   }
-  return cleaned;
+
+  // If number has 910... (13 digits: 91 + 0 + 10 digits)
+  if (digits.startsWith("910") && digits.length === 13) {
+    digits = "91" + digits.slice(3);
+  }
+
+  // If already has 91 country code and 12 digits total (91 + 10-digit Indian number)
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return digits;
+  }
+
+  // If 10 digits (standard Indian mobile number without country code)
+  if (digits.length === 10) {
+    return "91" + digits;
+  }
+
+  return digits;
 }
 
 export function getWhatsAppLink(phone: string | null | undefined, message: string): string {
   const cleaned = cleanPhoneNumber(phone);
   if (!cleaned) return "#";
   return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
+}
+
+export function buildPaymentReminderMessage(params: {
+  customerName: string;
+  invoiceNumber: string;
+  totalAmount: number;
+  pendingAmount: number;
+  dueDate?: string;
+  viewUrl?: string;
+}): string {
+  let msg = `Hello ${params.customerName} 👋,\n\n`;
+  msg += `This is a friendly payment reminder from *TechNext Technologies* regarding Invoice *#${params.invoiceNumber}*.\n\n`;
+  msg += `📄 *Invoice Number:* ${params.invoiceNumber}\n`;
+  msg += `💰 *Total Amount:* ₹${params.totalAmount.toLocaleString("en-IN")}\n`;
+  msg += `⚠️ *Pending Balance:* ₹${params.pendingAmount.toLocaleString("en-IN")}\n`;
+  if (params.dueDate) {
+    msg += `📅 *Due Date:* ${params.dueDate}\n`;
+  }
+  if (params.viewUrl) {
+    msg += `\n🔗 *View & Pay Online:* ${params.viewUrl}\n`;
+  }
+  msg += `\nPlease arrange the payment at your earliest convenience.\nIf you have already processed this payment, please disregard this reminder.\n\nThank you for choosing TechNext Technologies!\n*TechNext Technologies*`;
+  return msg;
 }
 
 export function getAppUrl(): string {

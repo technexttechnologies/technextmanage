@@ -6,6 +6,7 @@ import { IndianRupee, ShieldAlert, ArrowRight, CheckCircle, Mail, MessageCircle 
 import styles from "./page.module.css";
 import { sendInvoiceReminder } from "../invoice-requests/actions";
 import { sendAMCPaymentReminder } from "../amc/actions";
+import { getWhatsAppLink, buildPaymentReminderMessage } from "@/lib/whatsapp";
 
 export default async function PaymentsDashboard() {
   const pendingInvoices = await prisma.invoiceRequest.findMany({
@@ -23,10 +24,6 @@ export default async function PaymentsDashboard() {
     include: { customer: true },
     orderBy: { createdAt: 'desc' }
   });
-
-  const getWhatsAppLink = (phone: string, text: string) => {
-    return `https://wa.me/91${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`;
-  };
 
   return (
     <div className={styles.container}>
@@ -64,7 +61,13 @@ export default async function PaymentsDashboard() {
               </thead>
               <tbody>
                 {pendingInvoices.map(inv => {
-                  const whatsappMsg = `Hello ${inv.customer.name}, this is a gentle reminder regarding your pending invoice for ₹${inv.amountRequested.toFixed(2)}. You can view and pay it here: https://technextmanage.vercel.app/track/${inv.id}`;
+                  const whatsappMsg = buildPaymentReminderMessage({
+                    customerName: inv.customer.name,
+                    invoiceNumber: inv.aroniumInvoiceNo || inv.id.slice(-6).toUpperCase(),
+                    totalAmount: inv.amountRequested,
+                    pendingAmount: inv.amountRequested,
+                    viewUrl: `https://technextmanage.vercel.app/track/${inv.id}`
+                  });
                   return (
                     <tr key={inv.id}>
                       <td>
