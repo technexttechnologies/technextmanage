@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/auth";
+import { getSession, isTestSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -8,8 +8,8 @@ import DashboardCharts from "./Charts";
 
 export default async function ErpDashboardPage() {
   const session = await getSession();
-  if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS", "OPERATIONS", "HR"].includes(session.role as string)) {
-    redirect("/");
+  if (!session || isTestSession(session) || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS", "OPERATIONS", "HR"].includes(session.role as string)) {
+    redirect("/billing");
   }
 
   // Fetch Financial Data

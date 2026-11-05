@@ -10,7 +10,7 @@ import { PackageActionButtons } from "@/app/packages/PackageActionButtons";
 import { DomainActionButtons } from "@/app/domains/DomainActionButtons";
 import { HostingActionButtons } from "@/app/hosting/HostingActionButtons";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { getSession, isTestSession } from "@/lib/auth";
 import { requestClientAccess } from "@/app/sales/actions";
 
 function maskPhone(phone?: string | null): string {
@@ -40,6 +40,7 @@ export default async function CustomerDetailsPage({
   searchParams?: Promise<{ existing?: string }>;
 }) {
   const session = await getSession();
+  const isTestUser = isTestSession(session);
   if (!session?.userId) {
     redirect("/login");
   }
@@ -140,7 +141,7 @@ export default async function CustomerDetailsPage({
           }}>
             <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>Customer Identity:</div>
             <div style={{ fontSize: "17px", fontWeight: 700 }}>{customer.name}</div>
-            {customer.company && <div style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "2px" }}>{customer.company}</div>}
+            {!isTestUser && customer.company && <div style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "2px" }}>{customer.company}</div>}
             
             <div style={{ marginTop: "14px", fontSize: "13px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               <div>Phone: <strong style={{ fontFamily: "monospace" }}>{maskPhone(customer.phone)}</strong></div>
@@ -317,7 +318,7 @@ export default async function CustomerDetailsPage({
                   <span className={styles.badge} style={{ fontSize: '12px', background: '#e2e8f0', color: '#334155' }}>
                     Customer #{customer.customerNumber}
                   </span>
-                  {customer.company && (
+                  {!isTestUser && customer.company && (
                     <p className={styles.company}>
                       <Building2 size={16} />
                       <span>{customer.company}</span>

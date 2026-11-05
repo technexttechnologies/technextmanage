@@ -1,6 +1,6 @@
 
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, isTestSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus, Monitor, Calendar, IndianRupee, Tag, ShieldCheck, User } from "lucide-react";
@@ -11,8 +11,8 @@ export const dynamic = "force-dynamic";
 
 export default async function AssetsPage() {
   const session = await getSession();
-  if (!session || (!["SUPER_ADMIN", "ADMIN", "OPERATIONS"].includes(session.role as string))) {
-    redirect("/");
+  if (!session || isTestSession(session) || (!["SUPER_ADMIN", "ADMIN", "OPERATIONS"].includes(session.role as string))) {
+    redirect("/billing");
   }
 
   const assets = await prisma.erpAsset.findMany({

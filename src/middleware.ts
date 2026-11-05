@@ -38,6 +38,42 @@ export async function middleware(request: NextRequest) {
     });
 
     const userRole = (payload.role as string) || '';
+    const userEmail = ((payload.email as string) || '').toLowerCase().trim();
+    const userName = ((payload.name as string) || '').toLowerCase().trim();
+    const userId = (payload.userId as string) || '';
+
+    const isTestUser =
+      userEmail === 'test@technext' ||
+      userEmail.startsWith('test@technext') ||
+      userName === 'test' ||
+      userId === 'cmw2z6xpa0001y5xm4g9lp30w';
+
+    // TEST USER RESTRICTION (test@technext):
+    // Completely hide and block all Company Financials, Company Assets, HR/Employees, and Settings
+    if (isTestUser) {
+      if (path === '/') {
+        return NextResponse.redirect(new URL('/billing', request.url));
+      }
+
+      const testForbiddenPrefixes = [
+        '/erp',
+        '/employees',
+        '/settings',
+        '/users',
+        '/reseller',
+        '/integration',
+        '/campaigns',
+        '/sales',
+      ];
+
+      const isForbidden = testForbiddenPrefixes.some(
+        prefix => path === prefix || path.startsWith(`${prefix}/`)
+      );
+
+      if (isForbidden) {
+        return NextResponse.redirect(new URL('/billing', request.url));
+      }
+    }
 
     // SALE STAFF ACCESS RESTRICTION:
     // If user is SALES, they only have access to the Sales Portal and their operational workspace

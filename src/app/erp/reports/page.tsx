@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/auth";
+import { getSession, isTestSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { PieChart, Download, FileText, IndianRupee, Users, Monitor, Repeat, Package } from "lucide-react";
@@ -8,8 +8,8 @@ import ReportExportHeader from "@/components/erp/ReportExportHeader";
 
 export default async function ReportsPage() {
   const session = await getSession();
-  if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS"].includes(session.role as string)) {
-    redirect("/");
+  if (!session || isTestSession(session) || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS"].includes(session.role as string)) {
+    redirect("/billing");
   }
 
   const [incomes, expenses] = await Promise.all([

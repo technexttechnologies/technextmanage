@@ -48,6 +48,8 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
   };
 
   const titleText = titles[data.documentType] || data.documentType || "INVOICE";
+  const hideCompany = Boolean(data.hideCompanyDetails);
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(0, 0, 0);
@@ -57,25 +59,27 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10.5);
   doc.setTextColor(0, 0, 0);
-  doc.text("TECHNEXT TECHNOLOGIES", margin, 24);
+  doc.text(hideCompany ? "OFFICIAL BILLING" : "TECHNEXT TECHNOLOGIES", margin, 24);
 
   // Addresses & Contact
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(17, 24, 39);
-  doc.text("PULPALLY", margin, 28.5);
-  doc.text("WAYANAD,673579", margin, 33);
-  doc.text("Email:    info.technexttech@gmail.com", margin, 37.5);
+  if (!hideCompany) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(17, 24, 39);
+    doc.text("PULPALLY", margin, 28.5);
+    doc.text("WAYANAD,673579", margin, 33);
+    doc.text("Email:    info.technexttech@gmail.com", margin, 37.5);
 
-  // Top Right: Official TechNext Logo
-  try {
-    const logoWidth = 46;
-    const logoHeight = 12.5;
-    const logoX = pageWidth - margin - logoWidth;
-    const logoY = 15;
-    doc.addImage(TECHNEXT_LOGO_BASE64, "PNG", logoX, logoY, logoWidth, logoHeight);
-  } catch (err) {
-    console.warn("Could not render logo in PDF:", err);
+    // Top Right: Official TechNext Logo
+    try {
+      const logoWidth = 46;
+      const logoHeight = 12.5;
+      const logoX = pageWidth - margin - logoWidth;
+      const logoY = 15;
+      doc.addImage(TECHNEXT_LOGO_BASE64, "PNG", logoX, logoY, logoWidth, logoHeight);
+    } catch (err) {
+      console.warn("Could not render logo in PDF:", err);
+    }
   }
 
   // Thin Horizontal Divider
@@ -93,7 +97,7 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
   doc.setTextColor(0, 0, 0);
   doc.text(billToLabel, margin, metaStartY);
 
-  const clientName = (data.customer.company || data.customer.name || "Customer").toUpperCase();
+  const clientName = (hideCompany ? data.customer.name : (data.customer.company || data.customer.name || "Customer")).toUpperCase();
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(0, 0, 0);
@@ -129,7 +133,7 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
   const numberLabel = data.documentType === "QUOTATION" ? "Quotation No.:" : data.documentType === "ORDER_FORM" ? "Order No.:" : data.documentType === "PAYMENT_RECEIPT" ? "Receipt No.:" : "Invoice No.:";
   const dueLabel = data.documentType === "QUOTATION" ? "Valid until:" : "Due date:";
 
-  const bankLines = (data.bankDetails || "SOUTH INDIAN BANK\nPULPALLY").split("\n").map(l => l.trim()).filter(Boolean);
+  const bankLines = (hideCompany ? ["[MASKED FOR TEST USER]"] : (data.bankDetails || "SOUTH INDIAN BANK\nPULPALLY").split("\n").map(l => l.trim()).filter(Boolean));
 
   const metaFields = [
     { label: numberLabel, val: data.documentNumber, isBold: true },
@@ -364,29 +368,31 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
     footerStartY = pageHeight - 78;
   }
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(55, 65, 81);
-  doc.text("Thank You for Choosing", margin, footerStartY);
+  if (!hideCompany) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(55, 65, 81);
+    doc.text("Thank You for Choosing", margin, footerStartY);
 
-  footerStartY += 4.5;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.setTextColor(0, 0, 0);
-  doc.text("TECHNEXT TECHNOLOGIES", margin, footerStartY);
+    footerStartY += 4.5;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text("TECHNEXT TECHNOLOGIES", margin, footerStartY);
 
-  footerStartY += 4.5;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(75, 85, 99);
-  doc.text("Delivering Innovative Digital Solutions with Quality, Creativity & Trust.", margin, footerStartY);
+    footerStartY += 4.5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(75, 85, 99);
+    doc.text("Delivering Innovative Digital Solutions with Quality, Creativity & Trust.", margin, footerStartY);
 
-  footerStartY += 3;
-  doc.setDrawColor(209, 213, 219);
-  doc.setLineWidth(0.4);
-  doc.line(margin, footerStartY, margin + 45, footerStartY);
+    footerStartY += 3;
+    doc.setDrawColor(209, 213, 219);
+    doc.setLineWidth(0.4);
+    doc.line(margin, footerStartY, margin + 45, footerStartY);
 
-  footerStartY += 4.5;
+    footerStartY += 4.5;
+  }
 
   // Payment Terms
   doc.setFont("helvetica", "bold");
@@ -438,12 +444,12 @@ export function generateDocumentVectorPdf(data: BillingDocumentData): void {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(107, 114, 128);
-  doc.text("TechNext Technologies • www.technexttechnologies.in", margin, pageHeight - 6.5);
+  doc.text(hideCompany ? "Official Billing System" : "TechNext Technologies • www.technexttechnologies.in", margin, pageHeight - 6.5);
   doc.text("Page 1", pageWidth - margin, pageHeight - 6.5, { align: "right" });
 
   // Save the crisp vector PDF directly
   const safeDocNum = (data.documentNumber || "DOC").replace(/[^a-zA-Z0-9_-]/g, "_");
-  const fileName = `TechNext_${data.documentType || "DOCUMENT"}_${safeDocNum}.pdf`;
+  const fileName = `${hideCompany ? "Billing" : "TechNext"}_${data.documentType || "DOCUMENT"}_${safeDocNum}.pdf`;
   doc.save(fileName);
 }
 

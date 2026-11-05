@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { getSession, isTestSession } from "@/lib/auth";
 import TechNextDocumentTemplate, { 
   BillingDocumentData 
 } from "@/components/billing/TechNextDocumentTemplate";
@@ -12,6 +13,9 @@ export default async function DynamicQuotationPage({
 }: { 
   params: Promise<{ id: string }> 
 }) {
+  const session = await getSession();
+  const isTestUser = isTestSession(session);
+
   const { id } = await params;
 
   const quotation = await prisma.quotation.findUnique({
@@ -63,7 +67,8 @@ export default async function DynamicQuotationPage({
     amountDue: quotation.status === "APPROVED" ? 0 : quotation.totalAmount,
     scopeOfWork: quotation.notes || "Quotation covers the agreed solution scope, software architecture, responsive optimization, deployment, and ongoing technical support.",
     paymentTermsNote: "Payment Terms: 50% advance upon order confirmation, balance due upon project delivery and handover.",
-    terms: quotation.terms.map(t => t.content)
+    terms: quotation.terms.map(t => t.content),
+    hideCompanyDetails: isTestUser,
   };
 
   return (

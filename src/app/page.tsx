@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, isTestSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import styles from "./page.module.css";
 import { 
@@ -16,6 +16,11 @@ export default async function Dashboard() {
 
   if (!session?.userId) {
     redirect("/login");
+  }
+
+  // TEST USER RESTRICTION (test@technext):
+  if (isTestSession(session)) {
+    redirect("/billing");
   }
 
   // SALES STAFF RESTRICTION:

@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
+import { getSession, isTestSession } from "@/lib/auth";
 import AroniumBillingConsole from "./AroniumBillingConsole";
 
 export default async function BillingHubPage({
@@ -8,6 +9,9 @@ export default async function BillingHubPage({
 }: {
   searchParams?: Promise<{ tab?: string; [key: string]: string | undefined }> | { tab?: string; [key: string]: string | undefined };
 }) {
+  const session = await getSession();
+  const isTestUser = isTestSession(session);
+
   const resolvedParams = searchParams ? await Promise.resolve(searchParams) : {};
   const rawTab = (resolvedParams.tab?.toUpperCase() || "DOCUMENTS") as any;
   const initialTab = ["DOCUMENTS", "REPORTING", "DASHBOARD", "PRODUCTS"].includes(rawTab) ? rawTab : "DOCUMENTS";
@@ -84,16 +88,36 @@ export default async function BillingHubPage({
     q => q.status !== "REJECTED" && q.status !== "CONVERTED"
   ).length;
 
+  const sanitizedCustomers = isTestUser
+    ? customers.map(c => ({ ...c, company: null }))
+    : customers;
+
+  const sanitizedQuotations = isTestUser
+    ? quotations.map(q => ({
+        ...q,
+        companyName: null,
+        customer: q.customer ? { ...q.customer, company: null } : q.customer
+      }))
+    : quotations;
+
+  const sanitizedInvoices = isTestUser
+    ? invoices.map(inv => ({
+        ...inv,
+        customer: inv.customer ? { ...inv.customer, company: null } : inv.customer
+      }))
+    : invoices;
+
   return (
     <AroniumBillingConsole 
-      invoices={invoices} 
-      quotations={quotations}
+      invoices={sanitizedInvoices} 
+      quotations={sanitizedQuotations}
       products={products}
-      customers={customers}
+      customers={sanitizedCustomers}
       users={users}
       projects={projects}
       metrics={{ totalBilled, totalCollected, totalDue, activeQuotes }}
       initialTab={initialTab}
+      isTestUser={isTestUser}
     />
   );
 }

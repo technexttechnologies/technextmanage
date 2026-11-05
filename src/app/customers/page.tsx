@@ -5,7 +5,7 @@ import { Plus, Search, Phone, Mail, Building2, UserCircle, Lock } from "lucide-r
 import { WhatsAppWelcomeTrigger } from "./WhatsAppWelcomeTrigger";
 import { CustomerActionButtons } from "./CustomerActionButtons";
 import styles from "./page.module.css";
-import { getSession } from "@/lib/auth";
+import { getSession, isTestSession } from "@/lib/auth";
 
 function maskPhone(phone?: string | null): string {
   if (!phone) return "—";
@@ -28,7 +28,8 @@ function maskEmail(email?: string | null): string {
 
 export default async function CustomersPage({ searchParams }: { searchParams: { wa_welcome?: string, wa_phone?: string, wa_name?: string } }) {
   const session = await getSession();
-  const isAdmin = ["SUPER_ADMIN", "ADMIN", "HEAD", "OPERATIONS"].includes(session?.role as string);
+  const isTestUser = isTestSession(session);
+  const isAdmin = !isTestUser && ["SUPER_ADMIN", "ADMIN", "HEAD", "OPERATIONS"].includes(session?.role as string);
 
   const [customers, pendingAccessCount] = await Promise.all([
     prisma.customer.findMany({
@@ -173,7 +174,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: { 
                           </span>
                         )}
                       </h3>
-                      {customer.company && (
+                      {!isTestUser && customer.company && (
                         <p className={styles.company}>
                           <Building2 size={14} /> {customer.company}
                         </p>

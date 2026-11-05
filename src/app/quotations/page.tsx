@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
+import { getSession, isTestSession } from "@/lib/auth";
 import Link from "next/link";
 import { formatPdfUrl } from "@/lib/cloudinaryStorage";
 import { Plus, Search, FileSignature, CheckCircle, XCircle, ArrowRightCircle, Download, MessageCircle } from "lucide-react";
@@ -12,6 +13,8 @@ export default async function QuotationsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  const session = await getSession();
+  const isTestUser = isTestSession(session);
   const currentStatus = (await searchParams).status || "ALL";
 
   const quotations = await prisma.quotation.findMany({
@@ -98,7 +101,7 @@ export default async function QuotationsPage({
               </div>
 
               <div className={styles.cardBody}>
-                <p><strong>Customer:</strong> {quote.customer.name} {quote.customer.company ? `(${quote.customer.company})` : ''}</p>
+                <p><strong>Customer:</strong> {quote.customer.name} {!isTestUser && quote.customer.company ? `(${quote.customer.company})` : ''}</p>
                 <div style={{ display: 'flex', gap: '16px', marginTop: '8px', marginBottom: '8px', fontSize: '13px', color: 'var(--text-muted)' }}>
                   <span>Subtotal: ₹{quote.subtotal?.toFixed(2) || "0.00"}</span>
                   <span style={{ fontWeight: '500', color: 'var(--brand-primary)' }}>Total: ₹{(quote.totalAmount || 0).toFixed(2)}</span>

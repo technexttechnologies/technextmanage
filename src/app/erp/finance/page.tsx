@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, isTestSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import styles from "./page.module.css";
@@ -9,8 +9,8 @@ import ReportExportHeader from "@/components/erp/ReportExportHeader";
 
 export default async function FinanceDashboard() {
   const session = await getSession();
-  if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS"].includes(session.role as string)) {
-    redirect("/");
+  if (!session || isTestSession(session) || !["SUPER_ADMIN", "ADMIN", "ACCOUNTS"].includes(session.role as string)) {
+    redirect("/billing");
   }
 
   const [incomes, expenses] = await Promise.all([

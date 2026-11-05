@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
+import { getSession, isTestSession } from "@/lib/auth";
 import Link from "next/link";
 import { Plus, Search, Filter, Phone, Mail, Building2, Calendar } from "lucide-react";
 import styles from "./page.module.css";
@@ -9,6 +10,8 @@ export default async function LeadsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  const session = await getSession();
+  const isTestUser = isTestSession(session);
   const currentStatus = (await searchParams).status || "ALL";
 
   const leads = await prisma.lead.findMany({
@@ -75,7 +78,7 @@ export default async function LeadsPage({
                 <div className={styles.cardHeader}>
                   <div className={styles.cardInfo}>
                     <h3>{lead.name}</h3>
-                    {lead.company && (
+                    {!isTestUser && lead.company && (
                       <p className={styles.company}>
                         <Building2 size={14} /> {lead.company}
                       </p>

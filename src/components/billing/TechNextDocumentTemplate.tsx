@@ -98,6 +98,7 @@ export interface BillingDocumentData {
   supportTerms?: string[];
   authorizedBy?: string;
   paymentReference?: string;
+  hideCompanyDetails?: boolean;
 }
 
 interface Props {
@@ -121,6 +122,7 @@ export default function TechNextDocumentTemplate({
   const [payRef, setPayRef] = useState("");
   const [payStatus, setPayStatus] = useState("PAID");
   const [isRecording, setIsRecording] = useState(false);
+  const hideCompany = Boolean(data.hideCompanyDetails);
 
   // Auto-trigger direct vector PDF download or browser print when passed via URL query
   useEffect(() => {
@@ -416,24 +418,32 @@ export default function TechNextDocumentTemplate({
         <div className={styles.docHeader}>
           <div className={styles.titleCompanyBlock}>
             <h1 className={styles.docTitle}>{titles[docType]}</h1>
-            <div className={styles.companyName}>TECHNEXT TECHNOLOGIES</div>
-            <div className={styles.companyLine}>PULPALLY</div>
-            <div className={styles.companyLine}>WAYANAD,673579</div>
-            <div className={styles.companyEmailRow}>
-              <span className={styles.companyEmailLabel}>Email:</span>
-              <span>info.technexttech@gmail.com</span>
+            <div className={styles.companyName}>
+              {hideCompany ? "OFFICIAL BILLING" : "TECHNEXT TECHNOLOGIES"}
             </div>
+            {!hideCompany && (
+              <>
+                <div className={styles.companyLine}>PULPALLY</div>
+                <div className={styles.companyLine}>WAYANAD,673579</div>
+                <div className={styles.companyEmailRow}>
+                  <span className={styles.companyEmailLabel}>Email:</span>
+                  <span>info.technexttech@gmail.com</span>
+                </div>
+              </>
+            )}
           </div>
 
-          <div className={styles.logoBlock}>
-            {/* TechNext official logo */}
-            <img
-              src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png"
-              alt="TECHNEXT TECHNOLOGIES"
-              className={styles.logoImg}
-              crossOrigin="anonymous"
-            />
-          </div>
+          {!hideCompany && (
+            <div className={styles.logoBlock}>
+              {/* TechNext official logo */}
+              <img
+                src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png"
+                alt="TECHNEXT TECHNOLOGIES"
+                className={styles.logoImg}
+                crossOrigin="anonymous"
+              />
+            </div>
+          )}
         </div>
 
         <hr className={styles.headerDivider} />
@@ -446,7 +456,7 @@ export default function TechNextDocumentTemplate({
               {docType === "QUOTATION" ? "Quotation For" : docType === "ORDER_FORM" ? "Ordered By" : docType === "PAYMENT_RECEIPT" ? "Received From" : "Bill to"}
             </div>
             <div className={styles.clientName}>
-              {data.customer.company || data.customer.name}
+              {hideCompany ? data.customer.name : (data.customer.company || data.customer.name)}
             </div>
             {data.customer.address && (
               <div className={styles.clientAddress} style={{ whiteSpace: "pre-line" }}>
@@ -504,7 +514,7 @@ export default function TechNextDocumentTemplate({
                 <tr>
                   <td className={styles.metaLabelCol}>Bank details:</td>
                   <td className={styles.metaValCol} style={{ whiteSpace: "pre-line" }}>
-                    {bankText}
+                    {hideCompany ? "[MASKED FOR TEST ACCOUNT]" : bankText}
                   </td>
                 </tr>
               </tbody>

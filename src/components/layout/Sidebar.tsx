@@ -20,10 +20,14 @@ import NotificationBell from "./NotificationBell";
 
 export default function Sidebar({ user }: { user: any }) {
   const pathname = usePathname() || "";
-  const isSalesStaff = user?.role === "SALES";
-  const isSuperAdmin = user?.role === "SUPER_ADMIN";
-  const isAdmin = isSuperAdmin || user?.role === "ADMIN";
-  const isErpAccess = isAdmin || ["ACCOUNTS", "OPERATIONS", "HR"].includes(user?.role);
+  const userEmail = (user?.email || "").toString().toLowerCase().trim();
+  const userName = (user?.name || "").toString().toLowerCase().trim();
+  const userId = (user?.userId || "").toString().trim();
+  const isTestUser = userEmail === "test@technext" || userEmail.startsWith("test@technext") || userName === "test" || userId === "cmw2z6xpa0001y5xm4g9lp30w";
+  const isSalesStaff = !isTestUser && user?.role === "SALES";
+  const isSuperAdmin = !isTestUser && user?.role === "SUPER_ADMIN";
+  const isAdmin = !isTestUser && (isSuperAdmin || user?.role === "ADMIN");
+  const isErpAccess = !isTestUser && (isAdmin || ["ACCOUNTS", "OPERATIONS", "HR"].includes(user?.role));
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -46,13 +50,24 @@ export default function Sidebar({ user }: { user: any }) {
       <aside className={`${styles.sidebar} ${isMobileOpen ? styles.mobileOpen : ''}`}>
         <div className={styles.logoContainer} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-            <Link href={isSalesStaff ? "/sales" : "/"} style={{ display: 'inline-flex' }}>
-              <img 
-                src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" 
-                alt="TechNext Technologies" 
-                className={styles.logo} 
-              />
-            </Link>
+            {isTestUser ? (
+              <Link href="/billing" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '15px' }}>
+                  TP
+                </div>
+                <div style={{ fontWeight: 800, fontSize: '16px', color: 'var(--text-main)', letterSpacing: '-0.3px' }}>
+                  Test Portal
+                </div>
+              </Link>
+            ) : (
+              <Link href={isSalesStaff ? "/sales" : "/"} style={{ display: 'inline-flex' }}>
+                <img 
+                  src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png" 
+                  alt="TechNext Technologies" 
+                  className={styles.logo} 
+                />
+              </Link>
+            )}
             <button 
               type="button" 
               className={styles.closeBtn} 
@@ -69,14 +84,18 @@ export default function Sidebar({ user }: { user: any }) {
             textTransform: 'uppercase',
             padding: '4px 10px',
             borderRadius: '6px',
-            background: isSalesStaff ? 'rgba(16, 185, 129, 0.1)' : 'rgba(79, 70, 229, 0.08)',
-            color: isSalesStaff ? '#059669' : '#4338ca',
-            border: isSalesStaff ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(79, 70, 229, 0.2)',
+            background: isTestUser ? 'rgba(59, 130, 246, 0.1)' : isSalesStaff ? 'rgba(16, 185, 129, 0.1)' : 'rgba(79, 70, 229, 0.08)',
+            color: isTestUser ? '#2563eb' : isSalesStaff ? '#059669' : '#4338ca',
+            border: isTestUser ? '1px solid rgba(59, 130, 246, 0.25)' : isSalesStaff ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(79, 70, 229, 0.2)',
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px'
           }}>
-            {isSalesStaff ? (
+            {isTestUser ? (
+              <>
+                <CheckSquare size={12} /> Test / Demo Account
+              </>
+            ) : isSalesStaff ? (
               <>
                 <TrendingUp size={12} /> Sales Operations Portal
               </>
@@ -93,8 +112,50 @@ export default function Sidebar({ user }: { user: any }) {
         </div>
       
         <nav className={styles.nav}>
-          {/* ===================== 1. SALES STAFF ONLY NAVIGATION ===================== */}
-          {isSalesStaff ? (
+          {/* ===================== 0. TEST USER WORKSPACE (NO COMPANY DETAILS) ===================== */}
+          {isTestUser ? (
+            <>
+              <div className={styles.navSection}>
+                <p className={styles.navSectionTitle} style={{ color: "#0284c7" }}>Billing &amp; Invoices</p>
+                <Link 
+                  href="/billing" 
+                  className={`${styles.suiteBtn} ${styles.suiteBtnBilling} ${pathname.startsWith('/billing') ? styles.suiteBtnBillingActive : ''}`}
+                  title="Billing Suite"
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Receipt size={18} />
+                    <span>Billing &amp; Invoices</span>
+                  </div>
+                  <span className={styles.suiteBadge}>Suite</span>
+                </Link>
+              </div>
+
+              <div className={styles.navSection}>
+                <p className={styles.navSectionTitle}>Clients &amp; Pipeline</p>
+                <Link href="/customers" className={`${styles.navItem} ${pathname.startsWith('/customers') ? styles.active : ''}`}>
+                  <Users size={19} /> Customers
+                </Link>
+                <Link href="/leads" className={`${styles.navItem} ${pathname.startsWith('/leads') ? styles.active : ''}`}>
+                  <Target size={19} /> Leads &amp; Deals
+                </Link>
+                <Link href="/projects" className={`${styles.navItem} ${pathname.startsWith('/projects') ? styles.active : ''}`}>
+                  <Briefcase size={19} /> Projects
+                </Link>
+                <Link href="/follow-ups" className={`${styles.navItem} ${pathname.startsWith('/follow-ups') ? styles.active : ''}`}>
+                  <PhoneCall size={19} /> Follow-ups
+                </Link>
+                <Link href="/appointments" className={`${styles.navItem} ${pathname.startsWith('/appointments') ? styles.active : ''}`}>
+                  <Calendar size={19} /> Appointments
+                </Link>
+                <Link href="/tickets" className={`${styles.navItem} ${pathname.startsWith('/tickets') ? styles.active : ''}`}>
+                  <HeadphonesIcon size={19} /> Support Tickets
+                </Link>
+                <Link href="/payments" className={`${styles.navItem} ${pathname.startsWith('/payments') ? styles.active : ''}`}>
+                  <Bell size={19} style={{ color: "#EAB308" }} /> Payment Reminders
+                </Link>
+              </div>
+            </>
+          ) : isSalesStaff ? (
             <>
               <div className={styles.navSection}>
                 <p className={styles.navSectionTitle} style={{ color: "#10B981" }}>Sales Workspace</p>
@@ -294,11 +355,11 @@ export default function Sidebar({ user }: { user: any }) {
         {/* User Profile */}
         <div className={styles.userProfile}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-            <div className={styles.avatar}>{user?.name?.charAt(0) || "U"}</div>
+            <div className={styles.avatar}>{isTestUser ? "T" : (user?.name?.charAt(0) || "U")}</div>
             <div className={styles.userInfo}>
-              <p className={styles.userName}>{user?.name || "User"}</p>
+              <p className={styles.userName}>{isTestUser ? "Test Account" : (user?.name || "User")}</p>
               <p className={styles.userRole}>
-                {isSalesStaff ? "Sales Executive" : isSuperAdmin ? "Super Admin" : (user?.role || "Staff")}
+                {isTestUser ? "Demo / Test User" : isSalesStaff ? "Sales Executive" : isSuperAdmin ? "Super Admin" : (user?.role || "Staff")}
               </p>
             </div>
           </div>

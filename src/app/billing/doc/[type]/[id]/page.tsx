@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { getSession, isTestSession } from "@/lib/auth";
 import TechNextDocumentTemplate, { 
   BillingDocumentData, 
   BillingDocType 
@@ -12,6 +13,9 @@ export default async function BillingDocumentViewerPage({
 }: {
   params: Promise<{ type: string; id: string }>;
 }) {
+  const session = await getSession();
+  const isTestUser = isTestSession(session);
+
   const { type, id } = await params;
   const normalizedType = type.toLowerCase();
 
@@ -76,7 +80,8 @@ export default async function BillingDocumentViewerPage({
       amountDue: quotation.status === "APPROVED" ? 0 : quotation.totalAmount,
       scopeOfWork: quotation.notes || "Quotation for provided services and digital solutions.",
       paymentTermsNote: "Payment Terms: 50% advance upon order confirmation, balance on delivery.",
-      terms: quotation.terms.map(t => t.content)
+      terms: quotation.terms.map(t => t.content),
+      hideCompanyDetails: isTestUser
     };
 
     return <TechNextDocumentTemplate data={docData} backUrl="/billing" />;
@@ -173,6 +178,7 @@ export default async function BillingDocumentViewerPage({
     amountDue: calculatedDue,
     scopeOfWork: structured.scopeOfWork || invoice.notes || "The invoice covers the agreed website development scope, including website design, development, responsive optimization, basic functionality, deployment, and related configuration as discussed with the client.",
     paymentTermsNote: structured.paymentTermsNote || "Payment Terms: Payment is due as per the agreed quotation/payment schedule. Any additional features, revisions, third-party services, domain, hosting, or other requirements outside the agreed scope may be charged separately.",
+    hideCompanyDetails: isTestUser,
   };
 
   return <TechNextDocumentTemplate data={docData} backUrl="/billing" />;

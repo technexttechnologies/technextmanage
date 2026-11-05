@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, isTestSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import SalesPortalClient from "./SalesPortalClient";
 
@@ -38,6 +38,10 @@ export default async function SalesPortalPage({
 
   if (!session?.userId) {
     redirect("/login");
+  }
+
+  if (isTestSession(session)) {
+    redirect("/billing");
   }
 
   const resolvedParams = searchParams ? await searchParams : undefined;

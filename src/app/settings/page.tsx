@@ -4,11 +4,18 @@ import { Shield, Settings as SettingsIcon, Users, MessageSquare, CreditCard, Che
 import styles from "./page.module.css";
 import { updatePlatformSettings } from "./actions";
 import Link from "next/link";
-import { getSession } from "@/lib/auth";
+import { getSession, isTestSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function SettingsPage() {
   const session = await getSession();
+  if (!session || isTestSession(session)) {
+    redirect("/billing");
+  }
   const isAdmin = session?.role === "SUPER_ADMIN" || session?.role === "ADMIN";
+  if (!isAdmin) {
+    redirect("/billing");
+  }
   const settings = await prisma.systemSettings.findFirst();
 
   return (

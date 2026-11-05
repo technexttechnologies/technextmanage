@@ -78,6 +78,7 @@ interface Props {
     activeQuotes: number;
   };
   initialTab?: "DOCUMENTS" | "REPORTING" | "DASHBOARD" | "PRODUCTS" | "STOCK" | "CUSTOMERS" | "PAYMENT_TYPES" | "TAX_RATES" | "MY_COMPANY";
+  isTestUser?: boolean;
 }
 
 export default function AroniumBillingConsole({
@@ -89,6 +90,7 @@ export default function AroniumBillingConsole({
   projects = [],
   metrics,
   initialTab = "DOCUMENTS",
+  isTestUser = false,
 }: Props) {
   const router = useRouter();
 
@@ -1002,25 +1004,25 @@ export default function AroniumBillingConsole({
     "#f87171", "#60a5fa", "#64748B", "#64748B"
   ];
 
-  // Authentic Aronium Left Navigation items
+  // Authentic Aronium Left Navigation items (Filtered for test accounts)
   const sidebarNavItems = [
-    { id: "DASHBOARD", label: "Dashboard", icon: LayoutDashboard },
+    ...(!isTestUser ? [{ id: "DASHBOARD", label: "Dashboard", icon: LayoutDashboard }] : []),
     { id: "DOCUMENTS", label: "Documents", icon: Receipt },
     { id: "PRODUCTS", label: "Products", icon: Package },
     { id: "STOCK", label: "Stock", icon: Layers },
-    { id: "REPORTING", label: "Reporting", icon: BarChart3 },
+    ...(!isTestUser ? [{ id: "REPORTING", label: "Reporting", icon: BarChart3 }] : []),
     { id: "CUSTOMERS", label: "Customers & suppliers", icon: Users },
     { id: "PROMOTIONS", label: "Promotions", icon: Gift },
-    { id: "SECURITY", label: "Users & security", icon: ShieldCheck },
+    ...(!isTestUser ? [{ id: "SECURITY", label: "Users & security", icon: ShieldCheck }] : []),
     { id: "PAYMENT_TYPES", label: "Payment types", icon: CreditCard },
     { id: "COUNTRIES", label: "Countries", icon: Globe },
-    { id: "MY_COMPANY", label: "My company", icon: Building2 },
+    ...(!isTestUser ? [{ id: "MY_COMPANY", label: "My company", icon: Building2 }] : []),
   ];
 
   const currentViewTitle = useMemo(() => {
     const item = sidebarNavItems.find(i => i.id === activeView);
     return item ? item.label : "Documents";
-  }, [activeView]);
+  }, [activeView, sidebarNavItems]);
 
   return (
     <div className={`${styles.consoleContainer} ${theme === "DARK" ? styles.darkTheme : styles.lightTheme}`}>
@@ -1030,14 +1032,20 @@ export default function AroniumBillingConsole({
       <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ""}`}>
         <div>
           <div className={styles.sidebarHeader}>
-            <img
-              src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png"
-              alt="TechNext"
-              style={{ height: "24px", maxWidth: "32px", objectFit: "contain" }}
-            />
+            {isTestUser ? (
+              <div style={{ width: "24px", height: "24px", borderRadius: "6px", background: "#0284c7", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "11px" }}>
+                BP
+              </div>
+            ) : (
+              <img
+                src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png"
+                alt="TechNext"
+                style={{ height: "24px", maxWidth: "32px", objectFit: "contain" }}
+              />
+            )}
             {!sidebarCollapsed && (
               <div className={styles.sidebarTitle}>
-                Management
+                {isTestUser ? "POS Billing" : "Management"}
               </div>
             )}
           </div>
@@ -2628,19 +2636,25 @@ export default function AroniumBillingConsole({
         {/* ========================================================= */}
         {activeView === "MY_COMPANY" && (
           <div style={{ padding: "16px 20px" }}>
-            <div className={styles.panelCard} style={{ padding: "20px", maxWidth: "600px" }}>
-              <h3 style={{ fontSize: "16px", fontWeight: 800, margin: "0 0 14px 0", color: "#00a2ed" }}>
-                Company Profile &amp; Letterhead
-              </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px" }}>
-                <div><strong>Company Name:</strong> TechNext Technologies Private Limited</div>
-                <div><strong>Registered Address:</strong> Door No. 4/487, Pulpally, Wayanad, Kerala - 673579, India</div>
-                <div><strong>Official Email:</strong> technexttechnologies@gmail.com</div>
-                <div><strong>Contact Phone:</strong> +91 85906 74531</div>
-                <div><strong>Website:</strong> technexttechnologies.in</div>
-                <div><strong>ERP Database:</strong> PostgreSQL &amp; Aronium POS Synchronized</div>
+            {isTestUser ? (
+              <div className={styles.panelCard} style={{ padding: "24px", color: "var(--text-muted)", textAlign: "center" }}>
+                Company profile is confidential and not available for test accounts.
               </div>
-            </div>
+            ) : (
+              <div className={styles.panelCard} style={{ padding: "20px", maxWidth: "600px" }}>
+                <h3 style={{ fontSize: "16px", fontWeight: 800, margin: "0 0 14px 0", color: "#00a2ed" }}>
+                  Company Profile &amp; Letterhead
+                </h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px" }}>
+                  <div><strong>Company Name:</strong> TechNext Technologies Private Limited</div>
+                  <div><strong>Registered Address:</strong> Door No. 4/487, Pulpally, Wayanad, Kerala - 673579, India</div>
+                  <div><strong>Official Email:</strong> technexttechnologies@gmail.com</div>
+                  <div><strong>Contact Phone:</strong> +91 85906 74531</div>
+                  <div><strong>Website:</strong> technexttechnologies.in</div>
+                  <div><strong>ERP Database:</strong> PostgreSQL &amp; Aronium POS Synchronized</div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -2665,24 +2679,30 @@ export default function AroniumBillingConsole({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0f172a", paddingBottom: "12px", marginBottom: "16px" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
-                <img
-                  src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png"
-                  alt="TechNext Technologies"
-                  style={{ height: "36px", objectFit: "contain" }}
-                />
+                {!isTestUser && (
+                  <img
+                    src="https://res.cloudinary.com/dwzerbhuj/image/upload/q_auto/f_auto/v1781198231/technext_ort9yj.png"
+                    alt="TechNext Technologies"
+                    style={{ height: "36px", objectFit: "contain" }}
+                  />
+                )}
                 <div>
                   <h1 style={{ fontSize: "18px", fontWeight: 800, margin: 0, textTransform: "uppercase", letterSpacing: "0.04em", color: "#0f172a" }}>
-                    TechNext Technologies
+                    {isTestUser ? "Billing & Audit Report" : "TechNext Technologies"}
                   </h1>
-                  <div style={{ fontSize: "10px", fontWeight: 600, color: "#475569" }}>
-                    Enterprise Software, Cloud &amp; Billing Systems
-                  </div>
+                  {!isTestUser && (
+                    <div style={{ fontSize: "10px", fontWeight: 600, color: "#475569" }}>
+                      Enterprise Software, Cloud &amp; Billing Systems
+                    </div>
+                  )}
                 </div>
               </div>
-              <div style={{ fontSize: "9pt", color: "#334155", lineHeight: 1.4 }}>
-                Door No. 4/487, Pulpally, Wayanad, Kerala - 673579, India<br />
-                Email: technexttechnologies@gmail.com | Phone: +91 85906 74531
-              </div>
+              {!isTestUser && (
+                <div style={{ fontSize: "9pt", color: "#334155", lineHeight: 1.4 }}>
+                  Door No. 4/487, Pulpally, Wayanad, Kerala - 673579, India<br />
+                  Email: technexttechnologies@gmail.com | Phone: +91 85906 74531
+                </div>
+              )}
             </div>
 
             <div style={{ textAlign: "right" }}>

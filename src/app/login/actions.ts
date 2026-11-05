@@ -28,8 +28,13 @@ export async function login(prevState: any, formData: FormData) {
     return { error: "Your staff account has been deactivated. Please contact Super Admin." };
   }
 
-  // Create JWT session cookie
-  await createSession(user.id, user.role, user.name);
+  // Create JWT session cookie with user email included
+  await createSession(user.id, user.role, user.name, user.email);
+
+  // Test account redirect directly into Billing Suite (no company details)
+  if (user.email === "test@technext" || user.name?.toLowerCase() === "test") {
+    redirect("/billing");
+  }
 
   // Sales staff login directly into the Sales Portal Panel
   if (user.role === "SALES") {

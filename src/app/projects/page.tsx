@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
+import { getSession, isTestSession } from "@/lib/auth";
 import Link from "next/link";
 import { Plus, Search, Filter, Briefcase, Calendar, CheckSquare, Clock } from "lucide-react";
 import styles from "./page.module.css";
@@ -9,6 +10,8 @@ export default async function ProjectsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  const session = await getSession();
+  const isTestUser = isTestSession(session);
   const currentStatus = (await searchParams).status || "ALL";
 
   const projects = await prisma.project.findMany({
@@ -83,7 +86,7 @@ export default async function ProjectsPage({
                     <h3>{project.name}</h3>
                     {project.customer && (
                       <p className={styles.customerName}>
-                        For: {project.customer.name} {project.customer.company ? `(${project.customer.company})` : ''}
+                        For: {project.customer.name} {!isTestUser && project.customer.company ? `(${project.customer.company})` : ''}
                       </p>
                     )}
                   </div>

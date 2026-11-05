@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, isTestSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import EmployeesClient from "./EmployeesClient";
 
@@ -15,6 +15,10 @@ export default async function EmployeesPage() {
 
   if (!session) {
     redirect("/login");
+  }
+
+  if (isTestSession(session)) {
+    redirect("/billing");
   }
 
   // Only Admin, HR, Super Admin can view full management

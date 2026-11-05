@@ -13,9 +13,9 @@ export async function comparePassword(password: string, hash: string) {
   return await bcrypt.compare(password, hash);
 }
 
-export async function createSession(userId: string, role: string, name: string) {
+export async function createSession(userId: string, role: string, name: string, email?: string) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-  const session = await new SignJWT({ userId, role, name })
+  const session = await new SignJWT({ userId, role, name, email })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
@@ -29,6 +29,19 @@ export async function createSession(userId: string, role: string, name: string) 
     sameSite: 'lax',
     path: '/',
   });
+}
+
+export function isTestSession(session: any): boolean {
+  if (!session) return false;
+  const email = (session.email || "").toString().toLowerCase().trim();
+  const name = (session.name || "").toString().toLowerCase().trim();
+  const userId = (session.userId || "").toString().trim();
+  return (
+    email === "test@technext" ||
+    email.startsWith("test@technext") ||
+    name === "test" ||
+    userId === "cmw2z6xpa0001y5xm4g9lp30w"
+  );
 }
 
 export async function getSession() {
